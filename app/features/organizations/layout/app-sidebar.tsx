@@ -1,4 +1,5 @@
 import {
+  BriefcaseIcon,
   ChartNoAxesColumnIncreasingIcon,
   CircleHelpIcon,
   FolderIcon,
@@ -85,6 +86,13 @@ export function AppSidebar({
               icon: ChartNoAxesColumnIncreasingIcon,
               title: t("app.analytics"),
               url: href("/organizations/:organizationSlug/analytics", {
+                organizationSlug,
+              }),
+            },
+            {
+              icon: BriefcaseIcon,
+              title: t("app.jobsAndClients"),
+              url: href("/organizations/:organizationSlug/jobs-and-clients", {
                 organizationSlug,
               }),
             },
