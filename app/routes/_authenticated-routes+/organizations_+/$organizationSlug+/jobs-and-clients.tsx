@@ -2,7 +2,7 @@ import { BotMessageSquare } from "lucide-react";
 import { useState } from "react";
 import { href } from "react-router";
 
-import type { Route } from "./+types/dashboard";
+import type { Route } from "./+types/jobs-and-clients";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import {
@@ -13,12 +13,49 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "~/components/ui/sheet";
+import { UrgentFunnelUpdates } from "~/features/funnel-updates/urgent-funnel-updates";
 import { getInstance } from "~/features/localization/i18next-middleware.server";
 import { getPageTitle } from "~/utils/get-page-title.server";
 
 export function loader({ params, context }: Route.LoaderArgs) {
   const i18n = getInstance(context);
   const t = i18n.t.bind(i18n);
+
+  // Dummy data for urgent funnel updates
+  const urgentFunnelUpdates = [
+    {
+      candidateName: "Sarah Miller",
+      deadline: "EOD",
+      id: "1",
+      isHigh: true,
+      role: "Senior Product Manager",
+      type: "offer_pending" as const,
+    },
+    {
+      candidateName: "Michael Chen",
+      deadline: "Tomorrow 5 PM",
+      id: "2",
+      isHigh: true,
+      role: "Lead Software Engineer",
+      type: "offer_pending" as const,
+    },
+    {
+      candidateName: "Emily Rodriguez",
+      deadline: "Friday EOD",
+      id: "3",
+      isHigh: false,
+      role: "UX Designer",
+      type: "response_needed" as const,
+    },
+    {
+      candidateName: "David Thompson",
+      deadline: "Monday 10 AM",
+      id: "4",
+      isHigh: true,
+      role: "Data Scientist",
+      type: "interview_scheduled" as const,
+    },
+  ];
 
   return {
     breadcrumb: {
@@ -28,6 +65,7 @@ export function loader({ params, context }: Route.LoaderArgs) {
       }),
     },
     pageTitle: getPageTitle(t, "organizations:jobsAndClients.pageTitle"),
+    urgentFunnelUpdates,
   };
 }
 
@@ -35,8 +73,11 @@ export const meta: Route.MetaFunction = ({ loaderData }) => [
   { title: loaderData?.pageTitle },
 ];
 
-export default function JobsAndClientsRoute() {
+export default function JobsAndClientsRoute({
+  loaderData,
+}: Route.ComponentProps) {
   const [aiSheetOpen, setAiSheetOpen] = useState(false);
+  const { urgentFunnelUpdates } = loaderData;
 
   return (
     <div className="flex min-h-screen flex-1">
@@ -69,7 +110,9 @@ export default function JobsAndClientsRoute() {
             <CardHeader>
               <CardTitle>Urgent Funnel Updates</CardTitle>
             </CardHeader>
-            <CardContent>...Urgent Funnel Updates Content...</CardContent>
+            <CardContent>
+              <UrgentFunnelUpdates updates={urgentFunnelUpdates} />
+            </CardContent>
           </Card>
 
           {/* Daily Agenda */}
