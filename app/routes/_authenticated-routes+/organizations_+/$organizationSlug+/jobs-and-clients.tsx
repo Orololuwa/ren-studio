@@ -1,3 +1,4 @@
+import { addDays, format, subDays } from "date-fns";
 import { BotMessageSquare, Clock } from "lucide-react";
 import { useState } from "react";
 import { href } from "react-router";
@@ -13,6 +14,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "~/components/ui/sheet";
+import { CalendarView } from "~/features/jobs-and-clients/calendar-view/calendar-view";
 import { DailyAgenda } from "~/features/jobs-and-clients/daily-agenda/daily-agenda";
 import { UrgentFunnelUpdates } from "~/features/jobs-and-clients/funnel-updates/urgent-funnel-updates";
 import { getInstance } from "~/features/localization/i18next-middleware.server";
@@ -84,6 +86,72 @@ export function loader({ params, context }: Route.LoaderArgs) {
 
   const dailyAgendaDate = "2025.04.23";
 
+  // Dummy data for calendar events
+  // Events are keyed by date (yyyy-MM-dd format)
+  const today = new Date();
+  const todayString = format(today, "yyyy-MM-dd");
+  const tomorrow = addDays(today, 1);
+  const tomorrowString = format(tomorrow, "yyyy-MM-dd");
+  const yesterday = subDays(today, 1);
+  const yesterdayString = format(yesterday, "yyyy-MM-dd");
+
+  const calendarEvents = [
+    // Today's events
+    {
+      date: todayString,
+      endTime: "10:00 AM",
+      id: "1",
+      startTime: "09:00 AM",
+      title: "AI Candidate Screening",
+    },
+    {
+      date: todayString,
+      endTime: "11:30 AM",
+      id: "2",
+      startTime: "10:30 AM",
+      title: "Team Sync: Q4 Agentic Features",
+    },
+    {
+      date: todayString,
+      endTime: "02:00 PM",
+      id: "3",
+      startTime: "01:00 PM",
+      title: "Interview with Sarah Miller",
+    },
+    {
+      date: todayString,
+      endTime: "04:30 PM",
+      id: "4",
+      startTime: "03:30 PM",
+      title: "Follow-up Call with Client",
+    },
+    // Tomorrow's events
+    {
+      date: tomorrowString,
+      endTime: "09:30 AM",
+      id: "5",
+      startTime: "08:30 AM",
+      title: "Morning Standup",
+    },
+    {
+      date: tomorrowString,
+      endTime: "12:00 PM",
+      id: "6",
+      startTime: "11:00 AM",
+      title: "Client Presentation",
+    },
+    // Yesterday's events (for testing)
+    {
+      date: yesterdayString,
+      endTime: "03:00 PM",
+      id: "7",
+      startTime: "02:00 PM",
+      title: "Retrospective Meeting",
+    },
+  ];
+
+  const currentDate = new Date();
+
   return {
     breadcrumb: {
       title: t("organizations:jobsAndClients.breadcrumb"),
@@ -91,6 +159,8 @@ export function loader({ params, context }: Route.LoaderArgs) {
         organizationSlug: params.organizationSlug,
       }),
     },
+    calendarEvents,
+    currentDate: currentDate.toISOString(),
     dailyAgenda,
     dailyAgendaDate,
     pageTitle: getPageTitle(t, "organizations:jobsAndClients.pageTitle"),
@@ -106,7 +176,13 @@ export default function JobsAndClientsRoute({
   loaderData,
 }: Route.ComponentProps) {
   const [aiSheetOpen, setAiSheetOpen] = useState(false);
-  const { dailyAgenda, dailyAgendaDate, urgentFunnelUpdates } = loaderData;
+  const {
+    calendarEvents,
+    currentDate,
+    dailyAgenda,
+    dailyAgendaDate,
+    urgentFunnelUpdates,
+  } = loaderData;
 
   return (
     <div className="flex min-h-screen flex-1">
@@ -167,7 +243,12 @@ export default function JobsAndClientsRoute({
           <CardHeader>
             <CardTitle>Calendar View</CardTitle>
           </CardHeader>
-          <CardContent>...Calendar View Content...</CardContent>
+          <CardContent>
+            <CalendarView
+              currentDate={new Date(currentDate)}
+              events={calendarEvents}
+            />
+          </CardContent>
         </Card>
       </div>
 
