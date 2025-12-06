@@ -14,6 +14,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "~/components/ui/sheet";
+import { AIAssistant } from "~/features/jobs-and-clients/ai-assistant/ai-assistant";
 import { CalendarView } from "~/features/jobs-and-clients/calendar-view/calendar-view";
 import { DailyAgenda } from "~/features/jobs-and-clients/daily-agenda/daily-agenda";
 import { UrgentFunnelUpdates } from "~/features/jobs-and-clients/funnel-updates/urgent-funnel-updates";
@@ -152,7 +153,51 @@ export function loader({ params, context }: Route.LoaderArgs) {
 
   const currentDate = new Date();
 
+  // Dummy data for AI Assistant
+  const aiMessages = [
+    {
+      content: "Hello! I'm your AI Assistant. How can I help you today?",
+      id: "1",
+      role: "assistant" as const,
+    },
+    {
+      content: "Show me candidates for the Senior Software Engineer role.",
+      id: "2",
+      role: "user" as const,
+    },
+    {
+      content:
+        "I've filtered the pipeline for Senior Software Engineer candidates. Alice Johnson is currently in the 'Applied' stage. Would you like me to summarize her profile?",
+      id: "3",
+      role: "assistant" as const,
+    },
+  ];
+
+  const contextualActions = [
+    {
+      icon: "calendar" as const,
+      id: "1",
+      label: "Schedule Interview",
+    },
+    {
+      icon: "file-text" as const,
+      id: "2",
+      label: "Summarize Candidate",
+    },
+    {
+      icon: "mail" as const,
+      id: "3",
+      label: "Send To Marketplace",
+    },
+    {
+      icon: "move-right" as const,
+      id: "4",
+      label: "Move to Next Stage",
+    },
+  ];
+
   return {
+    aiMessages,
     breadcrumb: {
       title: t("organizations:jobsAndClients.breadcrumb"),
       to: href("/organizations/:organizationSlug/jobs-and-clients", {
@@ -160,6 +205,7 @@ export function loader({ params, context }: Route.LoaderArgs) {
       }),
     },
     calendarEvents,
+    contextualActions,
     currentDate: currentDate.toISOString(),
     dailyAgenda,
     dailyAgendaDate,
@@ -176,13 +222,21 @@ export default function JobsAndClientsRoute({
   loaderData,
 }: Route.ComponentProps) {
   const [aiSheetOpen, setAiSheetOpen] = useState(false);
+  const [aiMessagesState, setAiMessagesState] = useState(loaderData.aiMessages);
   const {
     calendarEvents,
+    contextualActions,
     currentDate,
     dailyAgenda,
     dailyAgendaDate,
     urgentFunnelUpdates,
   } = loaderData;
+
+  const handleMessageAdd = (
+    message: (typeof loaderData.aiMessages)[number],
+  ) => {
+    setAiMessagesState((prev) => [...prev, message]);
+  };
 
   return (
     <div className="flex min-h-screen flex-1">
@@ -197,14 +251,20 @@ export default function JobsAndClientsRoute({
                 Open AI Assistant
               </Button>
             </SheetTrigger>
-            <SheetContent className="flex w-full flex-col p-0 sm:max-w-md">
-              <SheetHeader className="border-b p-6">
+            <SheetContent className="flex h-full w-full flex-col p-0 sm:max-w-md">
+              <SheetHeader className="border-b p-6 shrink-0">
                 <SheetTitle>AI Assistant</SheetTitle>
                 <SheetDescription>
                   Get help with your recruiting tasks
                 </SheetDescription>
               </SheetHeader>
-              <div> AI Assistant Panel</div>
+              <div className="flex-1 min-h-0">
+                <AIAssistant
+                  contextualActions={contextualActions}
+                  messages={aiMessagesState}
+                  onMessageAdd={handleMessageAdd}
+                />
+              </div>
             </SheetContent>
           </Sheet>
         </div>
@@ -253,12 +313,18 @@ export default function JobsAndClientsRoute({
       </div>
 
       {/* AI Assistant Panel - Desktop Only */}
-      <div className="bg-card text-card-foreground hidden w-80 shrink-0 border-l lg:block">
+      <div className="bg-card text-card-foreground hidden h-screen w-80 shrink-0 border-l lg:block">
         <div className="flex h-full flex-col">
-          <div className="border-b p-6">
+          <div className="border-b p-6 shrink-0">
             <h2 className="text-xl font-semibold">AI Assistant</h2>
           </div>
-          <div> AI Assistant Panel</div>
+          <div className="flex-1 min-h-0">
+            <AIAssistant
+              contextualActions={contextualActions}
+              messages={aiMessagesState}
+              onMessageAdd={handleMessageAdd}
+            />
+          </div>
         </div>
       </div>
     </div>
