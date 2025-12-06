@@ -26,7 +26,7 @@ export function UrgentFunnelUpdates({ updates }: UrgentFunnelUpdatesProps) {
   }
 
   return (
-    <div className="max-h-[120px] space-y-4 overflow-y-auto">
+    <div className="max-h-[120px] space-y-4 overflow-y-auto [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-muted-foreground/20 hover:[&::-webkit-scrollbar-thumb]:bg-muted-foreground/30 [&::-webkit-scrollbar-track]:bg-transparent">
       {updates.map((update) => (
         <div className="space-y-3" key={update.id}>
           <div className="flex items-start gap-3">

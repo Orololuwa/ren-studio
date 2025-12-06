@@ -1,4 +1,4 @@
-import { BotMessageSquare } from "lucide-react";
+import { BotMessageSquare, Clock } from "lucide-react";
 import { useState } from "react";
 import { href } from "react-router";
 
@@ -13,7 +13,8 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "~/components/ui/sheet";
-import { UrgentFunnelUpdates } from "~/features/funnel-updates/urgent-funnel-updates";
+import { DailyAgenda } from "~/features/jobs-and-clients/daily-agenda/daily-agenda";
+import { UrgentFunnelUpdates } from "~/features/jobs-and-clients/funnel-updates/urgent-funnel-updates";
 import { getInstance } from "~/features/localization/i18next-middleware.server";
 import { getPageTitle } from "~/utils/get-page-title.server";
 
@@ -57,6 +58,32 @@ export function loader({ params, context }: Route.LoaderArgs) {
     },
   ];
 
+  // Dummy data for daily agenda
+  const dailyAgenda = [
+    {
+      completed: false,
+      id: "1",
+      title: "Review AI Candidate Profiles for Senior Software Engineer Role",
+    },
+    {
+      completed: false,
+      id: "2",
+      title: "Schedule Interview with candidate 'Alex Johnson'",
+    },
+    {
+      completed: true,
+      id: "3",
+      title: "Follow up on offer sent to Sarah Miller",
+    },
+    {
+      completed: false,
+      id: "4",
+      title: "Prepare interview questions for Product Manager role",
+    },
+  ];
+
+  const dailyAgendaDate = "2025.04.23";
+
   return {
     breadcrumb: {
       title: t("organizations:jobsAndClients.breadcrumb"),
@@ -64,6 +91,8 @@ export function loader({ params, context }: Route.LoaderArgs) {
         organizationSlug: params.organizationSlug,
       }),
     },
+    dailyAgenda,
+    dailyAgendaDate,
     pageTitle: getPageTitle(t, "organizations:jobsAndClients.pageTitle"),
     urgentFunnelUpdates,
   };
@@ -77,7 +106,7 @@ export default function JobsAndClientsRoute({
   loaderData,
 }: Route.ComponentProps) {
   const [aiSheetOpen, setAiSheetOpen] = useState(false);
-  const { urgentFunnelUpdates } = loaderData;
+  const { dailyAgenda, dailyAgendaDate, urgentFunnelUpdates } = loaderData;
 
   return (
     <div className="flex min-h-screen flex-1">
@@ -118,9 +147,18 @@ export default function JobsAndClientsRoute({
           {/* Daily Agenda */}
           <Card>
             <CardHeader>
-              <CardTitle>Daily Agenda</CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle>
+                  Daily Agenda {"//"} {dailyAgendaDate}
+                </CardTitle>
+                <Button size="icon" variant="ghost">
+                  <Clock className="size-4" />
+                </Button>
+              </div>
             </CardHeader>
-            <CardContent>...Daily Agenda Content...</CardContent>
+            <CardContent>
+              <DailyAgenda items={dailyAgenda} />
+            </CardContent>
           </Card>
         </div>
 
