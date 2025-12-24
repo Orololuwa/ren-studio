@@ -3,6 +3,7 @@ import {
   ChartNoAxesColumnIncreasingIcon,
   CircleHelpIcon,
   FolderIcon,
+  HammerIcon,
   LayoutDashboardIcon,
   SettingsIcon,
 } from "lucide-react";
@@ -93,6 +94,13 @@ export function AppSidebar({
               icon: BriefcaseIcon,
               title: t("app.jobsAndClients"),
               url: href("/organizations/:organizationSlug/jobs-and-clients", {
+                organizationSlug,
+              }),
+            },
+            {
+              icon: HammerIcon,
+              title: t("app.builder"),
+              url: href("/organizations/:organizationSlug/builder", {
                 organizationSlug,
               }),
             },

@@ -49,6 +49,10 @@ export default {
     breadcrumb: "Analytics",
     pageTitle: "Analytics",
   },
+  builder: {
+    breadcrumb: "Builder",
+    pageTitle: "Template Builder",
+  },
   dashboard: {
     breadcrumb: "Dashboard",
     pageTitle: "Dashboard",
@@ -66,6 +70,7 @@ export default {
       nav: {
         app: {
           analytics: "Analytics",
+          builder: "Builder",
           dashboard: "Dashboard",
           jobsAndClients: "Jobs and Clients",
           projects: {
