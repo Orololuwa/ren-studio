@@ -674,6 +674,8 @@ function resetSectionData(type: string): Record<string, unknown> {
 
 **File**: `app/routes/_authenticated-routes+/organizations_+/$organizationSlug+/builder.tsx`
 
+**Note**: This phase only loads predefined templates. Database access will be added in Phase 8 after the schema is created.
+
 ```typescript
 import { useState } from "react";
 import { href, useNavigate } from "react-router";
@@ -691,40 +693,24 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { getInstance } from "~/features/localization/i18next-middleware.server";
 import { getPageTitle } from "~/utils/get-page-title.server";
 import { getTemplatesByType } from "~/features/builder/templates";
-import { db } from "~/utils/database.server";
-import { organizationMembershipContext } from "~/features/organizations/organizations-middleware.server";
 
 export async function loader({ params, context }: Route.LoaderArgs) {
   const i18n = getInstance(context);
   const t = i18n.t.bind(i18n);
-  const { organization } = context.get(organizationMembershipContext);
 
-  // Load predefined templates
+  // Load predefined templates only
+  // Note: Database access will be added in Phase 8 after schema is created
   const predefinedResume = getTemplatesByType("resume");
   const predefinedInvoice = getTemplatesByType("invoice");
   const predefinedCertificate = getTemplatesByType("certificate");
   const predefinedReportCards = getTemplatesByType("report-cards");
 
-  // Load user's custom templates from database
-  const userTemplates = await db.template.findMany({
-    where: {
-      organizationId: organization.id,
-    },
-    orderBy: { createdAt: "desc" },
-  });
-
-  // Group templates by type
+  // Group templates by type (only predefined for now)
   const templatesByType = {
-    resume: [...predefinedResume, ...userTemplates.filter((t) => t.type === "resume")],
-    invoice: [...predefinedInvoice, ...userTemplates.filter((t) => t.type === "invoice")],
-    certificate: [
-      ...predefinedCertificate,
-      ...userTemplates.filter((t) => t.type === "certificate"),
-    ],
-    "report-cards": [
-      ...predefinedReportCards,
-      ...userTemplates.filter((t) => t.type === "report-cards"),
-    ],
+    resume: predefinedResume,
+    invoice: predefinedInvoice,
+    certificate: predefinedCertificate,
+    "report-cards": predefinedReportCards,
   };
 
   return {
@@ -828,39 +814,23 @@ export default function BuilderRoute({ loaderData }: Route.ComponentProps) {
 
 **File**: `app/routes/_authenticated-routes+/organizations_+/$organizationSlug+/builder.new.tsx`
 
+**Note**: This route will redirect back to builder page until Phase 8. Database functionality will be added after the schema is created.
+
 ```typescript
 import { redirect } from "react-router";
 import type { Route } from "./+types/builder.new";
-import { createEmptyTemplate } from "~/features/builder/utils/template-factory";
-import { db } from "~/utils/database.server";
-import { organizationMembershipContext } from "~/features/organizations/organizations-middleware.server";
 
-export async function loader({ params, context }: Route.LoaderArgs) {
-  const { organization } = context.get(organizationMembershipContext);
-  
-  // Create a new empty template
-  const newTemplate = createEmptyTemplate(
-    "resume", // Default type, can be made configurable
-    organization.id,
-    "Untitled Template"
-  );
+export async function loader({ params }: Route.LoaderArgs) {
+  // Phase 4: Database doesn't exist yet
+  // This functionality will be implemented in Phase 8 after database schema is created
+  // For now, redirect back to builder page
+  return redirect(`/organizations/${params.organizationSlug}/builder`);
 
-  // Save to database
-  const savedTemplate = await db.template.create({
-    data: {
-      id: newTemplate.id,
-      organizationId: newTemplate.organizationId,
-      name: newTemplate.name,
-      type: newTemplate.type,
-      sections: newTemplate.sections as any,
-      globalStyles: newTemplate.globalStyles as any,
-    },
-  });
-
-  // Redirect to editor
-  return redirect(
-    `/organizations/${params.organizationSlug}/builder/${savedTemplate.id}`
-  );
+  // Phase 8 implementation will replace the above:
+  // const { organization } = context.get(organizationMembershipContext);
+  // const newTemplate = createEmptyTemplate("resume", organization.id, "Untitled Template");
+  // const savedTemplate = await db.template.create({ data: { ... } });
+  // return redirect(`/organizations/${params.organizationSlug}/builder/${savedTemplate.id}`);
 }
 ```
 
@@ -1624,7 +1594,9 @@ export default function BuilderEditorRoute({ loaderData }: Route.ComponentProps)
 
 ## Phase 8: Database Schema
 
-### Step 7.1: Add Prisma Schema
+**Important**: After completing this phase, you should update Phase 4 routes (`builder.tsx` and `builder.new.tsx`) to include database functionality. See "Step 8.2: Update Phase 4 Routes" below.
+
+### Step 8.1: Add Prisma Schema
 
 Add to `prisma/schema.prisma`:
 
@@ -1648,6 +1620,118 @@ model Template {
 Run migration:
 ```bash
 bun run prisma:migrate dev --name add_templates
+```
+
+### Step 8.2: Update Phase 4 Routes to Use Database
+
+Now that the database schema exists, update the routes created in Phase 4 to include database functionality:
+
+**Update `app/routes/_authenticated-routes+/organizations_+/$organizationSlug+/builder.tsx` loader:**
+
+Add these imports at the top:
+```typescript
+import { organizationMembershipContext } from "~/features/organizations/organizations-middleware.server";
+import { db } from "~/utils/database.server";
+```
+
+Update the loader function:
+```typescript
+export async function loader({ params, context }: Route.LoaderArgs) {
+  const i18n = getInstance(context);
+  const t = i18n.t.bind(i18n);
+  const { organization } = context.get(organizationMembershipContext);
+
+  // Load predefined templates
+  const predefinedResume = getTemplatesByType("resume");
+  const predefinedInvoice = getTemplatesByType("invoice");
+  const predefinedCertificate = getTemplatesByType("certificate");
+  const predefinedReportCards = getTemplatesByType("report-cards");
+
+  // Load user's custom templates from database
+  const userTemplates = await db.template.findMany({
+    where: {
+      organizationId: organization.id,
+    },
+    orderBy: { createdAt: "desc" },
+    select: {
+      id: true,
+      name: true,
+      type: true,
+    },
+  });
+
+  // Group templates by type
+  const templatesByType = {
+    resume: [
+      ...predefinedResume,
+      ...userTemplates.filter((t) => t.type === "resume"),
+    ],
+    invoice: [
+      ...predefinedInvoice,
+      ...userTemplates.filter((t) => t.type === "invoice"),
+    ],
+    certificate: [
+      ...predefinedCertificate,
+      ...userTemplates.filter((t) => t.type === "certificate"),
+    ],
+    "report-cards": [
+      ...predefinedReportCards,
+      ...userTemplates.filter((t) => t.type === "report-cards"),
+    ],
+  };
+
+  return {
+    breadcrumb: {
+      title: t("organizations:builder.breadcrumb"),
+      to: href("/organizations/:organizationSlug/builder", {
+        organizationSlug: params.organizationSlug,
+      }),
+    },
+    organizationSlug: params.organizationSlug,
+    pageTitle: getPageTitle(t, "organizations:builder.pageTitle"),
+    templatesByType,
+  };
+}
+```
+
+**Update `app/routes/_authenticated-routes+/organizations_+/$organizationSlug+/builder.new.tsx`:**
+
+Replace the entire file content with:
+```typescript
+import { redirect } from "react-router";
+
+import type { Route } from "./+types/builder.new";
+import { createEmptyTemplate } from "~/features/builder/utils/template-factory";
+import { db } from "~/utils/database.server";
+import { organizationMembershipContext } from "~/features/organizations/organizations-middleware.server";
+
+export async function loader({ params, context }: Route.LoaderArgs) {
+  const { organization } = context.get(organizationMembershipContext);
+
+  // Create a new empty template
+  const newTemplate = createEmptyTemplate(
+    "resume", // Default type, can be made configurable
+    organization.id,
+    "Untitled Template",
+  );
+
+  // Save to database
+  const savedTemplate = await db.template.create({
+    data: {
+      id: newTemplate.id,
+      organizationId: newTemplate.organizationId,
+      name: newTemplate.name,
+      type: newTemplate.type,
+      sections: newTemplate.sections as any,
+      globalStyles: newTemplate.globalStyles as any,
+    },
+  });
+
+  // Redirect to editor
+  return redirect(
+    `/organizations/${params.organizationSlug}/builder/${savedTemplate.id}`,
+  );
+}
 ```
 
 ---
