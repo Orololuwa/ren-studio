@@ -88,6 +88,7 @@ export interface SectionStyles {
   transition?: string;
   filter?: string;
   backdropFilter?: string;
+  visibility?: "visible" | "hidden";
 
   // Positioning
   position?: string;
@@ -143,4 +144,18 @@ export interface ComponentDefinition {
   defaultData: Record<string, unknown>;
   defaultStyles: SectionStyles;
   configurableProperties: string[];
+}
+
+export interface ExperienceEntry {
+  company: string;
+  position: string;
+  startDate: string;
+  endDate: string;
+  description: string;
+}
+
+export interface EducationEntry {
+  institution: string;
+  degree: string;
+  year: string;
 }

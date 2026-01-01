@@ -25,7 +25,7 @@ export const resumeTemplates: Template[] = [
         order: 0,
         styles: {
           backgroundColor: "#ffffff",
-          borderBottom: "2px solid #667eea",
+          color: "#000000",
           padding: "2rem",
           paddingBottom: "1rem",
           textAlign: "center",
@@ -35,14 +35,13 @@ export const resumeTemplates: Template[] = [
       {
         data: {
           content:
-            "Experienced software engineer with 5+ years of expertise in full-stack development, cloud architecture, and team leadership.",
+            "<p>Experienced software engineer with 5+ years of expertise in full-stack development, cloud architecture, and team leadership.</p>",
         },
         id: "summary-1",
         order: 1,
         styles: {
           backgroundColor: "#f9fafb",
           borderRadius: "8px",
-          marginTop: "1rem",
           padding: "1.5rem",
         },
         type: "summary",
@@ -53,7 +52,7 @@ export const resumeTemplates: Template[] = [
             {
               company: "Tech Corp",
               description:
-                "Led development of microservices architecture serving 1M+ users. Mentored junior developers and improved code quality.",
+                "<ul><li>Led development of microservices architecture serving 1M+ users</li><li>Mentored junior developers and improved code quality</li><li>Optimized system performance and scalability</li></ul>",
               endDate: "Present",
               position: "Senior Software Engineer",
               startDate: "2020",
@@ -61,7 +60,7 @@ export const resumeTemplates: Template[] = [
             {
               company: "StartupXYZ",
               description:
-                "Built and maintained React/Node.js applications. Implemented CI/CD pipelines reducing deployment time by 60%.",
+                "<ul><li>Built and maintained React/Node.js applications</li><li>Implemented CI/CD pipelines reducing deployment time by 60%</li><li>Collaborated with cross-functional teams on product features</li></ul>",
               endDate: "2020",
               position: "Full Stack Developer",
               startDate: "2018",
@@ -71,7 +70,6 @@ export const resumeTemplates: Template[] = [
         id: "experience-1",
         order: 2,
         styles: {
-          marginTop: "1rem",
           padding: "1.5rem",
         },
         type: "experience",
@@ -89,7 +87,6 @@ export const resumeTemplates: Template[] = [
         id: "education-1",
         order: 3,
         styles: {
-          marginTop: "1rem",
           padding: "1.5rem",
         },
         type: "education",
@@ -109,7 +106,6 @@ export const resumeTemplates: Template[] = [
         id: "skills-1",
         order: 4,
         styles: {
-          marginTop: "1rem",
           padding: "1.5rem",
         },
         type: "skills",
@@ -149,11 +145,25 @@ export const resumeTemplates: Template[] = [
       },
       {
         data: {
+          content:
+            "<p>Strategic product manager with expertise in B2B SaaS platforms, product strategy, and cross-functional collaboration.</p>",
+        },
+        id: "summary-2",
+        order: 1,
+        styles: {
+          borderLeft: "4px solid #1a1a1a",
+          padding: "2rem",
+          paddingLeft: "1.5rem",
+        },
+        type: "summary",
+      },
+      {
+        data: {
           entries: [
             {
               company: "Innovation Labs",
               description:
-                "Drive product strategy and roadmap for B2B SaaS platform.",
+                "<ul><li>Drive product strategy and roadmap for B2B SaaS platform</li><li>Collaborate with engineering and design teams</li><li>Analyze market trends and user feedback</li></ul>",
               endDate: "Present",
               position: "Product Manager",
               startDate: "2019",
@@ -161,10 +171,9 @@ export const resumeTemplates: Template[] = [
           ],
         },
         id: "experience-2",
-        order: 1,
+        order: 2,
         styles: {
           borderLeft: "4px solid #1a1a1a",
-          marginTop: "2rem",
           padding: "2rem",
           paddingLeft: "1.5rem",
         },
@@ -181,14 +190,34 @@ export const resumeTemplates: Template[] = [
           ],
         },
         id: "education-2",
-        order: 2,
+        order: 3,
         styles: {
           borderLeft: "4px solid #1a1a1a",
-          marginTop: "1rem",
           padding: "2rem",
           paddingLeft: "1.5rem",
         },
         type: "education",
+      },
+      {
+        data: {
+          category: "Core Competencies",
+          items: [
+            "Product Strategy",
+            "Roadmap Planning",
+            "Stakeholder Management",
+            "Agile Methodologies",
+            "Data Analysis",
+            "User Research",
+          ],
+        },
+        id: "skills-2",
+        order: 4,
+        styles: {
+          borderLeft: "4px solid #1a1a1a",
+          padding: "2rem",
+          paddingLeft: "1.5rem",
+        },
+        type: "skills",
       },
     ],
     type: "resume",

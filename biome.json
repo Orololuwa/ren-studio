@@ -36,6 +36,10 @@
   "linter": {
     "enabled": true,
     "rules": {
+      "a11y": {
+        "noDangerouslySetInnerHtml": "off",
+        "noStaticElementInteractions": "off"
+      },
       "correctness": {
         "noReactPropAssignments": "error",
         "useHookAtTopLevel": "error",

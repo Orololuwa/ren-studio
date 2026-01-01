@@ -10,6 +10,7 @@ interface BuilderState {
   addSection: (section: TemplateSection) => void;
   updateSection: (id: string, updates: Partial<TemplateSection>) => void;
   deleteSection: (id: string) => void;
+  duplicateSection: (section: TemplateSection) => void;
   reorderSections: (sections: TemplateSection[]) => void;
   selectSection: (id: string | null) => void;
   setDirty: (dirty: boolean) => void;
@@ -49,6 +50,44 @@ export const useBuilderStore = create<BuilderState>((set) => ({
           state.selectedSectionId === id ? null : state.selectedSectionId,
       };
     }),
+
+  duplicateSection: (section) =>
+    set((state) => {
+      if (!state.currentTemplate) return state;
+      
+      // Sort sections by order to ensure correct positioning
+      const sortedSections = [...state.currentTemplate.sections].sort(
+        (a, b) => a.order - b.order,
+      );
+      
+      const currentIndex = sortedSections.findIndex(
+        (s) => s.id === section.id,
+      );
+      
+      if (currentIndex === -1) return state;
+      
+      const newSection: TemplateSection = {
+        ...section,
+        id: crypto.randomUUID(),
+        order: section.order + 1,
+      };
+      
+      // Insert right after the original section
+      const updatedSections = [
+        ...sortedSections.slice(0, currentIndex + 1),
+        newSection,
+        ...sortedSections.slice(currentIndex + 1),
+      ].map((s, index) => ({ ...s, order: index }));
+      
+      return {
+        currentTemplate: {
+          ...state.currentTemplate,
+          sections: updatedSections,
+        },
+        isDirty: true,
+      };
+    }),
+
   isDirty: false,
 
   reorderSections: (sections) =>
