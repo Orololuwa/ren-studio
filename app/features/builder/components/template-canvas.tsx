@@ -224,6 +224,7 @@ export function TemplateCanvas() {
         } ${
           sortedSections.length === 0 ? "flex items-center justify-center" : ""
         }`}
+        data-testid="canvas-droppable"
         ref={setNodeRef}
       >
         {sortedSections.length === 0 ? (

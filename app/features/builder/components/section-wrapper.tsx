@@ -74,6 +74,7 @@ export function SectionWrapper({
       className={`relative border-2 rounded-lg mb-4 bg-white cursor-pointer ${
         isSelected ? "border-blue-500 shadow-lg" : "border-gray-300"
       } ${!isVisible ? "opacity-60" : ""}`}
+      data-testid={`section-${section.id}`}
       onClick={onSelect}
       onKeyDown={handleKeyDown}
       ref={setNodeRef}
@@ -120,6 +121,7 @@ export function SectionWrapper({
           {...attributes}
           {...listeners}
           className="h-8 w-8 cursor-grab active:cursor-grabbing text-gray-700 hover:text-gray-900 hover:bg-gray-100"
+          data-testid={`section-drag-handle-${section.id}`}
           size="icon"
           title="Drag to reorder"
           variant="ghost"

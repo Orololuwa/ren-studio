@@ -45,6 +45,7 @@ function DraggableComponent({ component }: { component: ComponentDefinition }) {
       className={`p-3 bg-background border-2 rounded-lg cursor-grab hover:border-primary hover:shadow-md transition-all select-none ${
         isDragging ? "opacity-50 border-primary" : "border-border"
       }`}
+      data-testid={`palette-${component.type}`}
     >
       <div className="flex items-start gap-3">
         <div className="text-primary mt-0.5">{iconMap[component.type]}</div>
