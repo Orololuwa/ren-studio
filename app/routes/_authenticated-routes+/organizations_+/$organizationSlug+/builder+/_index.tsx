@@ -74,41 +74,77 @@ export default function BuilderRoute({ loaderData }: Route.ComponentProps) {
     <div className="flex flex-1 flex-col gap-6 px-4 py-4 md:py-6 lg:px-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold">Template Builder</h1>
-          <p className="text-muted-foreground text-sm mt-1">
+          <h1
+            className="text-2xl font-semibold"
+            data-testid="template-builder-heading"
+          >
+            Template Builder
+          </h1>
+          <p
+            className="text-muted-foreground text-sm mt-1"
+            data-testid="template-builder-description"
+          >
             Choose a template and customize it to your needs
           </p>
         </div>
-        <Button onClick={handleCreateNew} size="lg">
+        <Button
+          data-testid="create-new-button"
+          onClick={handleCreateNew}
+          size="lg"
+        >
           Create New
         </Button>
       </div>
 
       <Tabs className="w-full" onValueChange={setActiveTab} value={activeTab}>
         <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="resume">Resume</TabsTrigger>
-          <TabsTrigger value="invoice">Invoice</TabsTrigger>
-          <TabsTrigger value="certificate">Certificate</TabsTrigger>
-          <TabsTrigger value="report-cards">Report Cards</TabsTrigger>
+          <TabsTrigger data-testid="tab-resume" value="resume">
+            Resume
+          </TabsTrigger>
+          <TabsTrigger data-testid="tab-invoice" value="invoice">
+            Invoice
+          </TabsTrigger>
+          <TabsTrigger data-testid="tab-certificate" value="certificate">
+            Certificate
+          </TabsTrigger>
+          <TabsTrigger data-testid="tab-report-cards" value="report-cards">
+            Report Cards
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent className="mt-6" value={activeTab}>
           {templates.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
+            <div
+              className="text-center py-12 text-muted-foreground"
+              data-testid="no-templates-message"
+            >
               <p>No templates available. Click "Create New" to get started.</p>
             </div>
           ) : (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div
+              className="grid gap-4 md:grid-cols-2 lg:grid-cols-3"
+              data-testid="template-grid"
+            >
               {templates.map((template) => (
-                <Card className="flex flex-col" key={template.id}>
+                <Card
+                  className="flex flex-col"
+                  data-testid={`template-card-${template.id}`}
+                  key={template.id}
+                >
                   <CardHeader>
                     <div className="bg-muted/50 aspect-4/3 rounded-lg mb-4 flex items-center justify-center">
                       <span className="text-muted-foreground text-sm">
                         {template.name} Preview
                       </span>
                     </div>
-                    <CardTitle>{template.name}</CardTitle>
-                    <CardDescription>
+                    <CardTitle
+                      data-testid={`template-card-title-${template.id}`}
+                    >
+                      {template.name}
+                    </CardTitle>
+                    <CardDescription
+                      data-testid={`template-card-description-${template.id}`}
+                    >
                       {template.type.charAt(0).toUpperCase() +
                         template.type.slice(1)}{" "}
                       Template
@@ -118,6 +154,7 @@ export default function BuilderRoute({ loaderData }: Route.ComponentProps) {
                   <CardFooter>
                     <Button
                       className="w-full"
+                      data-testid={`template-customize-button-${template.id}`}
                       onClick={() => handleCustomize(template.id)}
                       variant="outline"
                     >

@@ -279,7 +279,10 @@ export function TemplateCanvas() {
   };
 
   return (
-    <div className="flex-1 bg-gray-100 p-8 overflow-auto">
+    <div
+      className="flex-1 bg-gray-100 p-8 overflow-auto"
+      data-testid="template-canvas"
+    >
       <div className="max-w-4xl mx-auto bg-white shadow-lg rounded-lg p-8">
         <DroppableCanvas />
       </div>

@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 
 import { useBuilderStore } from "../store/builder-store";
 import type { TemplateSection } from "../types";
@@ -118,6 +118,7 @@ export function SectionRenderer({
             <h1>
               <button
                 className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left font-bold text-2xl"
+                data-testid={`editable-field-${section.id}-name`}
                 onClick={(e) =>
                   handleFieldClick(
                     e,
@@ -357,11 +358,14 @@ export function SectionRenderer({
                     {exp.endDate}
                   </button>
                 </p>
+                {/* biome-ignore lint/a11y/useSemanticElements: Rich text content div needs to be clickable but cannot be a button element */}
                 <div
                   className="rich-text-content cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left block w-full"
+                  // biome-ignore lint/security/noDangerouslySetInnerHtml: Rich text content from editor needs to be rendered as HTML
                   dangerouslySetInnerHTML={{
                     __html: exp.description || "",
                   }}
+                  data-testid={`rich-text-content-${section.id}-description-${idx}`}
                   onClick={(e) =>
                     handleFieldClick(
                       e,
@@ -511,11 +515,14 @@ export function SectionRenderer({
         return (
           <div className="text-gray-900" style={sectionStyles}>
             <h2 className="text-gray-900">Summary</h2>
+            {/* biome-ignore lint/a11y/useSemanticElements: Rich text content div needs to be clickable but cannot be a button element */}
             <div
               className="rich-text-content cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left block w-full"
+              // biome-ignore lint/security/noDangerouslySetInnerHtml: Rich text content from editor needs to be rendered as HTML
               dangerouslySetInnerHTML={{
                 __html: (section.data.content as string) || "",
               }}
+              data-testid={`rich-text-content-${section.id}-summary`}
               onClick={(e) =>
                 handleFieldClick(
                   e,
@@ -683,11 +690,6 @@ export function SectionRenderer({
             if (!open) {
               setIsModalOpen(false);
               setEditingField(null);
-            } else if (!open) {
-              // If Dialog tried to close but we don't allow it, ignore the request
-              // Keep the modal open by not updating state
-              // The Dialog's handleDialogOpenChange should have prevented this,
-              // but this is a safety net
             } else {
               setIsModalOpen(open);
             }

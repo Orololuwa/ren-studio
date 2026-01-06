@@ -125,6 +125,7 @@ export function InlineEditor({
     <Dialog modal={true} onOpenChange={handleDialogOpenChange} open={open}>
       <DialogContent
         className="max-w-2xl max-h-[80vh] overflow-y-auto"
+        data-testid={`inline-editor-dialog-${label.toLowerCase().replace(/\s+/g, "-")}`}
         onEscapeKeyDown={() => {
           // Allow ESC to close
           allowCloseRef.current = true;
@@ -163,7 +164,11 @@ export function InlineEditor({
           role="presentation"
         >
           <DialogHeader>
-            <DialogTitle>Edit {label}</DialogTitle>
+            <DialogTitle
+              data-testid={`inline-editor-title-${label.toLowerCase().replace(/\s+/g, "-")}`}
+            >
+              Edit {label}
+            </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
@@ -250,6 +255,7 @@ export function InlineEditor({
                 >
                   <Input
                     // className="bg-white text-gray-900"
+                    data-testid={`inline-editor-input-${label.toLowerCase().replace(/\s+/g, "-")}`}
                     id="editor"
                     onChange={(e) => setEditedValue(e.target.value)}
                     onClick={(e) => e.stopPropagation()}
@@ -262,10 +268,19 @@ export function InlineEditor({
               )}
             </div>
             <div className="flex justify-end gap-2 pt-4">
-              <Button onClick={handleCancel} variant="outline">
+              <Button
+                data-testid="inline-editor-cancel-button"
+                onClick={handleCancel}
+                variant="outline"
+              >
                 Cancel
               </Button>
-              <Button onClick={handleSave}>Save</Button>
+              <Button
+                data-testid="inline-editor-save-button"
+                onClick={handleSave}
+              >
+                Save
+              </Button>
             </div>
           </div>
         </div>

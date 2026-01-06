@@ -8,6 +8,7 @@ export function ExportButton() {
 
   return (
     <Button
+      data-testid="export-button"
       disabled={!currentTemplate}
       onClick={() => {
         // Export functionality will be available after Phase 11 (Puppeteer PDF Generation)

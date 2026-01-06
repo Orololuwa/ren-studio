@@ -137,11 +137,18 @@ export default function BuilderEditorRoute({
         {/* Canvas on the left */}
         <div className="flex-1 flex flex-col overflow-hidden">
           <div className="border-b p-4 flex items-center justify-between bg-background">
-            <h2 className="text-lg font-semibold">
+            <h2
+              className="text-lg font-semibold"
+              data-testid="template-editor-title"
+            >
               {currentTemplate?.name || "Untitled Template"}
             </h2>
             <div className="flex gap-2">
-              <Button onClick={() => setPreviewOpen(true)} variant="outline">
+              <Button
+                data-testid="preview-button"
+                onClick={() => setPreviewOpen(true)}
+                variant="outline"
+              >
                 Preview
               </Button>
               <ExportButton />

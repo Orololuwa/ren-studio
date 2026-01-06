@@ -14,14 +14,25 @@ const iconMap: Record<string, React.ReactNode> = {
 
 export function ComponentPalette() {
   return (
-    <div className="h-[calc(100vh-4rem)] w-80 bg-muted/30 border-l border-border overflow-y-auto">
+    <div
+      className="h-[calc(100vh-4rem)] w-80 bg-muted/30 border-l border-border overflow-y-auto"
+      data-testid="component-palette"
+    >
       <div className="p-4">
-        <h2 className="text-lg font-bold mb-2">Components</h2>
-        <p className="text-xs text-muted-foreground mb-4">
+        <h2
+          className="text-lg font-bold mb-2"
+          data-testid="component-palette-heading"
+        >
+          Components
+        </h2>
+        <p
+          className="text-xs text-muted-foreground mb-4"
+          data-testid="component-palette-instruction"
+        >
           Drag components to add them to your template
         </p>
 
-        <div className="space-y-3">
+        <div className="space-y-3" data-testid="component-palette-list">
           {Object.values(componentLibrary).map((component) => (
             <DraggableComponent component={component} key={component.type} />
           ))}

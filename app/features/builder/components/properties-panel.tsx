@@ -2,11 +2,7 @@ import { Plus, Trash2, X } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { useBuilderStore } from "../store/builder-store";
-import type {
-  EducationEntry,
-  ExperienceEntry,
-  TemplateSection,
-} from "../types";
+import type { EducationEntry, ExperienceEntry } from "../types";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
@@ -306,7 +302,7 @@ export function PropertiesPanel() {
             {entries.map((entry, idx) => (
               <div
                 className="p-3 border rounded-lg space-y-3 bg-background"
-                key={idx}
+                key={`exp-${entry.company}-${entry.position}-${idx}`}
               >
                 <div className="flex items-center justify-between">
                   <Label className="text-xs font-medium">Entry {idx + 1}</Label>
@@ -435,7 +431,7 @@ export function PropertiesPanel() {
             {entries.map((entry, idx) => (
               <div
                 className="p-3 border rounded-lg space-y-3 bg-background"
-                key={idx}
+                key={`edu-${entry.institution}-${entry.degree}-${idx}`}
               >
                 <div className="flex items-center justify-between">
                   <Label className="text-xs font-medium">Entry {idx + 1}</Label>
@@ -542,7 +538,10 @@ export function PropertiesPanel() {
               </div>
               <div className="space-y-2">
                 {items.map((skill, idx) => (
-                  <div className="flex gap-2" key={idx}>
+                  <div
+                    className="flex gap-2"
+                    key={`skill-${String(skill)}-${idx}`}
+                  >
                     <Input
                       className="flex-1"
                       onChange={(e) => updateSkill(idx, e.target.value)}
@@ -575,9 +574,17 @@ export function PropertiesPanel() {
   };
 
   return (
-    <div className="h-[calc(100vh-4rem)] w-80 bg-muted/30 border-l border-border overflow-y-auto">
+    <div
+      className="h-[calc(100vh-4rem)] w-80 bg-muted/30 border-l border-border overflow-y-auto"
+      data-testid="properties-panel"
+    >
       <div className="p-4 border-b border-border flex items-center justify-between">
-        <h3 className="font-semibold text-foreground">Content Editor</h3>
+        <h3
+          className="font-semibold text-foreground"
+          data-testid="content-editor-heading"
+        >
+          Content Editor
+        </h3>
         <Button
           className="h-8 w-8"
           onClick={() => selectSection(null)}
