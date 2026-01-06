@@ -391,15 +391,22 @@ test.describe("builder drag and drop interactions", () => {
       );
     }
 
-    // Now scroll the last section into view and drop on it
-    await lastSection.scrollIntoViewIfNeeded();
-    await page.waitForTimeout(100);
+    // Scroll to the bottom of the canvas and drop on empty canvas-droppable space
+    // Dropping on canvas-droppable (not on a section) moves the item to the end
+    const canvas = page.getByTestId("canvas-droppable");
+    await canvas.scrollIntoViewIfNeeded();
+    // Scroll to bottom of page to show bottom of canvas
+    await page.evaluate(() => {
+      window.scrollTo(0, document.body.scrollHeight);
+    });
+    await page.waitForTimeout(200);
 
-    const finalLastSectionBox = await lastSection.boundingBox();
-    if (finalLastSectionBox) {
-      const targetDropX = finalLastSectionBox.x + finalLastSectionBox.width / 2;
-      const targetDropY =
-        finalLastSectionBox.y + finalLastSectionBox.height / 2;
+    // Get canvas bounding box at the bottom
+    const finalCanvasBox = await canvas.boundingBox();
+    if (finalCanvasBox) {
+      // Drop at the bottom of canvas-droppable (empty space, not on a section)
+      const targetDropX = finalCanvasBox.x + finalCanvasBox.width / 2;
+      const targetDropY = finalCanvasBox.y + finalCanvasBox.height - 50; // Near bottom, within canvas
       await page.mouse.move(targetDropX, targetDropY, { steps: 5 });
     }
 
@@ -410,8 +417,7 @@ test.describe("builder drag and drop interactions", () => {
     // Wait for drop to be processed (don't rely on status message for reordering)
     await page.waitForTimeout(500);
 
-    // Verify header section moved down (not necessarily to the absolute end,
-    // but at least to where the last section was)
+    // Verify header section is now at the end (below all other sections)
     await expect(async () => {
       const finalHeaderBox = await headerSection.boundingBox();
       if (!finalHeaderBox) {
@@ -423,6 +429,22 @@ test.describe("builder drag and drop interactions", () => {
         throw new Error(
           `Header did not move down. Initial y: ${initialHeaderBox.y}, Final y: ${finalHeaderBox.y}`,
         );
+      }
+
+      // Verify header is below all other sections (is the last one)
+      const currentSections = await allSections.all();
+      for (const section of currentSections) {
+        const sectionBox = await section.boundingBox();
+        const sectionIdAttr = await section.getAttribute("data-testid");
+        // Skip the header section itself
+        if (sectionBox && sectionIdAttr !== headerSectionId) {
+          // Header should be at or below other sections
+          if (finalHeaderBox.y < sectionBox.y - 10) {
+            throw new Error(
+              `Header (y: ${finalHeaderBox.y}) is not at the end - section ${sectionIdAttr} is below it (y: ${sectionBox.y})`,
+            );
+          }
+        }
       }
     }).toPass({ timeout: 5000 });
 
