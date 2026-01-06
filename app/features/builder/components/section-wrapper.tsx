@@ -138,7 +138,7 @@ export function SectionWrapper({
       </div>
 
       {/* Section Content */}
-      <div>{children}</div>
+      <div className="overflow-hidden rounded-b-lg">{children}</div>
     </section>
   );
 }
