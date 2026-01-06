@@ -9,7 +9,7 @@ import {
 import { useEffect, useState } from "react";
 import { href, useNavigate, useParams } from "react-router";
 
-import type { Route } from "../+types/builder.$templateId";
+import type { Route } from "../$templateId/+types/_index";
 import { Button } from "~/components/ui/button";
 import { ComponentPalette } from "~/features/builder/components/component-palette";
 import { ExportButton } from "~/features/builder/components/export-button";

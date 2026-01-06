@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { href, useNavigate } from "react-router";
 
-import type { Route } from "./+types/builder";
+import type { Route } from "./+types/_index";
 import { Button } from "~/components/ui/button";
 import {
   Card,
