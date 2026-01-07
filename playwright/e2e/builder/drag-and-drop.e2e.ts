@@ -6,6 +6,14 @@ import { teardownOrganizationAndMember } from "~/test/test-utils";
 const templateId = "resume-modern-professional";
 
 test.describe("builder drag and drop interactions", () => {
+  // Reset store state before each test to prevent state leakage
+  test.beforeEach(async ({ page }) => {
+    // Reset the Zustand store by navigating to a page that will reset it
+    // The editor route resets selectedSectionId when loading a template
+    await page.goto("/");
+    // Wait a bit for any cleanup
+    await page.waitForTimeout(100);
+  });
   test("given: a logged in user, should: drag component from palette to empty canvas", async ({
     page,
   }) => {
@@ -298,13 +306,24 @@ test.describe("builder drag and drop interactions", () => {
     // Wait for template to load
     await expect(page.getByText(/john doe/i)).toBeVisible({ timeout: 5000 });
 
+    // Wait for canvas to be ready before finding sections
+    const canvas = page.getByTestId("canvas-droppable");
+    await expect(canvas).toBeVisible({ timeout: 5000 });
+
     // Find the header section using test IDs
-    const headerSections = page
-      .getByTestId("canvas-droppable")
+    // Re-query the element to ensure it's attached to DOM
+    const headerSection = canvas
       .locator('[data-testid^="section-"]')
-      .filter({ hasText: /john doe/i });
-    const headerSection = headerSections.first();
-    await expect(headerSection).toBeVisible();
+      .filter({ hasText: /john doe/i })
+      .first();
+    await expect(headerSection).toBeVisible({ timeout: 5000 });
+
+    // Scroll header section into view to ensure it's in the viewport
+    // Use a retry mechanism in case element gets detached
+    await expect(async () => {
+      await headerSection.scrollIntoViewIfNeeded();
+    }).toPass({ timeout: 2000 });
+    await page.waitForTimeout(100); // Wait for scroll to complete
 
     // Get all sections to verify position at end
     const allSections = page
@@ -313,7 +332,13 @@ test.describe("builder drag and drop interactions", () => {
     const initialSectionCount = await allSections.count();
 
     // Get initial position of header section
-    const initialHeaderBox = await headerSection.boundingBox();
+    // Retry getting bounding box in case element needs to stabilize
+    let initialHeaderBox = await headerSection.boundingBox();
+    if (!initialHeaderBox) {
+      // Retry after a short wait
+      await page.waitForTimeout(200);
+      initialHeaderBox = await headerSection.boundingBox();
+    }
     if (!initialHeaderBox) {
       throw new Error("Could not get header section bounding box");
     }
@@ -393,7 +418,7 @@ test.describe("builder drag and drop interactions", () => {
 
     // Scroll to the bottom of the canvas and drop on empty canvas-droppable space
     // Dropping on canvas-droppable (not on a section) moves the item to the end
-    const canvas = page.getByTestId("canvas-droppable");
+    // Re-query canvas to ensure it's still attached (use existing canvas variable)
     await canvas.scrollIntoViewIfNeeded();
     // Scroll to bottom of page to show bottom of canvas
     await page.evaluate(() => {

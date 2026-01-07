@@ -14,6 +14,7 @@ interface BuilderState {
   reorderSections: (sections: TemplateSection[]) => void;
   selectSection: (id: string | null) => void;
   setDirty: (dirty: boolean) => void;
+  reset: () => void;
 }
 
 export const useBuilderStore = create<BuilderState>((set) => ({
@@ -101,6 +102,13 @@ export const useBuilderStore = create<BuilderState>((set) => ({
         },
         isDirty: true,
       };
+    }),
+
+  reset: () =>
+    set({
+      currentTemplate: null,
+      isDirty: false,
+      selectedSectionId: null,
     }),
   selectedSectionId: null,
 

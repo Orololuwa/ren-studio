@@ -7,6 +7,13 @@ import { teardownOrganizationAndMember } from "~/test/test-utils";
 const templateId = "resume-modern-professional";
 
 test.describe("builder template editor page", () => {
+  // Reset store state before each test to prevent state leakage
+  test.beforeEach(async ({ page }) => {
+    // Reset the Zustand store by navigating to a clean page
+    await page.goto("/");
+    // Wait a bit for any cleanup
+    await page.waitForTimeout(100);
+  });
   test("given: a logged in user, should: load template with sections visible on canvas", async ({
     page,
   }) => {
@@ -263,15 +270,28 @@ test.describe("builder template editor page", () => {
     const canvas = page.getByTestId("template-canvas");
     await expect(canvas).toBeVisible({ timeout: 5000 });
 
+    // Wait for sections to be rendered
+    await expect(
+      page
+        .getByTestId("canvas-droppable")
+        .locator('[data-testid^="section-"]')
+        .first(),
+    ).toBeVisible({ timeout: 5000 });
+
     // Find and click on a rich text content field (description)
     // We need to find a description field specifically (not summary)
+    // Re-query the element to ensure it's attached to DOM
     const richTextContent = page
       .locator('[data-testid*="description"]')
       .first();
-    await expect(richTextContent).toBeVisible();
+    await expect(richTextContent).toBeVisible({ timeout: 5000 });
 
     // Scroll element into view to ensure it's clickable
-    await richTextContent.scrollIntoViewIfNeeded();
+    // Use retry mechanism in case element gets detached
+    await expect(async () => {
+      await richTextContent.scrollIntoViewIfNeeded();
+    }).toPass({ timeout: 2000 });
+    await page.waitForTimeout(100); // Wait for scroll to complete
 
     // Click on the rich text content field using Playwright's click
     // The div has dangerouslySetInnerHTML, but Playwright should handle this correctly

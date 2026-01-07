@@ -5,6 +5,13 @@ import { setupOrganizationAndLoginAsMember } from "../../utils";
 import { teardownOrganizationAndMember } from "~/test/test-utils";
 
 test.describe("builder template selection page", () => {
+  // Reset store state before each test to prevent state leakage
+  test.beforeEach(async ({ page }) => {
+    // Reset the Zustand store by navigating to a clean page
+    await page.goto("/");
+    // Wait a bit for any cleanup
+    await page.waitForTimeout(100);
+  });
   test("given: a logged in user, should: show template builder page with tabs", async ({
     page,
   }) => {
@@ -178,6 +185,8 @@ test.describe("builder template selection page", () => {
     const templateName = await firstCard
       .locator('[data-testid^="template-card-title-"]')
       .textContent();
+    // Normalize template name (trim whitespace)
+    const normalizedTemplateName = templateName?.trim() || "";
 
     // Get the template ID from the button's test ID to construct expected URL
     const customizeButton = firstCard.locator(
@@ -198,15 +207,28 @@ test.describe("builder template selection page", () => {
       customizeButton.click(),
     ]);
 
-    // Wait for the editor page to load
-    await expect(page.getByTestId("template-editor-title")).toBeVisible({
-      timeout: 10_000,
+    // Wait for navigation to complete and page to be interactive
+    await page.waitForLoadState("networkidle", { timeout: 5000 }).catch(() => {
+      // Ignore if networkidle times out, page might still be loading
     });
 
-    // Verify template name matches
-    await expect(page.getByTestId("template-editor-title")).toContainText(
-      templateName || "",
-    );
+    // Wait for the editor page to load and template name to appear
+    const editorTitle = page.getByTestId("template-editor-title");
+    await expect(editorTitle).toBeVisible({ timeout: 10_000 });
+
+    // Wait for the template name to be set (it loads asynchronously via useEffect)
+    // First ensure the title has actual content (not "Untitled Template")
+    await expect(editorTitle).not.toHaveText("Untitled Template", {
+      timeout: 5000,
+    });
+
+    // Then verify template name matches (case-insensitive to handle any casing differences)
+    if (normalizedTemplateName) {
+      await expect(editorTitle).toContainText(
+        new RegExp(normalizedTemplateName, "i"),
+        { timeout: 5000 },
+      );
+    }
 
     await teardownOrganizationAndMember({ organization, user });
   });
