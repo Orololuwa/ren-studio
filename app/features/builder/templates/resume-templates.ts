@@ -19,6 +19,11 @@ export const resumeTemplates: Template[] = [
           location: "San Francisco, CA",
           name: "John Doe",
           phone: "+1 (555) 123-4567",
+          socialLinks: [
+            { link: "https://linkedin.com/in/johndoe", name: "LinkedIn" },
+            { link: "https://github.com/johndoe", name: "GitHub" },
+            { link: "https://johndoe.dev", name: "Portfolio" },
+          ],
           title: "Software Engineer",
         },
         id: "header-1",
@@ -110,6 +115,73 @@ export const resumeTemplates: Template[] = [
         },
         type: "skills",
       },
+      {
+        data: {
+          entries: [
+            {
+              date: "2023",
+              description:
+                "<p>Built a full-stack e-commerce platform with React and Node.js serving 10,000+ daily active users.</p><ul><li>Implemented payment processing with Stripe</li><li>Optimized database queries reducing load time by 40%</li><li>Deployed on AWS with CI/CD pipeline</li></ul>",
+              link: "https://github.com/johndoe/ecommerce",
+              name: "E-commerce Platform",
+              technologies: ["React", "Node.js", "PostgreSQL", "AWS", "Stripe"],
+            },
+            {
+              date: "2022",
+              description:
+                "<p>Developed a collaborative task management application with real-time updates.</p><ul><li>Used WebSockets for real-time collaboration</li><li>Implemented drag-and-drop interface</li><li>Built with TypeScript and React</li></ul>",
+              link: "https://github.com/johndoe/taskapp",
+              name: "Task Management App",
+              technologies: ["React", "TypeScript", "WebSockets", "MongoDB"],
+            },
+          ],
+        },
+        id: "projects-1",
+        order: 5,
+        styles: {
+          padding: "1.5rem",
+        },
+        type: "projects",
+      },
+      {
+        data: {
+          entries: [
+            {
+              date: "2023",
+              issuer: "Amazon Web Services",
+              link: "https://www.credly.com/badges/example",
+              name: "AWS Certified Solutions Architect",
+            },
+            {
+              date: "2022",
+              issuer: "Google Cloud",
+              link: "https://www.credly.com/badges/google-cloud-professional-developer",
+              name: "Google Cloud Professional Developer",
+            },
+          ],
+        },
+        id: "certifications-1",
+        order: 6,
+        styles: {
+          padding: "1.5rem",
+        },
+        type: "certifications",
+      },
+      {
+        data: {
+          entries: [
+            { language: "English", proficiency: "Native" },
+            { language: "Spanish", proficiency: "Fluent" },
+            { language: "French", proficiency: "Intermediate" },
+          ],
+        },
+        id: "languages-1",
+        order: 7,
+        styles: {
+          padding: "1.5rem",
+        },
+        type: "languages",
+      },
     ],
     type: "resume",
     updatedAt: new Date(),
@@ -131,6 +203,10 @@ export const resumeTemplates: Template[] = [
           email: "jane.smith@example.com",
           name: "Jane Smith",
           phone: "+1 (555) 987-6543",
+          socialLinks: [
+            { link: "https://linkedin.com/in/janesmith", name: "LinkedIn" },
+            { link: "https://twitter.com/janesmith", name: "Twitter" },
+          ],
           title: "Product Manager",
         },
         id: "header-2",
@@ -218,6 +294,64 @@ export const resumeTemplates: Template[] = [
           paddingLeft: "1.5rem",
         },
         type: "skills",
+      },
+      {
+        data: {
+          entries: [
+            {
+              date: "2022",
+              description:
+                "<p>Led development of analytics dashboard for B2B SaaS platform.</p><ul><li>Increased user engagement by 35%</li><li>Reduced data load time by 50%</li><li>Collaborated with engineering and design teams</li></ul>",
+              link: "https://example.com/analytics-dashboard",
+              name: "SaaS Analytics Dashboard",
+              technologies: ["React", "D3.js", "Python", "PostgreSQL"],
+            },
+          ],
+        },
+        id: "projects-2",
+        order: 5,
+        styles: {
+          borderLeft: "4px solid #1a1a1a",
+          padding: "2rem",
+          paddingLeft: "1.5rem",
+        },
+        type: "projects",
+      },
+      {
+        data: {
+          entries: [
+            {
+              date: "2021",
+              issuer: "Product Management Institute",
+              link: "https://www.productmanagementinstitute.org/certifications",
+              name: "Certified Product Manager",
+            },
+          ],
+        },
+        id: "certifications-2",
+        order: 6,
+        styles: {
+          borderLeft: "4px solid #1a1a1a",
+          padding: "2rem",
+          paddingLeft: "1.5rem",
+        },
+        type: "certifications",
+      },
+      {
+        data: {
+          entries: [
+            { language: "English", proficiency: "Native" },
+            { language: "German", proficiency: "Advanced" },
+          ],
+        },
+        id: "languages-2",
+        order: 7,
+        styles: {
+          borderLeft: "4px solid #1a1a1a",
+          padding: "2rem",
+          paddingLeft: "1.5rem",
+        },
+        type: "languages",
       },
     ],
     type: "resume",

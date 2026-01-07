@@ -54,9 +54,20 @@ export function createEmptyTemplate(
 function resetSectionData(type: string): Record<string, unknown> {
   switch (type) {
     case "header":
-      return { email: "", location: "", name: "", phone: "", title: "" };
+      return {
+        contact: "",
+        email: "",
+        location: "",
+        name: "",
+        phone: "",
+        socialLinks: [],
+        title: "",
+      };
     case "experience":
     case "education":
+    case "certifications":
+    case "projects":
+    case "languages":
       return { entries: [] };
     case "skills":
       return { category: "", items: [] };

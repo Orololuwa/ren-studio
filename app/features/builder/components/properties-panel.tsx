@@ -2,10 +2,24 @@ import { Plus, Trash2, X } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { useBuilderStore } from "../store/builder-store";
-import type { EducationEntry, ExperienceEntry } from "../types";
+import type {
+  CertificationEntry,
+  EducationEntry,
+  ExperienceEntry,
+  LanguageEntry,
+  ProjectEntry,
+  SocialLink,
+} from "../types";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "~/components/ui/select";
 
 // Inline Rich Text Editor Component
 type ReactQuillProps = {
@@ -241,6 +255,125 @@ export function PropertiesPanel() {
                 placeholder="City, State"
                 value={String(section.data.location || "")}
               />
+            </div>
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <Label className="text-xs font-medium">Social Links</Label>
+                <Button
+                  onClick={() => {
+                    const socialLinks = Array.isArray(section.data.socialLinks)
+                      ? [...(section.data.socialLinks as SocialLink[])]
+                      : [];
+                    updateData("socialLinks", [
+                      ...socialLinks,
+                      { link: "", name: "" },
+                    ]);
+                  }}
+                  size="sm"
+                  type="button"
+                  variant="outline"
+                >
+                  <Plus className="w-4 h-4 mr-1" />
+                  Add Link
+                </Button>
+              </div>
+              <div className="space-y-2">
+                {Array.isArray(section.data.socialLinks) &&
+                  (section.data.socialLinks as SocialLink[]).map(
+                    (link, idx) => (
+                      <div
+                        className="p-3 border rounded-lg space-y-2 bg-background"
+                        key={`social-${link.name}-${link.link}-${idx}`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <Label className="text-xs font-medium">
+                            Link {idx + 1}
+                          </Label>
+                          <Button
+                            onClick={() => {
+                              const socialLinks = Array.isArray(
+                                section.data.socialLinks,
+                              )
+                                ? [
+                                    ...(section.data
+                                      .socialLinks as SocialLink[]),
+                                  ]
+                                : [];
+                              updateData(
+                                "socialLinks",
+                                socialLinks.filter((_, i) => i !== idx),
+                              );
+                            }}
+                            size="sm"
+                            type="button"
+                            variant="ghost"
+                          >
+                            <Trash2 className="w-4 h-4 text-destructive" />
+                          </Button>
+                        </div>
+                        <div>
+                          <Label
+                            className="text-xs"
+                            htmlFor={`social-name-${idx}`}
+                          >
+                            Name
+                          </Label>
+                          <Input
+                            className="mt-1"
+                            id={`social-name-${idx}`}
+                            onChange={(e) => {
+                              const socialLinks = Array.isArray(
+                                section.data.socialLinks,
+                              )
+                                ? [
+                                    ...(section.data
+                                      .socialLinks as SocialLink[]),
+                                  ]
+                                : [];
+                              socialLinks[idx] = {
+                                link: socialLinks[idx]?.link || "",
+                                name: e.target.value,
+                              };
+                              updateData("socialLinks", socialLinks);
+                            }}
+                            placeholder="LinkedIn"
+                            value={link.name || ""}
+                          />
+                        </div>
+                        <div>
+                          <Label
+                            className="text-xs"
+                            htmlFor={`social-link-${idx}`}
+                          >
+                            URL
+                          </Label>
+                          <Input
+                            className="mt-1"
+                            id={`social-link-${idx}`}
+                            onChange={(e) => {
+                              const socialLinks = Array.isArray(
+                                section.data.socialLinks,
+                              )
+                                ? [
+                                    ...(section.data
+                                      .socialLinks as SocialLink[]),
+                                  ]
+                                : [];
+                              socialLinks[idx] = {
+                                link: e.target.value,
+                                name: socialLinks[idx]?.name || "",
+                              };
+                              updateData("socialLinks", socialLinks);
+                            }}
+                            placeholder="https://linkedin.com/in/username"
+                            type="url"
+                            value={link.link || ""}
+                          />
+                        </div>
+                      </div>
+                    ),
+                  )}
+              </div>
             </div>
           </div>
         );
@@ -563,6 +696,415 @@ export function PropertiesPanel() {
                 ))}
               </div>
             </div>
+          </div>
+        );
+      }
+
+      case "certifications": {
+        const entries = (
+          Array.isArray(section.data.entries) ? section.data.entries : []
+        ) as CertificationEntry[];
+
+        const addEntry = () => {
+          const newEntry: CertificationEntry = {
+            date: "",
+            issuer: "",
+            link: "",
+            name: "",
+          };
+          updateData("entries", [...entries, newEntry]);
+        };
+
+        const updateEntry = (index: number, field: string, value: string) => {
+          const updated = [...entries];
+          updated[index] = {
+            ...updated[index],
+            [field]: value,
+          } as CertificationEntry;
+          updateData("entries", updated);
+        };
+
+        const deleteEntry = (index: number) => {
+          const updated = entries.filter((_, i) => i !== index);
+          updateData("entries", updated);
+        };
+
+        return (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <Label className="text-xs font-medium">Certifications</Label>
+              <Button
+                onClick={addEntry}
+                size="sm"
+                type="button"
+                variant="outline"
+              >
+                <Plus className="w-4 h-4 mr-1" />
+                Add Entry
+              </Button>
+            </div>
+            {entries.map((entry, idx) => (
+              <div
+                className="p-3 border rounded-lg space-y-3 bg-background"
+                key={`cert-${entry.name}-${idx}`}
+              >
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs font-medium">Entry {idx + 1}</Label>
+                  <Button
+                    onClick={() => deleteEntry(idx)}
+                    size="sm"
+                    type="button"
+                    variant="ghost"
+                  >
+                    <Trash2 className="w-4 h-4 text-destructive" />
+                  </Button>
+                </div>
+                <div>
+                  <Label className="text-xs" htmlFor={`cert-name-${idx}`}>
+                    Certification Name
+                  </Label>
+                  <Input
+                    className="mt-1"
+                    id={`cert-name-${idx}`}
+                    onChange={(e) => updateEntry(idx, "name", e.target.value)}
+                    placeholder="AWS Certified Solutions Architect"
+                    value={entry.name || ""}
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs" htmlFor={`cert-issuer-${idx}`}>
+                    Issuer
+                  </Label>
+                  <Input
+                    className="mt-1"
+                    id={`cert-issuer-${idx}`}
+                    onChange={(e) => updateEntry(idx, "issuer", e.target.value)}
+                    placeholder="Amazon Web Services"
+                    value={entry.issuer || ""}
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs" htmlFor={`cert-date-${idx}`}>
+                    Date
+                  </Label>
+                  <Input
+                    className="mt-1"
+                    id={`cert-date-${idx}`}
+                    onChange={(e) => updateEntry(idx, "date", e.target.value)}
+                    placeholder="2023"
+                    value={entry.date || ""}
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs" htmlFor={`cert-link-${idx}`}>
+                    Link (Optional)
+                  </Label>
+                  <Input
+                    className="mt-1"
+                    id={`cert-link-${idx}`}
+                    onChange={(e) => updateEntry(idx, "link", e.target.value)}
+                    placeholder="https://www.credly.com/badges/..."
+                    type="url"
+                    value={entry.link || ""}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        );
+      }
+
+      case "projects": {
+        const entries = (
+          Array.isArray(section.data.entries) ? section.data.entries : []
+        ) as ProjectEntry[];
+
+        const addEntry = () => {
+          const newEntry: ProjectEntry = {
+            date: "",
+            description: "",
+            link: "",
+            name: "",
+            technologies: [],
+          };
+          updateData("entries", [...entries, newEntry]);
+        };
+
+        const updateEntry = (
+          index: number,
+          field: string,
+          value: string | string[],
+        ) => {
+          const updated = [...entries];
+          updated[index] = {
+            ...updated[index],
+            [field]: value,
+          } as ProjectEntry;
+          updateData("entries", updated);
+        };
+
+        const deleteEntry = (index: number) => {
+          const updated = entries.filter((_, i) => i !== index);
+          updateData("entries", updated);
+        };
+
+        const addTechnology = (index: number) => {
+          const entry = entries[index];
+          if (!entry) return;
+          const technologies = Array.isArray(entry.technologies)
+            ? [...entry.technologies]
+            : [];
+          updateEntry(index, "technologies", [...technologies, ""]);
+        };
+
+        const updateTechnology = (
+          entryIndex: number,
+          techIndex: number,
+          value: string,
+        ) => {
+          const entry = entries[entryIndex];
+          if (!entry) return;
+          const technologies = Array.isArray(entry.technologies)
+            ? [...entry.technologies]
+            : [];
+          technologies[techIndex] = value;
+          updateEntry(entryIndex, "technologies", technologies);
+        };
+
+        const deleteTechnology = (entryIndex: number, techIndex: number) => {
+          const entry = entries[entryIndex];
+          if (!entry) return;
+          const technologies = Array.isArray(entry.technologies)
+            ? [...entry.technologies]
+            : [];
+          updateEntry(
+            entryIndex,
+            "technologies",
+            technologies.filter((_, i) => i !== techIndex),
+          );
+        };
+
+        return (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <Label className="text-xs font-medium">Projects</Label>
+              <Button
+                onClick={addEntry}
+                size="sm"
+                type="button"
+                variant="outline"
+              >
+                <Plus className="w-4 h-4 mr-1" />
+                Add Entry
+              </Button>
+            </div>
+            {entries.map((entry, idx) => (
+              <div
+                className="p-3 border rounded-lg space-y-3 bg-background"
+                key={`project-${entry.name}-${idx}`}
+              >
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs font-medium">Entry {idx + 1}</Label>
+                  <Button
+                    onClick={() => deleteEntry(idx)}
+                    size="sm"
+                    type="button"
+                    variant="ghost"
+                  >
+                    <Trash2 className="w-4 h-4 text-destructive" />
+                  </Button>
+                </div>
+                <div>
+                  <Label className="text-xs" htmlFor={`project-name-${idx}`}>
+                    Project Name
+                  </Label>
+                  <Input
+                    className="mt-1"
+                    id={`project-name-${idx}`}
+                    onChange={(e) => updateEntry(idx, "name", e.target.value)}
+                    placeholder="E-commerce Platform"
+                    value={entry.name || ""}
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs" htmlFor={`project-date-${idx}`}>
+                    Date
+                  </Label>
+                  <Input
+                    className="mt-1"
+                    id={`project-date-${idx}`}
+                    onChange={(e) => updateEntry(idx, "date", e.target.value)}
+                    placeholder="2023"
+                    value={entry.date || ""}
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs" htmlFor={`project-link-${idx}`}>
+                    Link (Optional)
+                  </Label>
+                  <Input
+                    className="mt-1"
+                    id={`project-link-${idx}`}
+                    onChange={(e) => updateEntry(idx, "link", e.target.value)}
+                    placeholder="https://github.com/user/project"
+                    type="url"
+                    value={entry.link || ""}
+                  />
+                </div>
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <Label className="text-xs font-medium">Technologies</Label>
+                    <Button
+                      onClick={() => addTechnology(idx)}
+                      size="sm"
+                      type="button"
+                      variant="outline"
+                    >
+                      <Plus className="w-4 h-4 mr-1" />
+                      Add Technology
+                    </Button>
+                  </div>
+                  <div className="space-y-2">
+                    {Array.isArray(entry.technologies) &&
+                      entry.technologies.map((tech, techIdx) => (
+                        <div
+                          className="flex gap-2"
+                          key={`tech-${String(tech)}-${techIdx}`}
+                        >
+                          <Input
+                            className="flex-1"
+                            onChange={(e) =>
+                              updateTechnology(idx, techIdx, e.target.value)
+                            }
+                            placeholder="React"
+                            value={String(tech || "")}
+                          />
+                          <Button
+                            onClick={() => deleteTechnology(idx, techIdx)}
+                            size="sm"
+                            type="button"
+                            variant="ghost"
+                          >
+                            <Trash2 className="w-4 h-4 text-destructive" />
+                          </Button>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+                <div>
+                  <RichTextEditor
+                    label="Description"
+                    onChange={(value) => updateEntry(idx, "description", value)}
+                    value={entry.description || ""}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        );
+      }
+
+      case "languages": {
+        const entries = (
+          Array.isArray(section.data.entries) ? section.data.entries : []
+        ) as LanguageEntry[];
+
+        const addEntry = () => {
+          const newEntry: LanguageEntry = {
+            language: "",
+            proficiency: "Intermediate",
+          };
+          updateData("entries", [...entries, newEntry]);
+        };
+
+        const updateEntry = (index: number, field: string, value: string) => {
+          const updated = [...entries];
+          updated[index] = {
+            ...updated[index],
+            [field]: value,
+          } as LanguageEntry;
+          updateData("entries", updated);
+        };
+
+        const deleteEntry = (index: number) => {
+          const updated = entries.filter((_, i) => i !== index);
+          updateData("entries", updated);
+        };
+
+        return (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <Label className="text-xs font-medium">Languages</Label>
+              <Button
+                onClick={addEntry}
+                size="sm"
+                type="button"
+                variant="outline"
+              >
+                <Plus className="w-4 h-4 mr-1" />
+                Add Entry
+              </Button>
+            </div>
+            {entries.map((entry, idx) => (
+              <div
+                className="p-3 border rounded-lg space-y-3 bg-background"
+                key={`lang-${entry.language}-${idx}`}
+              >
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs font-medium">Entry {idx + 1}</Label>
+                  <Button
+                    onClick={() => deleteEntry(idx)}
+                    size="sm"
+                    type="button"
+                    variant="ghost"
+                  >
+                    <Trash2 className="w-4 h-4 text-destructive" />
+                  </Button>
+                </div>
+                <div>
+                  <Label className="text-xs" htmlFor={`lang-name-${idx}`}>
+                    Language
+                  </Label>
+                  <Input
+                    className="mt-1"
+                    id={`lang-name-${idx}`}
+                    onChange={(e) =>
+                      updateEntry(idx, "language", e.target.value)
+                    }
+                    placeholder="English"
+                    value={entry.language || ""}
+                  />
+                </div>
+                <div>
+                  <Label
+                    className="text-xs"
+                    htmlFor={`lang-proficiency-${idx}`}
+                  >
+                    Proficiency
+                  </Label>
+                  <Select
+                    onValueChange={(value) =>
+                      updateEntry(idx, "proficiency", value)
+                    }
+                    value={entry.proficiency}
+                  >
+                    <SelectTrigger
+                      className="mt-1"
+                      id={`lang-proficiency-${idx}`}
+                    >
+                      <SelectValue placeholder="Select proficiency" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Beginner">Beginner</SelectItem>
+                      <SelectItem value="Intermediate">Intermediate</SelectItem>
+                      <SelectItem value="Advanced">Advanced</SelectItem>
+                      <SelectItem value="Fluent">Fluent</SelectItem>
+                      <SelectItem value="Native">Native</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            ))}
           </div>
         );
       }

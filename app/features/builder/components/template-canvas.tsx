@@ -22,6 +22,16 @@ function createDefaultSectionConfig(
 
   // Mock data for each section type
   const mockData: Record<string, Record<string, unknown>> = {
+    certifications: {
+      entries: [
+        {
+          date: "2023",
+          issuer: "Amazon Web Services",
+          link: "https://www.credly.com/badges/example",
+          name: "AWS Certified Solutions Architect",
+        },
+      ],
+    },
     education: {
       entries: [
         {
@@ -62,7 +72,29 @@ function createDefaultSectionConfig(
       location: "San Francisco, CA",
       name: "John Doe",
       phone: "+1 (555) 123-4567",
+      socialLinks: [
+        { link: "https://linkedin.com/in/johndoe", name: "LinkedIn" },
+        { link: "https://github.com/johndoe", name: "GitHub" },
+      ],
       title: "Software Engineer",
+    },
+    languages: {
+      entries: [
+        { language: "English", proficiency: "Native" },
+        { language: "Spanish", proficiency: "Fluent" },
+      ],
+    },
+    projects: {
+      entries: [
+        {
+          date: "2023",
+          description:
+            "<p>Built a full-stack e-commerce platform with React and Node.js.</p>",
+          link: "https://github.com/user/project",
+          name: "E-commerce Platform",
+          technologies: ["React", "Node.js", "PostgreSQL"],
+        },
+      ],
     },
     skills: {
       category: "Technical Skills",

@@ -1,7 +1,13 @@
 import { useState } from "react";
 
 import { useBuilderStore } from "../store/builder-store";
-import type { TemplateSection } from "../types";
+import type {
+  CertificationEntry,
+  LanguageEntry,
+  ProjectEntry,
+  SocialLink,
+  TemplateSection,
+} from "../types";
 import { InlineEditor } from "./inline-editor";
 
 interface SectionRendererProps {
@@ -241,6 +247,23 @@ export function SectionRenderer({
                 {location}
               </button>
             )}
+            {Array.isArray(section.data.socialLinks) &&
+              section.data.socialLinks.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-2 justify-center">
+                  {(section.data.socialLinks as SocialLink[]).map((link) => (
+                    <a
+                      className="text-blue-600 hover:text-blue-800 underline"
+                      href={link.link}
+                      key={`social-${link.name}-${link.link}`}
+                      onClick={(e) => e.stopPropagation()}
+                      rel="noopener noreferrer"
+                      target="_blank"
+                    >
+                      {link.name || link.link}
+                    </a>
+                  ))}
+                </div>
+              )}
           </div>
         );
       }
@@ -547,6 +570,281 @@ export function SectionRenderer({
             />
           </div>
         );
+
+      case "certifications": {
+        const certifications = (
+          Array.isArray(section.data.entries) ? section.data.entries : []
+        ) as CertificationEntry[];
+        return (
+          <div className="text-gray-900" style={sectionStyles}>
+            <h2 className="text-gray-900">Certifications</h2>
+            {certifications.map((cert, idx) => (
+              <div className="mb-4" key={`cert-${cert.name}-${idx}`}>
+                <h3 className="text-gray-900">
+                  <button
+                    className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left font-semibold"
+                    onClick={(e) =>
+                      handleFieldClick(
+                        e,
+                        ["entries", String(idx), "name"],
+                        cert.name,
+                        "Certification Name",
+                        false,
+                      )
+                    }
+                    onKeyDown={(e) =>
+                      handleFieldKeyDown(
+                        e,
+                        ["entries", String(idx), "name"],
+                        cert.name,
+                        "Certification Name",
+                        false,
+                      )
+                    }
+                    type="button"
+                  >
+                    {cert.name}
+                  </button>
+                </h3>
+                <p className="text-gray-900">
+                  <button
+                    className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left"
+                    onClick={(e) =>
+                      handleFieldClick(
+                        e,
+                        ["entries", String(idx), "issuer"],
+                        cert.issuer,
+                        "Issuer",
+                        false,
+                      )
+                    }
+                    onKeyDown={(e) =>
+                      handleFieldKeyDown(
+                        e,
+                        ["entries", String(idx), "issuer"],
+                        cert.issuer,
+                        "Issuer",
+                        false,
+                      )
+                    }
+                    type="button"
+                  >
+                    {cert.issuer}
+                  </button>{" "}
+                  -{" "}
+                  <button
+                    className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left"
+                    onClick={(e) =>
+                      handleFieldClick(
+                        e,
+                        ["entries", String(idx), "date"],
+                        cert.date,
+                        "Date",
+                        false,
+                      )
+                    }
+                    onKeyDown={(e) =>
+                      handleFieldKeyDown(
+                        e,
+                        ["entries", String(idx), "date"],
+                        cert.date,
+                        "Date",
+                        false,
+                      )
+                    }
+                    type="button"
+                  >
+                    {cert.date}
+                  </button>
+                  {cert.link && (
+                    <>
+                      {" - "}
+                      <a
+                        className="text-blue-600 hover:text-blue-800 underline"
+                        href={cert.link}
+                        onClick={(e) => e.stopPropagation()}
+                        rel="noopener noreferrer"
+                        target="_blank"
+                      >
+                        View Certificate
+                      </a>
+                    </>
+                  )}
+                </p>
+              </div>
+            ))}
+          </div>
+        );
+      }
+
+      case "projects": {
+        const projects = (
+          Array.isArray(section.data.entries) ? section.data.entries : []
+        ) as ProjectEntry[];
+        return (
+          <div className="text-gray-900" style={sectionStyles}>
+            <h2 className="text-gray-900">Projects</h2>
+            {projects.map((project, idx) => (
+              <div className="mb-4" key={`project-${project.name}-${idx}`}>
+                <h3 className="text-gray-900">
+                  <button
+                    className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left font-semibold"
+                    onClick={(e) =>
+                      handleFieldClick(
+                        e,
+                        ["entries", String(idx), "name"],
+                        project.name,
+                        "Project Name",
+                        false,
+                      )
+                    }
+                    onKeyDown={(e) =>
+                      handleFieldKeyDown(
+                        e,
+                        ["entries", String(idx), "name"],
+                        project.name,
+                        "Project Name",
+                        false,
+                      )
+                    }
+                    type="button"
+                  >
+                    {project.name}
+                  </button>
+                  {project.link && (
+                    <>
+                      {" - "}
+                      <a
+                        className="text-blue-600 hover:text-blue-800 underline"
+                        href={project.link}
+                        onClick={(e) => e.stopPropagation()}
+                        rel="noopener noreferrer"
+                        target="_blank"
+                      >
+                        View Project
+                      </a>
+                    </>
+                  )}
+                </h3>
+                <p className="text-sm text-gray-600">
+                  <button
+                    className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left"
+                    onClick={(e) =>
+                      handleFieldClick(
+                        e,
+                        ["entries", String(idx), "date"],
+                        project.date,
+                        "Date",
+                        false,
+                      )
+                    }
+                    onKeyDown={(e) =>
+                      handleFieldKeyDown(
+                        e,
+                        ["entries", String(idx), "date"],
+                        project.date,
+                        "Date",
+                        false,
+                      )
+                    }
+                    type="button"
+                  >
+                    {project.date}
+                  </button>
+                </p>
+                {Array.isArray(project.technologies) &&
+                  project.technologies.length > 0 && (
+                    <div className="flex flex-wrap gap-2 my-2">
+                      {project.technologies.map((tech) => (
+                        <span
+                          className="px-2 py-1 bg-gray-200 rounded text-gray-800 text-sm"
+                          key={`tech-${tech}`}
+                        >
+                          {tech}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                {/* biome-ignore lint/a11y/useSemanticElements: Rich text content div needs to be clickable but cannot be a button element */}
+                <div
+                  className="rich-text-content cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left block w-full"
+                  // biome-ignore lint/security/noDangerouslySetInnerHtml: Rich text content from editor needs to be rendered as HTML
+                  dangerouslySetInnerHTML={{
+                    __html: project.description || "",
+                  }}
+                  data-testid={`rich-text-content-${section.id}-description-${idx}`}
+                  onClick={(e) =>
+                    handleFieldClick(
+                      e,
+                      ["entries", String(idx), "description"],
+                      project.description,
+                      "Description",
+                      true,
+                    )
+                  }
+                  onKeyDown={(e) =>
+                    handleFieldKeyDown(
+                      e,
+                      ["entries", String(idx), "description"],
+                      project.description,
+                      "Description",
+                      true,
+                    )
+                  }
+                  role="button"
+                  tabIndex={0}
+                />
+              </div>
+            ))}
+          </div>
+        );
+      }
+
+      case "languages": {
+        const languages = (
+          Array.isArray(section.data.entries) ? section.data.entries : []
+        ) as LanguageEntry[];
+        return (
+          <div className="text-gray-900" style={sectionStyles}>
+            <h2 className="text-gray-900">Languages</h2>
+            <div className="space-y-2">
+              {languages.map((lang, idx) => (
+                <div
+                  className="flex items-center gap-2"
+                  key={`lang-${lang.language}-${lang.proficiency}-${idx}`}
+                >
+                  <button
+                    className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left font-medium"
+                    onClick={(e) =>
+                      handleFieldClick(
+                        e,
+                        ["entries", String(idx), "language"],
+                        lang.language,
+                        "Language",
+                        false,
+                      )
+                    }
+                    onKeyDown={(e) =>
+                      handleFieldKeyDown(
+                        e,
+                        ["entries", String(idx), "language"],
+                        lang.language,
+                        "Language",
+                        false,
+                      )
+                    }
+                    type="button"
+                  >
+                    {lang.language}
+                  </button>
+                  <span className="text-gray-600">-</span>
+                  <span className="text-gray-600">{lang.proficiency}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      }
 
       default:
         return (

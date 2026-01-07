@@ -1,6 +1,17 @@
 import type { ComponentDefinition } from "../types";
 
 export const componentLibrary: Record<string, ComponentDefinition> = {
+  certifications: {
+    configurableProperties: ["entries"],
+    defaultData: { entries: [] },
+    defaultStyles: {
+      marginTop: "1rem",
+      padding: "1rem",
+    },
+    icon: "Award",
+    label: "Certifications",
+    type: "certifications",
+  },
   education: {
     configurableProperties: ["entries"],
     defaultData: { entries: [] },
@@ -31,6 +42,7 @@ export const componentLibrary: Record<string, ComponentDefinition> = {
       "email",
       "phone",
       "location",
+      "socialLinks",
     ],
     defaultData: {
       contact: "",
@@ -38,6 +50,7 @@ export const componentLibrary: Record<string, ComponentDefinition> = {
       location: "",
       name: "",
       phone: "",
+      socialLinks: [],
       title: "",
     },
     defaultStyles: {
@@ -48,6 +61,28 @@ export const componentLibrary: Record<string, ComponentDefinition> = {
     icon: "Heading",
     label: "Header",
     type: "header",
+  },
+  languages: {
+    configurableProperties: ["entries"],
+    defaultData: { entries: [] },
+    defaultStyles: {
+      marginTop: "1rem",
+      padding: "1rem",
+    },
+    icon: "Languages",
+    label: "Languages",
+    type: "languages",
+  },
+  projects: {
+    configurableProperties: ["entries"],
+    defaultData: { entries: [] },
+    defaultStyles: {
+      marginTop: "1rem",
+      padding: "1rem",
+    },
+    icon: "FolderKanban",
+    label: "Projects",
+    type: "projects",
   },
   skills: {
     configurableProperties: ["items", "category"],

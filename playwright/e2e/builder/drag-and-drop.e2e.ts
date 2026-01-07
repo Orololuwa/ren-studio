@@ -189,25 +189,41 @@ test.describe("builder drag and drop interactions", () => {
     // Wait for template to load
     await expect(page.getByText(/john doe/i)).toBeVisible({ timeout: 5000 });
 
+    // Wait for canvas to be ready
+    const canvas = page.getByTestId("canvas-droppable");
+    await expect(canvas).toBeVisible({ timeout: 5000 });
+
     // Find two sections using test IDs
-    const headerSections = page
-      .getByTestId("canvas-droppable")
+    const headerSection = canvas
       .locator('[data-testid^="section-"]')
-      .filter({ hasText: /john doe/i });
-    const summarySections = page
-      .getByTestId("canvas-droppable")
+      .filter({ hasText: /john doe/i })
+      .first();
+    const summarySection = canvas
       .locator('[data-testid^="section-"]')
-      .filter({ hasText: /summary/i });
+      .filter({ hasText: /summary/i })
+      .first();
 
-    const headerSection = headerSections.first();
-    const summarySection = summarySections.first();
+    await expect(headerSection).toBeVisible({ timeout: 5000 });
+    await expect(summarySection).toBeVisible({ timeout: 5000 });
 
-    await expect(headerSection).toBeVisible();
-    await expect(summarySection).toBeVisible();
+    // Scroll sections into view to ensure they're in the viewport
+    await expect(async () => {
+      await headerSection.scrollIntoViewIfNeeded();
+      await summarySection.scrollIntoViewIfNeeded();
+    }).toPass({ timeout: 2000 });
+    await page.waitForTimeout(200); // Wait for scroll to complete
 
     // Get initial positions to verify order changed
-    const initialHeaderBox = await headerSection.boundingBox();
-    const initialSummaryBox = await summarySection.boundingBox();
+    // Retry getting bounding boxes in case elements need to stabilize
+    let initialHeaderBox = await headerSection.boundingBox();
+    let initialSummaryBox = await summarySection.boundingBox();
+
+    if (!initialHeaderBox || !initialSummaryBox) {
+      // Retry after a short wait
+      await page.waitForTimeout(300);
+      initialHeaderBox = await headerSection.boundingBox();
+      initialSummaryBox = await summarySection.boundingBox();
+    }
 
     if (!initialHeaderBox || !initialSummaryBox) {
       throw new Error("Could not get bounding boxes for sections");

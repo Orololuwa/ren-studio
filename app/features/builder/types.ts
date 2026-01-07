@@ -11,6 +11,9 @@ export type SectionType =
   | "education"
   | "skills"
   | "summary"
+  | "certifications"
+  | "projects"
+  | "languages"
   | "invoice-header"
   | "invoice-items"
   | "invoice-footer"
@@ -158,4 +161,29 @@ export interface EducationEntry {
   institution: string;
   degree: string;
   year: string;
+}
+
+export interface SocialLink {
+  name: string;
+  link: string;
+}
+
+export interface CertificationEntry {
+  name: string;
+  issuer: string;
+  date: string;
+  link: string;
+}
+
+export interface ProjectEntry {
+  name: string;
+  description: string;
+  technologies: string[];
+  link: string;
+  date: string;
+}
+
+export interface LanguageEntry {
+  language: string;
+  proficiency: "Beginner" | "Intermediate" | "Advanced" | "Fluent" | "Native";
 }

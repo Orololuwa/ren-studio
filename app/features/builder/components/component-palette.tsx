@@ -1,13 +1,24 @@
 import { useDraggable } from "@dnd-kit/core";
-import { Briefcase, FileText, GraduationCap, Star } from "lucide-react";
+import {
+  Award,
+  Briefcase,
+  FileText,
+  FolderKanban,
+  GraduationCap,
+  Languages,
+  Star,
+} from "lucide-react";
 
 import type { ComponentDefinition } from "../types";
 import { componentLibrary } from "./component-library";
 
 const iconMap: Record<string, React.ReactNode> = {
+  certifications: <Award className="w-5 h-5" />,
   education: <GraduationCap className="w-5 h-5" />,
   experience: <Briefcase className="w-5 h-5" />,
   header: <FileText className="w-5 h-5" />,
+  languages: <Languages className="w-5 h-5" />,
+  projects: <FolderKanban className="w-5 h-5" />,
   skills: <Star className="w-5 h-5" />,
   summary: <FileText className="w-5 h-5" />,
 };
@@ -33,9 +44,24 @@ export function ComponentPalette() {
         </p>
 
         <div className="space-y-3" data-testid="component-palette-list">
-          {Object.values(componentLibrary).map((component) => (
-            <DraggableComponent component={component} key={component.type} />
-          ))}
+          {[
+            "header",
+            "summary",
+            "experience",
+            "education",
+            "skills",
+            "projects",
+            "certifications",
+            "languages",
+          ]
+            .map((type) => componentLibrary[type])
+            .filter(
+              (component): component is ComponentDefinition =>
+                component !== undefined,
+            )
+            .map((component) => (
+              <DraggableComponent component={component} key={component.type} />
+            ))}
         </div>
       </div>
     </div>
