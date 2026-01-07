@@ -179,22 +179,29 @@ test.describe("builder template selection page", () => {
       .locator('[data-testid^="template-card-title-"]')
       .textContent();
 
-    // Click Customize button
+    // Get the template ID from the button's test ID to construct expected URL
     const customizeButton = firstCard.locator(
       '[data-testid^="template-customize-button-"]',
     );
-    await customizeButton.click();
+    const buttonTestId = await customizeButton.getAttribute("data-testid");
+    const templateId = buttonTestId?.replace("template-customize-button-", "");
 
-    // Wait for the editor page to load by checking for a specific element
-    // This is more reliable than waiting for URL change with client-side navigation
+    // Click Customize button and wait for navigation
+    // React Router uses client-side navigation, so we wait for URL change
+    await Promise.all([
+      page.waitForURL(
+        new RegExp(
+          `/organizations/${organization.slug}/builder/${templateId}$`,
+        ),
+        { timeout: 10_000 },
+      ),
+      customizeButton.click(),
+    ]);
+
+    // Wait for the editor page to load
     await expect(page.getByTestId("template-editor-title")).toBeVisible({
       timeout: 10_000,
     });
-
-    // Verify navigation to editor
-    await expect(page).toHaveURL(
-      new RegExp(`/organizations/${organization.slug}/builder/[^/]+$`),
-    );
 
     // Verify template name matches
     await expect(page.getByTestId("template-editor-title")).toContainText(
