@@ -169,6 +169,7 @@ export function SectionRenderer({
               </button>
             </h2>
             <button
+              aria-label="Edit contact information"
               className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left"
               onClick={(e) =>
                 handleFieldClick(
@@ -190,7 +191,7 @@ export function SectionRenderer({
               }
               type="button"
             >
-              {String(section.data.contact ?? "")}
+              {String(section.data.contact ?? "") || "Click to add contact"}
             </button>
             {email && (
               <button

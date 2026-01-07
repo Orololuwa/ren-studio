@@ -61,7 +61,7 @@ function DraggableComponent({ component }: { component: ComponentDefinition }) {
       <div className="flex items-start gap-3">
         <div className="text-primary mt-0.5">{iconMap[component.type]}</div>
         <div className="flex-1 min-w-0">
-          <h4 className="text-sm font-semibold mb-1">{component.label}</h4>
+          <h3 className="text-sm font-semibold mb-1">{component.label}</h3>
           <p className="text-xs text-muted-foreground line-clamp-2">
             {component.configurableProperties.join(", ")}
           </p>

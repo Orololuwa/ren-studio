@@ -147,7 +147,10 @@ export function PropertiesPanel() {
 
   if (!section) {
     return (
-      <div className="h-[calc(100vh-4rem) w-80 bg-muted/30 border-l border-border p-6">
+      <div
+        className="h-[calc(100vh-4rem) w-80 bg-muted/30 border-l border-border p-6"
+        data-testid="properties-panel"
+      >
         <div className="text-center text-muted-foreground">
           <p className="text-sm">Select a section to edit content</p>
         </div>
