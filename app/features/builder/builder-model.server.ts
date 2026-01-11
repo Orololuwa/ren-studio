@@ -1,0 +1,294 @@
+import type { Template, TemplateSection } from "./types";
+import type { Prisma } from "~/generated/client";
+import { TemplateType } from "~/generated/enums";
+import { prisma } from "~/utils/database.server";
+
+// Helper to convert Prisma TemplateType enum to TypeScript TemplateType
+function convertPrismaTemplateTypeToTS(prismaType: string): Template["type"] {
+  if (prismaType === TemplateType.reportCards) {
+    return "report-cards";
+  }
+  return prismaType as Template["type"];
+}
+
+// Helper to convert TypeScript TemplateType to Prisma TemplateType enum
+function convertTSTemplateTypeToPrisma(
+  tsType: Template["type"],
+): (typeof TemplateType)[keyof typeof TemplateType] {
+  if (tsType === "report-cards") {
+    return TemplateType.reportCards;
+  }
+  return tsType as (typeof TemplateType)[keyof typeof TemplateType];
+}
+
+/* READ */
+
+/**
+ * Retrieves a template from the database by ID.
+ * Validates that the template belongs to the specified organization.
+ *
+ * @param templateId - The ID of the template to retrieve.
+ * @param organizationId - The ID of the organization that owns the template.
+ * @returns The template or null if not found or doesn't belong to the organization.
+ */
+export async function retrieveTemplateFromDatabaseById({
+  templateId,
+  organizationId,
+}: {
+  templateId: string;
+  organizationId: string;
+}): Promise<Template | null> {
+  const template = await prisma.template.findFirst({
+    where: {
+      id: templateId,
+      organizationId,
+    },
+  });
+
+  if (!template) {
+    return null;
+  }
+
+  return {
+    createdAt: template.createdAt,
+    globalStyles: template.globalStyles as unknown as Record<string, string>,
+    id: template.id,
+    name: template.name,
+    organizationId: template.organizationId,
+    sections: template.sections as unknown as TemplateSection[],
+    type: convertPrismaTemplateTypeToTS(template.type),
+    updatedAt: template.updatedAt,
+  };
+}
+
+/**
+ * Retrieves all templates for an organization, optionally filtered by type.
+ *
+ * @param organizationId - The ID of the organization.
+ * @param type - Optional template type filter.
+ * @returns Array of templates sorted by creation date (newest first).
+ */
+export async function retrieveTemplatesByOrganizationIdAndType({
+  organizationId,
+  type,
+}: {
+  organizationId: string;
+  type?: Template["type"];
+}): Promise<Template[]> {
+  const where: Prisma.TemplateWhereInput = {
+    organizationId,
+  };
+
+  if (type) {
+    where.type = convertTSTemplateTypeToPrisma(type);
+  }
+
+  const templates = await prisma.template.findMany({
+    orderBy: {
+      createdAt: "desc",
+    },
+    where,
+  });
+
+  return templates.map((template) => ({
+    createdAt: template.createdAt,
+    globalStyles: template.globalStyles as unknown as Record<string, string>,
+    id: template.id,
+    name: template.name,
+    organizationId: template.organizationId,
+    sections: template.sections as unknown as TemplateSection[],
+    type: convertPrismaTemplateTypeToTS(template.type),
+    updatedAt: template.updatedAt,
+  }));
+}
+
+/* CREATE */
+
+/**
+ * Creates a new template in the database.
+ *
+ * @param template - The template data to create.
+ * @returns The created template.
+ */
+export async function createTemplateInDatabase(
+  template: Omit<Template, "id" | "createdAt" | "updatedAt">,
+): Promise<Template> {
+  const created = await prisma.template.create({
+    data: {
+      globalStyles: template.globalStyles as unknown as Prisma.JsonObject,
+      name: template.name,
+      organizationId: template.organizationId,
+      sections: template.sections as unknown as Prisma.JsonArray,
+      type: convertTSTemplateTypeToPrisma(template.type),
+    },
+  });
+
+  return {
+    createdAt: created.createdAt,
+    globalStyles: created.globalStyles as unknown as Record<string, string>,
+    id: created.id,
+    name: created.name,
+    organizationId: created.organizationId,
+    sections: created.sections as unknown as TemplateSection[],
+    type: convertPrismaTemplateTypeToTS(created.type),
+    updatedAt: created.updatedAt,
+  };
+}
+
+/* UPDATE */
+
+/**
+ * Updates an existing template in the database.
+ * Validates that the template belongs to the specified organization.
+ *
+ * @param templateId - The ID of the template to update.
+ * @param organizationId - The ID of the organization that owns the template.
+ * @param data - The data to update.
+ * @returns The updated template or null if not found or doesn't belong to the organization.
+ */
+export async function updateTemplateInDatabase({
+  templateId,
+  organizationId,
+  data,
+}: {
+  templateId: string;
+  organizationId: string;
+  data: Partial<
+    Omit<Template, "id" | "organizationId" | "createdAt" | "updatedAt">
+  >;
+}): Promise<Template | null> {
+  // First verify the template exists and belongs to the organization
+  const existing = await prisma.template.findFirst({
+    where: {
+      id: templateId,
+      organizationId,
+    },
+  });
+
+  if (!existing) {
+    return null;
+  }
+
+  const updateData: Prisma.TemplateUpdateInput = {};
+
+  if (data.name !== undefined) {
+    updateData.name = data.name;
+  }
+
+  if (data.type !== undefined) {
+    updateData.type = convertTSTemplateTypeToPrisma(data.type);
+  }
+
+  if (data.sections !== undefined) {
+    updateData.sections = data.sections as unknown as Prisma.JsonArray;
+  }
+
+  if (data.globalStyles !== undefined) {
+    updateData.globalStyles = data.globalStyles as unknown as Prisma.JsonObject;
+  }
+
+  const updated = await prisma.template.update({
+    data: updateData,
+    where: {
+      id: templateId,
+    },
+  });
+
+  return {
+    createdAt: updated.createdAt,
+    globalStyles: updated.globalStyles as unknown as Record<string, string>,
+    id: updated.id,
+    name: updated.name,
+    organizationId: updated.organizationId,
+    sections: updated.sections as unknown as TemplateSection[],
+    type: convertPrismaTemplateTypeToTS(updated.type),
+    updatedAt: updated.updatedAt,
+  };
+}
+
+/**
+ * Saves a template to the database. Creates a new template if it doesn't exist,
+ * or updates an existing one.
+ *
+ * @param template - The template to save.
+ * @param organizationId - The ID of the organization that owns the template.
+ * @returns The saved template.
+ */
+export async function saveTemplateToDatabase({
+  template,
+  organizationId,
+}: {
+  template: Omit<Template, "createdAt" | "updatedAt">;
+  organizationId: string;
+}): Promise<Template> {
+  // Check if template exists
+  if (template.id) {
+    const existing = await prisma.template.findFirst({
+      where: {
+        id: template.id,
+        organizationId,
+      },
+    });
+
+    if (existing) {
+      // Update existing template
+      return (await updateTemplateInDatabase({
+        data: {
+          globalStyles: template.globalStyles,
+          name: template.name,
+          sections: template.sections,
+          type: template.type,
+        },
+        organizationId,
+        templateId: template.id,
+      })) as Template;
+    }
+  }
+
+  // Create new template
+  return await createTemplateInDatabase({
+    globalStyles: template.globalStyles,
+    name: template.name,
+    organizationId,
+    sections: template.sections,
+    type: template.type,
+  });
+}
+
+/* DELETE */
+
+/**
+ * Deletes a template from the database.
+ * Validates that the template belongs to the specified organization.
+ *
+ * @param templateId - The ID of the template to delete.
+ * @param organizationId - The ID of the organization that owns the template.
+ * @returns True if the template was deleted, false if not found or doesn't belong to the organization.
+ */
+export async function deleteTemplateFromDatabase({
+  templateId,
+  organizationId,
+}: {
+  templateId: string;
+  organizationId: string;
+}): Promise<boolean> {
+  // First verify the template exists and belongs to the organization
+  const existing = await prisma.template.findFirst({
+    where: {
+      id: templateId,
+      organizationId,
+    },
+  });
+
+  if (!existing) {
+    return false;
+  }
+
+  await prisma.template.delete({
+    where: {
+      id: templateId,
+    },
+  });
+
+  return true;
+}
