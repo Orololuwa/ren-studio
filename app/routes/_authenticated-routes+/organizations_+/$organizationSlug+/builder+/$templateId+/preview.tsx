@@ -1,8 +1,8 @@
 import { z } from "zod";
 
 import type { Route } from "./+types/preview";
-import type { TemplateSection } from "~/features/builder/types";
-import { generatePreviewHTML } from "~/features/builder/utils/html-generator.server";
+import type { TemplateSection } from "~/features/builder/shared/types";
+import { generatePreviewHTML } from "~/features/builder/shared/utils/html-generator.server";
 import { organizationMembershipContext } from "~/features/organizations/organizations-middleware.server";
 import { validateFormData } from "~/utils/validate-form-data.server";
 

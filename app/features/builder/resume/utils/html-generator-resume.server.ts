@@ -5,7 +5,7 @@ import type {
   SectionStyles,
   SocialLink,
   TemplateSection,
-} from "../types";
+} from "../../shared/types";
 
 function escapeHtml(text: string): string {
   const map: Record<string, string> = {

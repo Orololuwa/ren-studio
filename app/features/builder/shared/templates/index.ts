@@ -1,6 +1,6 @@
+import { invoiceTemplates } from "../../invoice/templates/invoice-templates";
+import { resumeTemplates } from "../../resume/templates/resume-templates";
 import type { Template } from "../types";
-import { invoiceTemplates } from "./invoice-templates";
-import { resumeTemplates } from "./resume-templates";
 
 // Add more template imports as you create them
 // import { certificateTemplates } from "./certificate-templates";

@@ -12,7 +12,7 @@ import {
 
 import { useBuilderStore } from "../store/builder-store";
 import type { ComponentDefinition } from "../types";
-import { componentLibrary } from "./component-library";
+import { componentLibrary } from "./component-library-registry";
 
 const iconMap: Record<string, React.ReactNode> = {
   certifications: <Award className="w-5 h-5" />,

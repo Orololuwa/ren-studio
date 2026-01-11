@@ -7,7 +7,7 @@ import {
 
 import { useBuilderStore } from "../store/builder-store";
 import type { TemplateSection } from "../types";
-import { componentLibrary } from "./component-library";
+import { componentLibrary } from "./component-library-registry";
 import { SectionRenderer } from "./section-renderer";
 import { SectionWrapper } from "./section-wrapper";
 

@@ -1,12 +1,12 @@
-import type { TemplateSection, TemplateType } from "../types";
 import {
   generateInvoiceExportHTML,
   generateInvoicePreviewHTML,
-} from "./html-generator-invoice.server";
+} from "../../invoice/utils/html-generator-invoice.server";
 import {
   generateResumeExportHTML,
   generateResumePreviewHTML,
-} from "./html-generator-resume.server";
+} from "../../resume/utils/html-generator-resume.server";
+import type { TemplateSection, TemplateType } from "../types";
 
 /**
  * Routes to the appropriate HTML generator based on template type

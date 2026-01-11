@@ -1,9 +1,9 @@
 import { z } from "zod";
 
 import type { Route } from "./+types/export";
-import type { TemplateSection } from "~/features/builder/types";
-import { generateExportHTML } from "~/features/builder/utils/html-generator.server";
-import { generatePDF } from "~/features/builder/utils/pdf-generator.server";
+import type { TemplateSection } from "~/features/builder/shared/types";
+import { generateExportHTML } from "~/features/builder/shared/utils/html-generator.server";
+import { generatePDF } from "~/features/builder/shared/utils/pdf-generator.server";
 import { organizationMembershipContext } from "~/features/organizations/organizations-middleware.server";
 import { validateFormData } from "~/utils/validate-form-data.server";
 

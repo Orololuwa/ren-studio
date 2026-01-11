@@ -15,15 +15,18 @@ import { Button } from "~/components/ui/button";
 import {
   retrieveTemplateFromDatabaseById,
   saveTemplateToDatabase,
-} from "~/features/builder/builder-model.server";
-import { ComponentPalette } from "~/features/builder/components/component-palette";
-import { ExportButton } from "~/features/builder/components/export-button";
-import { PreviewModal } from "~/features/builder/components/preview-modal";
-import { PropertiesPanel } from "~/features/builder/components/properties-panel";
-import { TemplateCanvas } from "~/features/builder/components/template-canvas";
-import { useBuilderStore } from "~/features/builder/store/builder-store";
-import { getTemplateById } from "~/features/builder/templates";
-import type { Template, TemplateSection } from "~/features/builder/types";
+} from "~/features/builder/shared/builder-model.server";
+import { ComponentPalette } from "~/features/builder/shared/components/component-palette";
+import { ExportButton } from "~/features/builder/shared/components/export-button";
+import { PreviewModal } from "~/features/builder/shared/components/preview-modal";
+import { PropertiesPanel } from "~/features/builder/shared/components/properties-panel";
+import { TemplateCanvas } from "~/features/builder/shared/components/template-canvas";
+import { useBuilderStore } from "~/features/builder/shared/store/builder-store";
+import { getTemplateById } from "~/features/builder/shared/templates";
+import type {
+  Template,
+  TemplateSection,
+} from "~/features/builder/shared/types";
 import { getInstance } from "~/features/localization/i18next-middleware.server";
 import { organizationMembershipContext } from "~/features/organizations/organizations-middleware.server";
 import { getPageTitle } from "~/utils/get-page-title.server";

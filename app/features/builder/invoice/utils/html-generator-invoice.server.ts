@@ -1,4 +1,4 @@
-import type { SectionStyles, TemplateSection } from "../types";
+import type { SectionStyles, TemplateSection } from "../../shared/types";
 import { formatCurrency } from "./currency-formatter";
 
 function escapeHtml(text: string): string {

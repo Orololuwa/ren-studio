@@ -12,8 +12,8 @@ import {
   CardTitle,
 } from "~/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
-import { retrieveTemplatesByOrganizationIdAndType } from "~/features/builder/builder-model.server";
-import { getTemplatesByType } from "~/features/builder/templates";
+import { retrieveTemplatesByOrganizationIdAndType } from "~/features/builder/shared/builder-model.server";
+import { getTemplatesByType } from "~/features/builder/shared/templates";
 import { getInstance } from "~/features/localization/i18next-middleware.server";
 import { organizationMembershipContext } from "~/features/organizations/organizations-middleware.server";
 import { getPageTitle } from "~/utils/get-page-title.server";

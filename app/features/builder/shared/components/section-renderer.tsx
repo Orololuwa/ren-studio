@@ -1,5 +1,6 @@
 import { useState } from "react";
 
+import { formatCurrency } from "../../invoice/utils/currency-formatter";
 import { useBuilderStore } from "../store/builder-store";
 import type {
   CertificationEntry,
@@ -9,7 +10,6 @@ import type {
   SocialLink,
   TemplateSection,
 } from "../types";
-import { formatCurrency } from "../utils/currency-formatter";
 import { InlineEditor } from "./inline-editor";
 
 interface SectionRendererProps {

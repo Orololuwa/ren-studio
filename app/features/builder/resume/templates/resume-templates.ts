@@ -1,4 +1,4 @@
-import type { Template } from "../types";
+import type { Template } from "../../shared/types";
 
 export const resumeTemplates: Template[] = [
   {

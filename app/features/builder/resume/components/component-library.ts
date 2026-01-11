@@ -1,6 +1,6 @@
-import type { ComponentDefinition } from "../types";
+import type { ComponentDefinition } from "../../shared/types";
 
-export const componentLibrary: Record<string, ComponentDefinition> = {
+export const resumeComponentLibrary: Record<string, ComponentDefinition> = {
   certifications: {
     configurableProperties: ["entries"],
     defaultData: { entries: [] },
@@ -110,78 +110,5 @@ export const componentLibrary: Record<string, ComponentDefinition> = {
     icon: "FileText",
     label: "Summary",
     type: "summary",
-  },
-  "invoice-header": {
-    configurableProperties: [
-      "companyLogo",
-      "companyName",
-      "companyAddress",
-      "companyEmail",
-      "companyPhone",
-      "invoiceNumber",
-      "invoiceDate",
-      "dueDate",
-      "billToName",
-      "billToAddress",
-      "shipToName",
-      "shipToAddress",
-    ],
-    defaultData: {
-      companyLogo:
-        "https://iwvduhvsxhjpxapdochp.supabase.co/storage/v1/object/public/app-images/organization-logos/logoipsum-404.svg",
-      companyName: "",
-      companyAddress: "",
-      companyEmail: "",
-      companyPhone: "",
-      invoiceNumber: "",
-      invoiceDate: "",
-      dueDate: "",
-      billToName: "",
-      billToAddress: "",
-      shipToName: "",
-      shipToAddress: "",
-    },
-    defaultStyles: {
-      padding: "2rem",
-    },
-    icon: "FileText",
-    label: "Invoice Header",
-    type: "invoice-header",
-  },
-  "invoice-items": {
-    configurableProperties: ["items"],
-    defaultData: { items: [] },
-    defaultStyles: {
-      padding: "1rem",
-    },
-    icon: "List",
-    label: "Invoice Items",
-    type: "invoice-items",
-  },
-  "invoice-footer": {
-    configurableProperties: [
-      "subtotal",
-      "taxRate",
-      "taxAmount",
-      "discount",
-      "total",
-      "paymentTerms",
-      "notes",
-    ],
-    defaultData: {
-      subtotal: "",
-      taxRate: "",
-      taxAmount: "",
-      discount: "",
-      total: "",
-      paymentTerms: "",
-      notes: "",
-    },
-    defaultStyles: {
-      padding: "1rem",
-    },
-    icon: "FileText",
-    label: "Invoice Footer",
-    type: "invoice-footer",
   },
 };
