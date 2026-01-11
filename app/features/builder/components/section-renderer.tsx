@@ -3,11 +3,13 @@ import { useState } from "react";
 import { useBuilderStore } from "../store/builder-store";
 import type {
   CertificationEntry,
+  InvoiceItem,
   LanguageEntry,
   ProjectEntry,
   SocialLink,
   TemplateSection,
 } from "../types";
+import { formatCurrency } from "../utils/currency-formatter";
 import { InlineEditor } from "./inline-editor";
 
 interface SectionRendererProps {
@@ -62,24 +64,28 @@ export function SectionRenderer({
     const { path } = editingField;
     const updatedData = { ...section.data };
 
-    // Handle nested paths (e.g., ["entries", "0", "description"])
+    // Handle nested paths (e.g., ["entries", "0", "description"] or ["items", "0", "description"])
     if (path.length === 1 && path[0]) {
       updatedData[path[0]] = newValue;
     } else if (
       path.length === 3 &&
-      path[0] === "entries" &&
+      (path[0] === "entries" || path[0] === "items") &&
       path[1] &&
       path[2]
     ) {
-      // Handle entries array (experience, education)
+      // Handle entries array (experience, education) or items array (invoice-items)
       const index = Number.parseInt(path[1], 10);
       const field = path[2];
-      const entries = Array.isArray(updatedData.entries)
-        ? [...updatedData.entries]
+      const arrayName = path[0];
+      const array = Array.isArray(updatedData[arrayName])
+        ? [...(updatedData[arrayName] as unknown[])]
         : [];
-      if (entries[index]) {
-        entries[index] = { ...entries[index], [field]: newValue };
-        updatedData.entries = entries;
+      if (array[index]) {
+        array[index] = {
+          ...(array[index] as Record<string, unknown>),
+          [field]: newValue,
+        };
+        updatedData[arrayName] = array;
       }
     }
 
@@ -849,6 +855,740 @@ export function SectionRenderer({
                 </div>
               ))}
             </div>
+          </div>
+        );
+      }
+
+      case "invoice-header": {
+        const logoUrl = (section.data.companyLogo as string) || "";
+        return (
+          <div className="text-gray-900" style={sectionStyles}>
+            <div className="flex justify-between mb-6">
+              <div>
+                {logoUrl && (
+                  <div className="mb-4">
+                    <button
+                      className="cursor-pointer hover:opacity-80 transition-opacity"
+                      onClick={(e) =>
+                        handleFieldClick(
+                          e,
+                          ["companyLogo"],
+                          logoUrl,
+                          "Company Logo URL",
+                          false,
+                        )
+                      }
+                      onKeyDown={(e) =>
+                        handleFieldKeyDown(
+                          e,
+                          ["companyLogo"],
+                          logoUrl,
+                          "Company Logo URL",
+                          false,
+                        )
+                      }
+                      type="button"
+                    >
+                      <img
+                        alt="Company Logo"
+                        className="h-12 object-contain"
+                        src={logoUrl}
+                      />
+                    </button>
+                  </div>
+                )}
+                <h2 className="text-gray-900 text-xl font-bold mb-2">
+                  <button
+                    className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left"
+                    onClick={(e) =>
+                      handleFieldClick(
+                        e,
+                        ["companyName"],
+                        section.data.companyName as string,
+                        "Company Name",
+                        false,
+                      )
+                    }
+                    onKeyDown={(e) =>
+                      handleFieldKeyDown(
+                        e,
+                        ["companyName"],
+                        section.data.companyName as string,
+                        "Company Name",
+                        false,
+                      )
+                    }
+                    type="button"
+                  >
+                    {(section.data.companyName as string) || "Company Name"}
+                  </button>
+                </h2>
+                <div className="text-sm text-gray-600">
+                  <button
+                    className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left"
+                    onClick={(e) =>
+                      handleFieldClick(
+                        e,
+                        ["companyAddress"],
+                        section.data.companyAddress as string,
+                        "Company Address",
+                        false,
+                      )
+                    }
+                    onKeyDown={(e) =>
+                      handleFieldKeyDown(
+                        e,
+                        ["companyAddress"],
+                        section.data.companyAddress as string,
+                        "Company Address",
+                        false,
+                      )
+                    }
+                    type="button"
+                  >
+                    {(section.data.companyAddress as string) ||
+                      "Company Address"}
+                  </button>
+                  {(section.data.companyEmail as string | undefined) && (
+                    <button
+                      className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left"
+                      onClick={(e) =>
+                        handleFieldClick(
+                          e,
+                          ["companyEmail"],
+                          section.data.companyEmail as string,
+                          "Company Email",
+                          false,
+                        )
+                      }
+                      onKeyDown={(e) =>
+                        handleFieldKeyDown(
+                          e,
+                          ["companyEmail"],
+                          section.data.companyEmail as string,
+                          "Company Email",
+                          false,
+                        )
+                      }
+                      type="button"
+                    >
+                      {section.data.companyEmail as string}
+                    </button>
+                  )}
+                  {(section.data.companyPhone as string | undefined) && (
+                    <button
+                      className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left"
+                      onClick={(e) =>
+                        handleFieldClick(
+                          e,
+                          ["companyPhone"],
+                          section.data.companyPhone as string,
+                          "Company Phone",
+                          false,
+                        )
+                      }
+                      onKeyDown={(e) =>
+                        handleFieldKeyDown(
+                          e,
+                          ["companyPhone"],
+                          section.data.companyPhone as string,
+                          "Company Phone",
+                          false,
+                        )
+                      }
+                      type="button"
+                    >
+                      {section.data.companyPhone as string}
+                    </button>
+                  )}
+                </div>
+              </div>
+              <div className="text-right">
+                <h1 className="text-2xl font-bold mb-4">INVOICE</h1>
+                <div className="text-sm space-y-1">
+                  <div>
+                    <span className="text-gray-600">Invoice #: </span>
+                    <button
+                      className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left"
+                      onClick={(e) =>
+                        handleFieldClick(
+                          e,
+                          ["invoiceNumber"],
+                          section.data.invoiceNumber as string,
+                          "Invoice Number",
+                          false,
+                        )
+                      }
+                      onKeyDown={(e) =>
+                        handleFieldKeyDown(
+                          e,
+                          ["invoiceNumber"],
+                          section.data.invoiceNumber as string,
+                          "Invoice Number",
+                          false,
+                        )
+                      }
+                      type="button"
+                    >
+                      {(section.data.invoiceNumber as string) || "INV-001"}
+                    </button>
+                  </div>
+                  <div>
+                    <span className="text-gray-600">Date: </span>
+                    <button
+                      className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left"
+                      onClick={(e) =>
+                        handleFieldClick(
+                          e,
+                          ["invoiceDate"],
+                          section.data.invoiceDate as string,
+                          "Invoice Date",
+                          false,
+                        )
+                      }
+                      onKeyDown={(e) =>
+                        handleFieldKeyDown(
+                          e,
+                          ["invoiceDate"],
+                          section.data.invoiceDate as string,
+                          "Invoice Date",
+                          false,
+                        )
+                      }
+                      type="button"
+                    >
+                      {(section.data.invoiceDate as string) || "Date"}
+                    </button>
+                  </div>
+                  {(section.data.dueDate as string | undefined) && (
+                    <div>
+                      <span className="text-gray-600">Due Date: </span>
+                      <button
+                        className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left"
+                        onClick={(e) =>
+                          handleFieldClick(
+                            e,
+                            ["dueDate"],
+                            section.data.dueDate as string,
+                            "Due Date",
+                            false,
+                          )
+                        }
+                        onKeyDown={(e) =>
+                          handleFieldKeyDown(
+                            e,
+                            ["dueDate"],
+                            section.data.dueDate as string,
+                            "Due Date",
+                            false,
+                          )
+                        }
+                        type="button"
+                      >
+                        {section.data.dueDate as string}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+            <div className="flex justify-between mt-6">
+              <div>
+                <h3 className="font-semibold mb-2">Bill To:</h3>
+                <div className="text-sm">
+                  <button
+                    className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left block w-full"
+                    onClick={(e) =>
+                      handleFieldClick(
+                        e,
+                        ["billToName"],
+                        section.data.billToName as string,
+                        "Bill To Name",
+                        false,
+                      )
+                    }
+                    onKeyDown={(e) =>
+                      handleFieldKeyDown(
+                        e,
+                        ["billToName"],
+                        section.data.billToName as string,
+                        "Bill To Name",
+                        false,
+                      )
+                    }
+                    type="button"
+                  >
+                    {(section.data.billToName as string) || "Client Name"}
+                  </button>
+                  <button
+                    className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left block w-full"
+                    onClick={(e) =>
+                      handleFieldClick(
+                        e,
+                        ["billToAddress"],
+                        section.data.billToAddress as string,
+                        "Bill To Address",
+                        false,
+                      )
+                    }
+                    onKeyDown={(e) =>
+                      handleFieldKeyDown(
+                        e,
+                        ["billToAddress"],
+                        section.data.billToAddress as string,
+                        "Bill To Address",
+                        false,
+                      )
+                    }
+                    type="button"
+                  >
+                    {(section.data.billToAddress as string) || "Client Address"}
+                  </button>
+                </div>
+              </div>
+              {(section.data.shipToName as string | undefined) && (
+                <div>
+                  <h3 className="font-semibold mb-2">Ship To:</h3>
+                  <div className="text-sm">
+                    <button
+                      className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left block w-full"
+                      onClick={(e) =>
+                        handleFieldClick(
+                          e,
+                          ["shipToName"],
+                          section.data.shipToName as string,
+                          "Ship To Name",
+                          false,
+                        )
+                      }
+                      onKeyDown={(e) =>
+                        handleFieldKeyDown(
+                          e,
+                          ["shipToName"],
+                          section.data.shipToName as string,
+                          "Ship To Name",
+                          false,
+                        )
+                      }
+                      type="button"
+                    >
+                      {section.data.shipToName as string}
+                    </button>
+                    <button
+                      className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left block w-full"
+                      onClick={(e) =>
+                        handleFieldClick(
+                          e,
+                          ["shipToAddress"],
+                          section.data.shipToAddress as string,
+                          "Ship To Address",
+                          false,
+                        )
+                      }
+                      onKeyDown={(e) =>
+                        handleFieldKeyDown(
+                          e,
+                          ["shipToAddress"],
+                          section.data.shipToAddress as string,
+                          "Ship To Address",
+                          false,
+                        )
+                      }
+                      type="button"
+                    >
+                      {section.data.shipToAddress as string}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      }
+
+      case "invoice-items": {
+        const items = Array.isArray(section.data.items)
+          ? (section.data.items as InvoiceItem[])
+          : [];
+        return (
+          <div className="text-gray-900" style={sectionStyles}>
+            <table className="w-full border-collapse">
+              <thead>
+                <tr className="border-b-2 border-gray-300">
+                  <th className="text-left p-2 font-semibold">Description</th>
+                  <th className="text-right p-2 font-semibold">Quantity</th>
+                  <th className="text-right p-2 font-semibold">Unit Price</th>
+                  <th className="text-right p-2 font-semibold">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {items.length === 0 ? (
+                  <tr>
+                    <td className="p-2 text-gray-500" colSpan={4}>
+                      No items added. Click to add items in the properties
+                      panel.
+                    </td>
+                  </tr>
+                ) : (
+                  items.map((item, idx) => (
+                    <tr
+                      className="border-b border-gray-200"
+                      key={`item-${item.description}-${item.quantity}-${item.unitPrice}-${idx}`}
+                    >
+                      <td className="p-2">
+                        <button
+                          className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left w-full"
+                          onClick={(e) =>
+                            handleFieldClick(
+                              e,
+                              ["items", String(idx), "description"],
+                              item.description,
+                              "Description",
+                              false,
+                            )
+                          }
+                          onKeyDown={(e) =>
+                            handleFieldKeyDown(
+                              e,
+                              ["items", String(idx), "description"],
+                              item.description,
+                              "Description",
+                              false,
+                            )
+                          }
+                          type="button"
+                        >
+                          {item.description || "Item Description"}
+                        </button>
+                      </td>
+                      <td className="p-2 text-right">
+                        <button
+                          className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-right"
+                          onClick={(e) =>
+                            handleFieldClick(
+                              e,
+                              ["items", String(idx), "quantity"],
+                              item.quantity,
+                              "Quantity",
+                              false,
+                            )
+                          }
+                          onKeyDown={(e) =>
+                            handleFieldKeyDown(
+                              e,
+                              ["items", String(idx), "quantity"],
+                              item.quantity,
+                              "Quantity",
+                              false,
+                            )
+                          }
+                          type="button"
+                        >
+                          {item.quantity || "0"}
+                        </button>
+                      </td>
+                      <td className="p-2 text-right">
+                        <button
+                          className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-right"
+                          onClick={(e) =>
+                            handleFieldClick(
+                              e,
+                              ["items", String(idx), "unitPrice"],
+                              item.unitPrice,
+                              "Unit Price",
+                              false,
+                            )
+                          }
+                          onKeyDown={(e) =>
+                            handleFieldKeyDown(
+                              e,
+                              ["items", String(idx), "unitPrice"],
+                              item.unitPrice,
+                              "Unit Price",
+                              false,
+                            )
+                          }
+                          type="button"
+                        >
+                          {formatCurrency(item.unitPrice)}
+                        </button>
+                      </td>
+                      <td className="p-2 text-right font-semibold">
+                        <button
+                          className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-right"
+                          onClick={(e) =>
+                            handleFieldClick(
+                              e,
+                              ["items", String(idx), "total"],
+                              item.total,
+                              "Total",
+                              false,
+                            )
+                          }
+                          onKeyDown={(e) =>
+                            handleFieldKeyDown(
+                              e,
+                              ["items", String(idx), "total"],
+                              item.total,
+                              "Total",
+                              false,
+                            )
+                          }
+                          type="button"
+                        >
+                          {formatCurrency(item.total)}
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        );
+      }
+
+      case "invoice-footer": {
+        return (
+          <div className="text-gray-900" style={sectionStyles}>
+            <div className="flex justify-end">
+              <div className="w-64 space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Subtotal:</span>
+                  <span>
+                    <button
+                      className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-right"
+                      onClick={(e) =>
+                        handleFieldClick(
+                          e,
+                          ["subtotal"],
+                          section.data.subtotal as string,
+                          "Subtotal",
+                          false,
+                        )
+                      }
+                      onKeyDown={(e) =>
+                        handleFieldKeyDown(
+                          e,
+                          ["subtotal"],
+                          section.data.subtotal as string,
+                          "Subtotal",
+                          false,
+                        )
+                      }
+                      type="button"
+                    >
+                      {formatCurrency(
+                        section.data.subtotal as
+                          | string
+                          | number
+                          | null
+                          | undefined,
+                      )}
+                    </button>
+                  </span>
+                </div>
+                {(section.data.taxRate as string | number | undefined) && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">
+                      Tax (
+                      <button
+                        className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5"
+                        onClick={(e) =>
+                          handleFieldClick(
+                            e,
+                            ["taxRate"],
+                            section.data.taxRate as string,
+                            "Tax Rate",
+                            false,
+                          )
+                        }
+                        onKeyDown={(e) =>
+                          handleFieldKeyDown(
+                            e,
+                            ["taxRate"],
+                            section.data.taxRate as string,
+                            "Tax Rate",
+                            false,
+                          )
+                        }
+                        type="button"
+                      >
+                        {(section.data.taxRate as string | number) || ""}%
+                      </button>
+                      ):
+                    </span>
+                    <span>
+                      <button
+                        className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-right"
+                        onClick={(e) =>
+                          handleFieldClick(
+                            e,
+                            ["taxAmount"],
+                            section.data.taxAmount as string,
+                            "Tax Amount",
+                            false,
+                          )
+                        }
+                        onKeyDown={(e) =>
+                          handleFieldKeyDown(
+                            e,
+                            ["taxAmount"],
+                            section.data.taxAmount as string,
+                            "Tax Amount",
+                            false,
+                          )
+                        }
+                        type="button"
+                      >
+                        {formatCurrency(
+                          section.data.taxAmount as
+                            | string
+                            | number
+                            | null
+                            | undefined,
+                        )}
+                      </button>
+                    </span>
+                  </div>
+                )}
+                {(section.data.discount as string | number | undefined) &&
+                  Number(section.data.discount) > 0 && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Discount:</span>
+                      <span>
+                        <button
+                          className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-right"
+                          onClick={(e) =>
+                            handleFieldClick(
+                              e,
+                              ["discount"],
+                              section.data.discount as string,
+                              "Discount",
+                              false,
+                            )
+                          }
+                          onKeyDown={(e) =>
+                            handleFieldKeyDown(
+                              e,
+                              ["discount"],
+                              section.data.discount as string,
+                              "Discount",
+                              false,
+                            )
+                          }
+                          type="button"
+                        >
+                          -
+                          {formatCurrency(
+                            section.data.discount as
+                              | string
+                              | number
+                              | null
+                              | undefined,
+                          )}
+                        </button>
+                      </span>
+                    </div>
+                  )}
+                <div className="flex justify-between border-t-2 border-gray-300 pt-2 font-bold text-lg">
+                  <span>Total:</span>
+                  <span>
+                    <button
+                      className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-right"
+                      onClick={(e) =>
+                        handleFieldClick(
+                          e,
+                          ["total"],
+                          section.data.total as string,
+                          "Total",
+                          false,
+                        )
+                      }
+                      onKeyDown={(e) =>
+                        handleFieldKeyDown(
+                          e,
+                          ["total"],
+                          section.data.total as string,
+                          "Total",
+                          false,
+                        )
+                      }
+                      type="button"
+                    >
+                      {formatCurrency(
+                        section.data.total as
+                          | string
+                          | number
+                          | null
+                          | undefined,
+                      )}
+                    </button>
+                  </span>
+                </div>
+              </div>
+            </div>
+            {(section.data.paymentTerms as string | undefined) && (
+              <div className="mt-4">
+                <p className="text-sm text-gray-600">
+                  <span className="font-semibold">Payment Terms: </span>
+                  <button
+                    className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5"
+                    onClick={(e) =>
+                      handleFieldClick(
+                        e,
+                        ["paymentTerms"],
+                        section.data.paymentTerms as string,
+                        "Payment Terms",
+                        false,
+                      )
+                    }
+                    onKeyDown={(e) =>
+                      handleFieldKeyDown(
+                        e,
+                        ["paymentTerms"],
+                        section.data.paymentTerms as string,
+                        "Payment Terms",
+                        false,
+                      )
+                    }
+                    type="button"
+                  >
+                    {section.data.paymentTerms as string}
+                  </button>
+                </p>
+              </div>
+            )}
+            {(section.data.notes as string | undefined) && (
+              <div className="mt-4">
+                <p className="text-sm text-gray-600">
+                  <button
+                    className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left w-full"
+                    onClick={(e) =>
+                      handleFieldClick(
+                        e,
+                        ["notes"],
+                        section.data.notes as string,
+                        "Notes",
+                        false,
+                      )
+                    }
+                    onKeyDown={(e) =>
+                      handleFieldKeyDown(
+                        e,
+                        ["notes"],
+                        section.data.notes as string,
+                        "Notes",
+                        false,
+                      )
+                    }
+                    type="button"
+                  >
+                    {section.data.notes as string}
+                  </button>
+                </p>
+              </div>
+            )}
           </div>
         );
       }

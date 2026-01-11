@@ -1,13 +1,13 @@
 import type { Template } from "../types";
+import { invoiceTemplates } from "./invoice-templates";
 import { resumeTemplates } from "./resume-templates";
 
 // Add more template imports as you create them
-// import { invoiceTemplates } from "./invoice-templates";
 // import { certificateTemplates } from "./certificate-templates";
 
 export const predefinedTemplates: Record<string, Template[]> = {
   certificate: [],
-  invoice: [],
+  invoice: invoiceTemplates,
   "report-cards": [],
   resume: resumeTemplates,
 };

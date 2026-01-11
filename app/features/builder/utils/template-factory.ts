@@ -73,6 +73,34 @@ function resetSectionData(type: string): Record<string, unknown> {
       return { category: "", items: [] };
     case "summary":
       return { content: "" };
+    case "invoice-header":
+      return {
+        companyLogo:
+          "https://iwvduhvsxhjpxapdochp.supabase.co/storage/v1/object/public/app-images/organization-logos/logoipsum-404.svg",
+        companyName: "",
+        companyAddress: "",
+        companyEmail: "",
+        companyPhone: "",
+        invoiceNumber: "",
+        invoiceDate: "",
+        dueDate: "",
+        billToName: "",
+        billToAddress: "",
+        shipToName: "",
+        shipToAddress: "",
+      };
+    case "invoice-items":
+      return { items: [] };
+    case "invoice-footer":
+      return {
+        subtotal: "",
+        taxRate: "",
+        taxAmount: "",
+        discount: "",
+        total: "",
+        paymentTerms: "",
+        notes: "",
+      };
     default:
       return {};
   }

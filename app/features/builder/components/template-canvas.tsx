@@ -115,6 +115,48 @@ function createDefaultSectionConfig(
       content:
         "<p>Experienced professional with expertise in modern technologies and best practices. Passionate about building scalable solutions and delivering high-quality results.</p>",
     },
+    "invoice-header": {
+      companyLogo:
+        "https://iwvduhvsxhjpxapdochp.supabase.co/storage/v1/object/public/app-images/organization-logos/logoipsum-404.svg",
+      companyName: "Your Company Name",
+      companyAddress: "123 Business St\nCity, State 12345",
+      companyEmail: "contact@company.com",
+      companyPhone: "+1 (555) 123-4567",
+      invoiceNumber: "INV-001",
+      invoiceDate: new Date().toLocaleDateString(),
+      dueDate: new Date(
+        Date.now() + 30 * 24 * 60 * 60 * 1000,
+      ).toLocaleDateString(),
+      billToName: "Client Name",
+      billToAddress: "456 Client Ave\nCity, State 67890",
+      shipToName: "",
+      shipToAddress: "",
+    },
+    "invoice-items": {
+      items: [
+        {
+          description: "Service or Product Description",
+          quantity: "1",
+          unitPrice: "100.00",
+          total: "100.00",
+        },
+        {
+          description: "Another Service or Product",
+          quantity: "2",
+          unitPrice: "50.00",
+          total: "100.00",
+        },
+      ],
+    },
+    "invoice-footer": {
+      subtotal: "200.00",
+      taxRate: "10",
+      taxAmount: "20.00",
+      discount: "0.00",
+      total: "220.00",
+      paymentTerms: "Net 30",
+      notes: "Thank you for your business!",
+    },
   };
 
   // Build default styles from template or component defaults

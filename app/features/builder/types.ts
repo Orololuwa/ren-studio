@@ -187,3 +187,26 @@ export interface LanguageEntry {
   language: string;
   proficiency: "Beginner" | "Intermediate" | "Advanced" | "Fluent" | "Native";
 }
+
+export interface InvoiceItem {
+  description: string;
+  quantity: string;
+  unitPrice: string;
+  total: string;
+}
+
+export interface InvoiceHeaderData {
+  companyLogo?: string;
+  companyName: string;
+  companyAddress: string;
+  companyEmail: string;
+  companyPhone: string;
+  companyWebsite: string;
+  invoiceNumber: string;
+  date: string;
+  dueDate: string;
+  billToName: string;
+  billToAddress: string;
+  shipToName?: string;
+  shipToAddress?: string;
+}

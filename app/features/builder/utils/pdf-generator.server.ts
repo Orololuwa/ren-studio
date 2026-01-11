@@ -5,7 +5,7 @@ let browserInstance: Browser | null = null;
 
 async function getBrowserInstance(): Promise<Browser> {
   // Check if browser exists and is still connected
-  if (browserInstance && browserInstance.isConnected()) {
+  if (browserInstance?.isConnected()) {
     return browserInstance;
   }
 
@@ -49,12 +49,44 @@ export async function generatePDF(html: string): Promise<Buffer> {
     browser = await getBrowserInstance();
     page = await browser.newPage();
 
-    // Use domcontentloaded instead of networkidle0 since we're not loading external resources
-    // This prevents hanging and connection timeouts
+    // Set content and wait for images to load
     await page.setContent(html, {
       waitUntil: "domcontentloaded",
       timeout: 30_000, // 30 second timeout
     });
+
+    // Wait for all images to load before generating PDF
+    try {
+      await page.evaluate(() => {
+        return Promise.all(
+          Array.from(document.images).map((img) => {
+            if (img.complete && img.naturalHeight !== 0) {
+              return Promise.resolve();
+            }
+            return new Promise<void>((resolve, reject) => {
+              const timeout = setTimeout(() => {
+                reject(new Error(`Image load timeout: ${img.src}`));
+              }, 15_000);
+
+              img.addEventListener("load", () => {
+                clearTimeout(timeout);
+                resolve();
+              });
+              img.addEventListener("error", () => {
+                clearTimeout(timeout);
+                reject(new Error(`Image load error: ${img.src}`));
+              });
+            });
+          }),
+        );
+      });
+    } catch (error) {
+      console.warn(
+        "Some images failed to load, continuing with PDF generation:",
+        error,
+      );
+      // Continue anyway - don't fail the entire PDF generation
+    }
 
     const pdfBuffer = await page.pdf({
       format: "A4",

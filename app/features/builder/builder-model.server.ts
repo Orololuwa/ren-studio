@@ -5,6 +5,9 @@ import { prisma } from "~/utils/database.server";
 
 // Helper to convert Prisma TemplateType enum to TypeScript TemplateType
 function convertPrismaTemplateTypeToTS(prismaType: string): Template["type"] {
+  if (!prismaType) {
+    return "resume"; // Default fallback
+  }
   if (prismaType === TemplateType.reportCards) {
     return "report-cards";
   }

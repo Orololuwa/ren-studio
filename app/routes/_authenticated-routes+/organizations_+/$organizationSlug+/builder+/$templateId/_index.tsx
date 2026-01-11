@@ -258,7 +258,15 @@ export default function BuilderEditorRoute({
         </div>
 
         {/* Side panel on the right - switches between ComponentPalette and PropertiesPanel */}
-        {selectedSectionId ? <PropertiesPanel /> : <ComponentPalette />}
+        {selectedSectionId ? (
+          <PropertiesPanel />
+        ) : (
+          <ComponentPalette
+            initialTemplateType={
+              currentTemplate?.type || loaderData.template?.type
+            }
+          />
+        )}
 
         <PreviewModal onOpenChange={setPreviewOpen} open={previewOpen} />
       </div>

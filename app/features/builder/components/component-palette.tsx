@@ -6,9 +6,11 @@ import {
   FolderKanban,
   GraduationCap,
   Languages,
+  List,
   Star,
 } from "lucide-react";
 
+import { useBuilderStore } from "../store/builder-store";
 import type { ComponentDefinition } from "../types";
 import { componentLibrary } from "./component-library";
 
@@ -21,9 +23,46 @@ const iconMap: Record<string, React.ReactNode> = {
   projects: <FolderKanban className="w-5 h-5" />,
   skills: <Star className="w-5 h-5" />,
   summary: <FileText className="w-5 h-5" />,
+  "invoice-header": <FileText className="w-5 h-5" />,
+  "invoice-items": <List className="w-5 h-5" />,
+  "invoice-footer": <FileText className="w-5 h-5" />,
 };
 
-export function ComponentPalette() {
+export function ComponentPalette({
+  initialTemplateType,
+}: {
+  initialTemplateType?: string;
+} = {}) {
+  const { currentTemplate } = useBuilderStore();
+  // Use currentTemplate type if available, otherwise fall back to initialTemplateType
+  const templateType = currentTemplate?.type || initialTemplateType;
+
+  // Get components based on template type
+  const getComponentsForType = (type: string | undefined): string[] => {
+    if (!type) {
+      return []; // No template loaded, show empty palette
+    }
+    switch (type) {
+      case "invoice":
+        return ["invoice-header", "invoice-items", "invoice-footer"];
+      case "resume":
+        return [
+          "header",
+          "summary",
+          "experience",
+          "education",
+          "skills",
+          "projects",
+          "certifications",
+          "languages",
+        ];
+      default:
+        return [];
+    }
+  };
+
+  const componentTypes = getComponentsForType(templateType);
+
   return (
     <div
       className="h-[calc(100vh-4rem)] w-80 bg-muted/30 border-l border-border overflow-y-auto"
@@ -43,26 +82,30 @@ export function ComponentPalette() {
           Drag components to add them to your template
         </p>
 
-        <div className="space-y-3" data-testid="component-palette-list">
-          {[
-            "header",
-            "summary",
-            "experience",
-            "education",
-            "skills",
-            "projects",
-            "certifications",
-            "languages",
-          ]
-            .map((type) => componentLibrary[type])
-            .filter(
-              (component): component is ComponentDefinition =>
-                component !== undefined,
-            )
-            .map((component) => (
-              <DraggableComponent component={component} key={component.type} />
-            ))}
-        </div>
+        {!templateType ? (
+          <div className="text-sm text-muted-foreground text-center py-8">
+            Load a template to see available components
+          </div>
+        ) : componentTypes.length === 0 ? (
+          <div className="text-sm text-muted-foreground text-center py-8">
+            No components available for this template type
+          </div>
+        ) : (
+          <div className="space-y-3" data-testid="component-palette-list">
+            {componentTypes
+              .map((type) => componentLibrary[type])
+              .filter(
+                (component): component is ComponentDefinition =>
+                  component !== undefined,
+              )
+              .map((component) => (
+                <DraggableComponent
+                  component={component}
+                  key={component.type}
+                />
+              ))}
+          </div>
+        )}
       </div>
     </div>
   );

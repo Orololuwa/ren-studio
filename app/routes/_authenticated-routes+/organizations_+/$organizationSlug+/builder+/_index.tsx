@@ -146,44 +146,48 @@ export default function BuilderRoute({ loaderData }: Route.ComponentProps) {
               className="grid gap-4 md:grid-cols-2 lg:grid-cols-3"
               data-testid="template-grid"
             >
-              {templates.map((template) => (
-                <Card
-                  className="flex flex-col"
-                  data-testid={`template-card-${template.id}`}
-                  key={template.id}
-                >
-                  <CardHeader>
-                    <div className="bg-muted/50 aspect-4/3 rounded-lg mb-4 flex items-center justify-center">
-                      <span className="text-muted-foreground text-sm">
-                        {template.name} Preview
-                      </span>
-                    </div>
-                    <CardTitle
-                      data-testid={`template-card-title-${template.id}`}
-                    >
-                      {template.name}
-                    </CardTitle>
-                    <CardDescription
-                      data-testid={`template-card-description-${template.id}`}
-                    >
-                      {template.type.charAt(0).toUpperCase() +
-                        template.type.slice(1)}{" "}
-                      Template
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="flex-1" />
-                  <CardFooter>
-                    <Button
-                      className="w-full"
-                      data-testid={`template-customize-button-${template.id}`}
-                      onClick={() => handleCustomize(template.id)}
-                      variant="outline"
-                    >
-                      Customize
-                    </Button>
-                  </CardFooter>
-                </Card>
-              ))}
+              {templates
+                .filter((template) => template?.id && template.name)
+                .map((template) => (
+                  <Card
+                    className="flex flex-col"
+                    data-testid={`template-card-${template.id}`}
+                    key={template.id}
+                  >
+                    <CardHeader>
+                      <div className="bg-muted/50 aspect-4/3 rounded-lg mb-4 flex items-center justify-center">
+                        <span className="text-muted-foreground text-sm">
+                          {template.name} Preview
+                        </span>
+                      </div>
+                      <CardTitle
+                        data-testid={`template-card-title-${template.id}`}
+                      >
+                        {template.name}
+                      </CardTitle>
+                      <CardDescription
+                        data-testid={`template-card-description-${template.id}`}
+                      >
+                        {template.type
+                          ? template.type.charAt(0).toUpperCase() +
+                            template.type.slice(1)
+                          : "Template"}{" "}
+                        Template
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="flex-1" />
+                    <CardFooter>
+                      <Button
+                        className="w-full"
+                        data-testid={`template-customize-button-${template.id}`}
+                        onClick={() => handleCustomize(template.id)}
+                        variant="outline"
+                      >
+                        Customize
+                      </Button>
+                    </CardFooter>
+                  </Card>
+                ))}
             </div>
           )}
         </TabsContent>

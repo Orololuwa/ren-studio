@@ -6,6 +6,7 @@ import type {
   CertificationEntry,
   EducationEntry,
   ExperienceEntry,
+  InvoiceItem,
   LanguageEntry,
   ProjectEntry,
   SocialLink,
@@ -1105,6 +1106,455 @@ export function PropertiesPanel() {
                 </div>
               </div>
             ))}
+          </div>
+        );
+      }
+
+      case "invoice-header": {
+        return (
+          <div className="space-y-4">
+            <div>
+              <Label className="text-xs" htmlFor="companyLogo">
+                Company Logo URL
+              </Label>
+              <Input
+                className="mt-1"
+                id="companyLogo"
+                onChange={(e) => updateData("companyLogo", e.target.value)}
+                placeholder="https://example.com/logo.png"
+                type="url"
+                value={String(section.data.companyLogo || "")}
+              />
+              {Boolean(section.data.companyLogo) && (
+                <div className="mt-2">
+                  <img
+                    alt="Logo Preview"
+                    className="h-12 object-contain border rounded"
+                    src={String(section.data.companyLogo)}
+                  />
+                </div>
+              )}
+            </div>
+            <div>
+              <Label className="text-xs" htmlFor="companyName">
+                Company Name
+              </Label>
+              <Input
+                className="mt-1"
+                id="companyName"
+                onChange={(e) => updateData("companyName", e.target.value)}
+                placeholder="Your Company Name"
+                value={String(section.data.companyName || "")}
+              />
+            </div>
+            <div>
+              <Label className="text-xs" htmlFor="companyAddress">
+                Company Address
+              </Label>
+              <textarea
+                className="mt-1 flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                id="companyAddress"
+                onChange={(e) => updateData("companyAddress", e.target.value)}
+                placeholder="123 Business St&#10;City, State 12345"
+                value={String(section.data.companyAddress || "")}
+              />
+            </div>
+            <div>
+              <Label className="text-xs" htmlFor="companyEmail">
+                Company Email
+              </Label>
+              <Input
+                className="mt-1"
+                id="companyEmail"
+                onChange={(e) => updateData("companyEmail", e.target.value)}
+                placeholder="contact@company.com"
+                type="email"
+                value={String(section.data.companyEmail || "")}
+              />
+            </div>
+            <div>
+              <Label className="text-xs" htmlFor="companyPhone">
+                Company Phone
+              </Label>
+              <Input
+                className="mt-1"
+                id="companyPhone"
+                onChange={(e) => updateData("companyPhone", e.target.value)}
+                placeholder="+1 (555) 123-4567"
+                type="tel"
+                value={String(section.data.companyPhone || "")}
+              />
+            </div>
+            <div>
+              <Label className="text-xs" htmlFor="invoiceNumber">
+                Invoice Number
+              </Label>
+              <Input
+                className="mt-1"
+                id="invoiceNumber"
+                onChange={(e) => updateData("invoiceNumber", e.target.value)}
+                placeholder="INV-001"
+                value={String(section.data.invoiceNumber || "")}
+              />
+            </div>
+            <div>
+              <Label className="text-xs" htmlFor="invoiceDate">
+                Invoice Date
+              </Label>
+              <Input
+                className="mt-1"
+                id="invoiceDate"
+                onChange={(e) => updateData("invoiceDate", e.target.value)}
+                placeholder="01/15/2024"
+                value={String(section.data.invoiceDate || "")}
+              />
+            </div>
+            <div>
+              <Label className="text-xs" htmlFor="dueDate">
+                Due Date
+              </Label>
+              <Input
+                className="mt-1"
+                id="dueDate"
+                onChange={(e) => updateData("dueDate", e.target.value)}
+                placeholder="02/15/2024"
+                value={String(section.data.dueDate || "")}
+              />
+            </div>
+            <div>
+              <Label className="text-xs" htmlFor="billToName">
+                Bill To Name
+              </Label>
+              <Input
+                className="mt-1"
+                id="billToName"
+                onChange={(e) => updateData("billToName", e.target.value)}
+                placeholder="Client Name"
+                value={String(section.data.billToName || "")}
+              />
+            </div>
+            <div>
+              <Label className="text-xs" htmlFor="billToAddress">
+                Bill To Address
+              </Label>
+              <textarea
+                className="mt-1 flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                id="billToAddress"
+                onChange={(e) => updateData("billToAddress", e.target.value)}
+                placeholder="456 Client Ave&#10;City, State 67890"
+                value={String(section.data.billToAddress || "")}
+              />
+            </div>
+            <div>
+              <Label className="text-xs" htmlFor="shipToName">
+                Ship To Name (Optional)
+              </Label>
+              <Input
+                className="mt-1"
+                id="shipToName"
+                onChange={(e) => updateData("shipToName", e.target.value)}
+                placeholder="Shipping Name"
+                value={String(section.data.shipToName || "")}
+              />
+            </div>
+            <div>
+              <Label className="text-xs" htmlFor="shipToAddress">
+                Ship To Address (Optional)
+              </Label>
+              <textarea
+                className="mt-1 flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                id="shipToAddress"
+                onChange={(e) => updateData("shipToAddress", e.target.value)}
+                placeholder="789 Shipping St&#10;City, State 54321"
+                value={String(section.data.shipToAddress || "")}
+              />
+            </div>
+          </div>
+        );
+      }
+
+      case "invoice-items": {
+        const items = (
+          Array.isArray(section.data.items) ? section.data.items : []
+        ) as InvoiceItem[];
+
+        const addItem = () => {
+          const newItem: InvoiceItem = {
+            description: "",
+            quantity: "1",
+            unitPrice: "0.00",
+            total: "0.00",
+          };
+          updateData("items", [...items, newItem]);
+        };
+
+        const deleteItem = (idx: number) => {
+          const newItems = items.filter((_, i) => i !== idx);
+          updateData("items", newItems);
+        };
+
+        const updateItem = (
+          idx: number,
+          field: keyof InvoiceItem,
+          value: string,
+        ) => {
+          const newItems = [...items];
+          if (newItems[idx]) {
+            newItems[idx] = { ...newItems[idx], [field]: value };
+            // Auto-calculate total if quantity or unitPrice changes
+            if (field === "quantity" || field === "unitPrice") {
+              const qty = Number.parseFloat(newItems[idx].quantity || "0");
+              const price = Number.parseFloat(newItems[idx].unitPrice || "0");
+              newItems[idx].total = (qty * price).toFixed(2);
+            }
+          }
+          updateData("items", newItems);
+        };
+
+        return (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <Label className="text-xs font-medium">Invoice Items</Label>
+              <Button
+                onClick={addItem}
+                size="sm"
+                type="button"
+                variant="outline"
+              >
+                <Plus className="w-4 h-4 mr-1" />
+                Add Item
+              </Button>
+            </div>
+            <div className="space-y-4">
+              {items.map((item, idx) => (
+                <div
+                  className="p-3 border rounded-lg space-y-3 bg-background"
+                  key={`item-${item.description}-${item.quantity}-${item.unitPrice}-${idx}`}
+                >
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs font-medium">
+                      Item {idx + 1}
+                    </Label>
+                    <Button
+                      onClick={() => deleteItem(idx)}
+                      size="sm"
+                      type="button"
+                      variant="ghost"
+                    >
+                      <Trash2 className="w-4 h-4 text-destructive" />
+                    </Button>
+                  </div>
+                  <div>
+                    <Label className="text-xs" htmlFor={`item-desc-${idx}`}>
+                      Description
+                    </Label>
+                    <Input
+                      className="mt-1"
+                      id={`item-desc-${idx}`}
+                      onChange={(e) =>
+                        updateItem(idx, "description", e.target.value)
+                      }
+                      placeholder="Service or Product Description"
+                      value={item.description || ""}
+                    />
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    <div>
+                      <Label className="text-xs" htmlFor={`item-qty-${idx}`}>
+                        Quantity
+                      </Label>
+                      <Input
+                        className="mt-1"
+                        id={`item-qty-${idx}`}
+                        onChange={(e) =>
+                          updateItem(idx, "quantity", e.target.value)
+                        }
+                        placeholder="1"
+                        type="number"
+                        value={item.quantity || ""}
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs" htmlFor={`item-price-${idx}`}>
+                        Unit Price
+                      </Label>
+                      <Input
+                        className="mt-1"
+                        id={`item-price-${idx}`}
+                        onChange={(e) =>
+                          updateItem(idx, "unitPrice", e.target.value)
+                        }
+                        placeholder="0.00"
+                        step="0.01"
+                        type="number"
+                        value={item.unitPrice || ""}
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs" htmlFor={`item-total-${idx}`}>
+                        Total
+                      </Label>
+                      <Input
+                        className="mt-1"
+                        id={`item-total-${idx}`}
+                        onChange={(e) =>
+                          updateItem(idx, "total", e.target.value)
+                        }
+                        placeholder="0.00"
+                        step="0.01"
+                        type="number"
+                        value={item.total || ""}
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {items.length === 0 && (
+                <div className="text-sm text-muted-foreground text-center py-4">
+                  No items added. Click "Add Item" to add invoice line items.
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      }
+
+      case "invoice-footer": {
+        // Auto-calculate totals when subtotal, tax rate, or discount changes
+
+        return (
+          <div className="space-y-4">
+            <div>
+              <Label className="text-xs" htmlFor="subtotal">
+                Subtotal
+              </Label>
+              <Input
+                className="mt-1"
+                id="subtotal"
+                onChange={(e) => updateData("subtotal", e.target.value)}
+                placeholder="0.00"
+                step="0.01"
+                type="number"
+                value={String(section.data.subtotal || "")}
+              />
+            </div>
+            <div>
+              <Label className="text-xs" htmlFor="taxRate">
+                Tax Rate (%)
+              </Label>
+              <Input
+                className="mt-1"
+                id="taxRate"
+                onChange={(e) => {
+                  updateData("taxRate", e.target.value);
+                  const rate = Number.parseFloat(e.target.value || "0");
+                  const subtotal = Number.parseFloat(
+                    String(section.data.subtotal || "0"),
+                  );
+                  if (rate > 0 && subtotal > 0) {
+                    const taxAmount = (subtotal * rate) / 100;
+                    updateData("taxAmount", taxAmount.toFixed(2));
+                    const discount = Number.parseFloat(
+                      String(section.data.discount || "0"),
+                    );
+                    const total = subtotal + taxAmount - discount;
+                    updateData("total", total.toFixed(2));
+                  }
+                }}
+                placeholder="10"
+                step="0.01"
+                type="number"
+                value={String(section.data.taxRate || "")}
+              />
+            </div>
+            <div>
+              <Label className="text-xs" htmlFor="taxAmount">
+                Tax Amount
+              </Label>
+              <Input
+                className="mt-1"
+                id="taxAmount"
+                onChange={(e) => {
+                  updateData("taxAmount", e.target.value);
+                  const subtotal = Number.parseFloat(
+                    String(section.data.subtotal || "0"),
+                  );
+                  const taxAmount = Number.parseFloat(e.target.value || "0");
+                  const discount = Number.parseFloat(
+                    String(section.data.discount || "0"),
+                  );
+                  const total = subtotal + taxAmount - discount;
+                  updateData("total", total.toFixed(2));
+                }}
+                placeholder="0.00"
+                step="0.01"
+                type="number"
+                value={String(section.data.taxAmount || "")}
+              />
+            </div>
+            <div>
+              <Label className="text-xs" htmlFor="discount">
+                Discount
+              </Label>
+              <Input
+                className="mt-1"
+                id="discount"
+                onChange={(e) => {
+                  updateData("discount", e.target.value);
+                  const subtotal = Number.parseFloat(
+                    String(section.data.subtotal || "0"),
+                  );
+                  const taxAmount = Number.parseFloat(
+                    String(section.data.taxAmount || "0"),
+                  );
+                  const discount = Number.parseFloat(e.target.value || "0");
+                  const total = subtotal + taxAmount - discount;
+                  updateData("total", total.toFixed(2));
+                }}
+                placeholder="0.00"
+                step="0.01"
+                type="number"
+                value={String(section.data.discount || "")}
+              />
+            </div>
+            <div>
+              <Label className="text-xs" htmlFor="total">
+                Total
+              </Label>
+              <Input
+                className="mt-1 font-semibold"
+                id="total"
+                onChange={(e) => updateData("total", e.target.value)}
+                placeholder="0.00"
+                step="0.01"
+                type="number"
+                value={String(section.data.total || "")}
+              />
+            </div>
+            <div>
+              <Label className="text-xs" htmlFor="paymentTerms">
+                Payment Terms
+              </Label>
+              <Input
+                className="mt-1"
+                id="paymentTerms"
+                onChange={(e) => updateData("paymentTerms", e.target.value)}
+                placeholder="Net 30"
+                value={String(section.data.paymentTerms || "")}
+              />
+            </div>
+            <div>
+              <Label className="text-xs" htmlFor="notes">
+                Notes
+              </Label>
+              <textarea
+                className="mt-1 flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                id="notes"
+                onChange={(e) => updateData("notes", e.target.value)}
+                placeholder="Thank you for your business!"
+                value={String(section.data.notes || "")}
+              />
+            </div>
           </div>
         );
       }
