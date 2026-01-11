@@ -12,27 +12,48 @@ import {
   CardTitle,
 } from "~/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
+import { retrieveTemplatesByOrganizationIdAndType } from "~/features/builder/builder-model.server";
 import { getTemplatesByType } from "~/features/builder/templates";
 import { getInstance } from "~/features/localization/i18next-middleware.server";
+import { organizationMembershipContext } from "~/features/organizations/organizations-middleware.server";
 import { getPageTitle } from "~/utils/get-page-title.server";
 
 export async function loader({ params, context }: Route.LoaderArgs) {
+  const { organization } = context.get(organizationMembershipContext);
   const i18n = getInstance(context);
   const t = i18n.t.bind(i18n);
 
-  // Load predefined templates only
-  // Note: Database access will be added in Phase 8 after schema is created
+  // Load templates from database
+  const dbResume = await retrieveTemplatesByOrganizationIdAndType({
+    organizationId: organization.id,
+    type: "resume",
+  });
+  const dbInvoice = await retrieveTemplatesByOrganizationIdAndType({
+    organizationId: organization.id,
+    type: "invoice",
+  });
+  const dbCertificate = await retrieveTemplatesByOrganizationIdAndType({
+    organizationId: organization.id,
+    type: "certificate",
+  });
+  const dbReportCards = await retrieveTemplatesByOrganizationIdAndType({
+    organizationId: organization.id,
+    type: "report-cards",
+  });
+
+  // Load predefined templates
   const predefinedResume = getTemplatesByType("resume");
   const predefinedInvoice = getTemplatesByType("invoice");
   const predefinedCertificate = getTemplatesByType("certificate");
   const predefinedReportCards = getTemplatesByType("report-cards");
 
-  // Group templates by type (only predefined for now)
+  // Merge database templates with predefined templates
+  // Database templates come first, then predefined templates
   const templatesByType = {
-    certificate: predefinedCertificate,
-    invoice: predefinedInvoice,
-    "report-cards": predefinedReportCards,
-    resume: predefinedResume,
+    certificate: [...dbCertificate, ...predefinedCertificate],
+    invoice: [...dbInvoice, ...predefinedInvoice],
+    "report-cards": [...dbReportCards, ...predefinedReportCards],
+    resume: [...dbResume, ...predefinedResume],
   };
 
   return {

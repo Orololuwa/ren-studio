@@ -114,6 +114,9 @@ export function SectionRenderer({
 
     switch (section.type) {
       case "header": {
+        const contact = section.data.contact
+          ? String(section.data.contact)
+          : null;
         const email = section.data.email ? String(section.data.email) : null;
         const phone = section.data.phone ? String(section.data.phone) : null;
         const location = section.data.location
@@ -174,85 +177,89 @@ export function SectionRenderer({
                 {section.data.title as string}
               </button>
             </h2>
-            <button
-              aria-label="Edit contact information"
-              className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left"
-              onClick={(e) =>
-                handleFieldClick(
-                  e,
-                  ["contact"],
-                  section.data.contact as string,
-                  "Contact",
-                  false,
-                )
-              }
-              onKeyDown={(e) =>
-                handleFieldKeyDown(
-                  e,
-                  ["contact"],
-                  section.data.contact as string,
-                  "Contact",
-                  false,
-                )
-              }
-              type="button"
-            >
-              {String(section.data.contact ?? "") || "Click to add contact"}
-            </button>
-            {email && (
-              <button
-                className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left"
-                onClick={(e) =>
-                  handleFieldClick(e, ["email"], email, "Email", false)
-                }
-                onKeyDown={(e) =>
-                  handleFieldKeyDown(e, ["email"], email, "Email", false)
-                }
-                type="button"
-              >
-                {email}
-              </button>
-            )}
-            {phone && (
-              <button
-                className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left"
-                onClick={(e) =>
-                  handleFieldClick(e, ["phone"], phone, "Phone", false)
-                }
-                onKeyDown={(e) =>
-                  handleFieldKeyDown(e, ["phone"], phone, "Phone", false)
-                }
-                type="button"
-              >
-                {phone}
-              </button>
-            )}
-            {location && (
-              <button
-                className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left"
-                onClick={(e) =>
-                  handleFieldClick(e, ["location"], location, "Location", false)
-                }
-                onKeyDown={(e) =>
-                  handleFieldKeyDown(
-                    e,
-                    ["location"],
-                    location,
-                    "Location",
-                    false,
-                  )
-                }
-                type="button"
-              >
-                {location}
-              </button>
-            )}
+            <div className="flex flex-wrap gap-2 justify-center">
+              {contact && (
+                <button
+                  aria-label="Edit contact information"
+                  className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left"
+                  onClick={(e) =>
+                    handleFieldClick(e, ["contact"], contact, "Contact", false)
+                  }
+                  onKeyDown={(e) =>
+                    handleFieldKeyDown(
+                      e,
+                      ["contact"],
+                      contact,
+                      "Contact",
+                      false,
+                    )
+                  }
+                  type="button"
+                >
+                  {contact}
+                </button>
+              )}
+              {email && (
+                <button
+                  className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left"
+                  onClick={(e) =>
+                    handleFieldClick(e, ["email"], email, "Email", false)
+                  }
+                  onKeyDown={(e) =>
+                    handleFieldKeyDown(e, ["email"], email, "Email", false)
+                  }
+                  type="button"
+                >
+                  {email}
+                </button>
+              )}
+              {phone && (
+                <button
+                  className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left"
+                  onClick={(e) =>
+                    handleFieldClick(e, ["phone"], phone, "Phone", false)
+                  }
+                  onKeyDown={(e) =>
+                    handleFieldKeyDown(e, ["phone"], phone, "Phone", false)
+                  }
+                  type="button"
+                >
+                  {phone}
+                </button>
+              )}
+              {location && (
+                <button
+                  className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left"
+                  onClick={(e) =>
+                    handleFieldClick(
+                      e,
+                      ["location"],
+                      location,
+                      "Location",
+                      false,
+                    )
+                  }
+                  onKeyDown={(e) =>
+                    handleFieldKeyDown(
+                      e,
+                      ["location"],
+                      location,
+                      "Location",
+                      false,
+                    )
+                  }
+                  type="button"
+                >
+                  {location}
+                </button>
+              )}
+            </div>
             {Array.isArray(section.data.socialLinks) &&
               section.data.socialLinks.length > 0 && (
                 <div className="mt-2 flex flex-wrap gap-2 justify-center">
                   {(section.data.socialLinks as SocialLink[]).map((link) => (
                     <a
-                      className="text-blue-600 hover:text-blue-800 underline"
+                      className="underline hover:opacity-80"
                       href={link.link}
                       key={`social-${link.name}-${link.link}`}
                       onClick={(e) => e.stopPropagation()}
@@ -274,7 +281,7 @@ export function SectionRenderer({
         ) as ExperienceEntry[];
         return (
           <div className="text-gray-900" style={sectionStyles}>
-            <h2 className="text-gray-900">Work Experience</h2>
+            <h2 className="text-gray-900 text-xl font-bold">Work Experience</h2>
             {experiences.map((exp, idx) => (
               <div
                 className="mb-4"
@@ -282,7 +289,7 @@ export function SectionRenderer({
               >
                 <h3 className="text-gray-900">
                   <button
-                    className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left font-semibold"
+                    className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left font-semibold text-base"
                     onClick={(e) =>
                       handleFieldClick(
                         e,
@@ -423,7 +430,7 @@ export function SectionRenderer({
         ) as EducationEntry[];
         return (
           <div className="text-gray-900" style={sectionStyles}>
-            <h2 className="text-gray-900">Education</h2>
+            <h2 className="text-gray-900 text-xl font-bold">Education</h2>
             {educations.map((edu, idx) => (
               <div
                 className="mb-4"
@@ -431,7 +438,7 @@ export function SectionRenderer({
               >
                 <h3 className="text-gray-900">
                   <button
-                    className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left font-semibold"
+                    className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left font-semibold text-base"
                     onClick={(e) =>
                       handleFieldClick(
                         e,
@@ -518,7 +525,7 @@ export function SectionRenderer({
           : [];
         return (
           <div className="text-gray-900" style={sectionStyles}>
-            <h2 className="text-gray-900">
+            <h2 className="text-gray-900 text-xl font-bold">
               {(section.data.category as string) || "Skills"}
             </h2>
             <div className="flex flex-wrap gap-2">
@@ -538,7 +545,7 @@ export function SectionRenderer({
       case "summary":
         return (
           <div className="text-gray-900" style={sectionStyles}>
-            <h2 className="text-gray-900">Summary</h2>
+            <h2 className="text-gray-900 text-xl font-bold">Summary</h2>
             {/* biome-ignore lint/a11y/useSemanticElements: Rich text content div needs to be clickable but cannot be a button element */}
             <div
               className="rich-text-content cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left block w-full"
@@ -577,12 +584,12 @@ export function SectionRenderer({
         ) as CertificationEntry[];
         return (
           <div className="text-gray-900" style={sectionStyles}>
-            <h2 className="text-gray-900">Certifications</h2>
+            <h2 className="text-gray-900 text-xl font-bold">Certifications</h2>
             {certifications.map((cert, idx) => (
               <div className="mb-4" key={`cert-${cert.name}-${idx}`}>
                 <h3 className="text-gray-900">
                   <button
-                    className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left font-semibold"
+                    className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left font-semibold text-base"
                     onClick={(e) =>
                       handleFieldClick(
                         e,
@@ -660,7 +667,7 @@ export function SectionRenderer({
                     <>
                       {" - "}
                       <a
-                        className="text-blue-600 hover:text-blue-800 underline"
+                        className="underline hover:opacity-80"
                         href={cert.link}
                         onClick={(e) => e.stopPropagation()}
                         rel="noopener noreferrer"
@@ -683,12 +690,12 @@ export function SectionRenderer({
         ) as ProjectEntry[];
         return (
           <div className="text-gray-900" style={sectionStyles}>
-            <h2 className="text-gray-900">Projects</h2>
+            <h2 className="text-gray-900 text-xl font-bold">Projects</h2>
             {projects.map((project, idx) => (
               <div className="mb-4" key={`project-${project.name}-${idx}`}>
                 <h3 className="text-gray-900">
                   <button
-                    className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left font-semibold"
+                    className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left font-semibold text-base"
                     onClick={(e) =>
                       handleFieldClick(
                         e,
@@ -715,7 +722,7 @@ export function SectionRenderer({
                     <>
                       {" - "}
                       <a
-                        className="text-blue-600 hover:text-blue-800 underline"
+                        className="underline hover:opacity-80"
                         href={project.link}
                         onClick={(e) => e.stopPropagation()}
                         rel="noopener noreferrer"
@@ -806,7 +813,7 @@ export function SectionRenderer({
         ) as LanguageEntry[];
         return (
           <div className="text-gray-900" style={sectionStyles}>
-            <h2 className="text-gray-900">Languages</h2>
+            <h2 className="text-gray-900 text-xl font-bold">Languages</h2>
             <div className="space-y-2">
               {languages.map((lang, idx) => (
                 <div

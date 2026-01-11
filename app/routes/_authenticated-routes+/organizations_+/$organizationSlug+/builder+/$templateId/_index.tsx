@@ -7,10 +7,15 @@ import {
   useSensors,
 } from "@dnd-kit/core";
 import { useEffect, useState } from "react";
-import { href, useNavigate, useParams } from "react-router";
+import { data, href, useNavigate, useParams } from "react-router";
+import { z } from "zod";
 
 import type { Route } from "../$templateId/+types/_index";
 import { Button } from "~/components/ui/button";
+import {
+  retrieveTemplateFromDatabaseById,
+  saveTemplateToDatabase,
+} from "~/features/builder/builder-model.server";
 import { ComponentPalette } from "~/features/builder/components/component-palette";
 import { ExportButton } from "~/features/builder/components/export-button";
 import { PreviewModal } from "~/features/builder/components/preview-modal";
@@ -18,16 +23,60 @@ import { PropertiesPanel } from "~/features/builder/components/properties-panel"
 import { TemplateCanvas } from "~/features/builder/components/template-canvas";
 import { useBuilderStore } from "~/features/builder/store/builder-store";
 import { getTemplateById } from "~/features/builder/templates";
+import type { Template, TemplateSection } from "~/features/builder/types";
 import { getInstance } from "~/features/localization/i18next-middleware.server";
+import { organizationMembershipContext } from "~/features/organizations/organizations-middleware.server";
 import { getPageTitle } from "~/utils/get-page-title.server";
+import { createToastHeaders } from "~/utils/toast.server";
+import { validateFormData } from "~/utils/validate-form-data.server";
 
-export function loader({ params, context }: Route.LoaderArgs) {
+const saveTemplateSchema = z.object({
+  globalStyles: z
+    .union([z.record(z.string(), z.string()), z.string()])
+    .transform((val) => {
+      if (typeof val === "string") {
+        return JSON.parse(val) as Record<string, string>;
+      }
+      return val;
+    }),
+  intent: z.literal("save"),
+  name: z.string(),
+  sections: z.union([z.array(z.any()), z.string()]).transform((val) => {
+    if (typeof val === "string") {
+      return JSON.parse(val) as unknown[];
+    }
+    return val;
+  }),
+  templateId: z.string().optional(),
+  type: z.enum(["resume", "invoice", "certificate", "report-cards"]),
+});
+
+const actionSchema = saveTemplateSchema;
+
+export async function loader({ params, context }: Route.LoaderArgs) {
+  const { organization } = context.get(organizationMembershipContext);
   const i18n = getInstance(context);
   const t = i18n.t.bind(i18n);
   const typedParams = params as {
     organizationSlug: string;
     templateId: string;
   };
+
+  // Try to fetch from database first
+  let template: Template | null = null;
+  try {
+    template = await retrieveTemplateFromDatabaseById({
+      organizationId: organization.id,
+      templateId: typedParams.templateId,
+    });
+  } catch {
+    // If not found in database, fall back to predefined templates
+  }
+
+  // Fallback to predefined templates if not found in database
+  if (!template) {
+    template = getTemplateById(typedParams.templateId) || null;
+  }
 
   return {
     breadcrumb: {
@@ -39,8 +88,55 @@ export function loader({ params, context }: Route.LoaderArgs) {
     },
     organizationSlug: typedParams.organizationSlug,
     pageTitle: getPageTitle(t, "organizations:builder.pageTitle"),
+    template,
     templateId: typedParams.templateId,
   };
+}
+
+export async function action({ request, context }: Route.ActionArgs) {
+  const { organization, headers } = context.get(organizationMembershipContext);
+
+  const result = await validateFormData(request, actionSchema);
+
+  if (!result.success) {
+    console.error("Validation failed:", result.response);
+    return result.response;
+  }
+
+  const { data: body } = result;
+
+  switch (body.intent) {
+    case "save": {
+      const template: Omit<Template, "createdAt" | "updatedAt"> = {
+        globalStyles: body.globalStyles as Record<string, string>,
+        id: body.templateId || "",
+        name: body.name,
+        organizationId: organization.id,
+        sections: body.sections as TemplateSection[],
+        type: body.type,
+      };
+
+      const savedTemplate = await saveTemplateToDatabase({
+        organizationId: organization.id,
+        template,
+      });
+
+      const toastHeaders = await createToastHeaders({
+        description: "Your template has been saved successfully.",
+        title: "Template saved",
+      });
+
+      return data(
+        { success: true, template: savedTemplate },
+        {
+          headers: {
+            ...Object.fromEntries(headers),
+            ...Object.fromEntries(toastHeaders),
+          },
+        },
+      );
+    }
+  }
 }
 
 export const meta: Route.MetaFunction = ({ loaderData }) => [
@@ -73,20 +169,18 @@ export default function BuilderEditorRoute({
   const organizationSlug =
     params.organizationSlug || loaderData.organizationSlug;
 
-  // Load template on mount from predefined templates
-  // Note: Database loading will be added in Phase 8 after schema is created
+  // Load template on mount from loader data (database or predefined)
   useEffect(() => {
     if (!templateId) return;
 
-    // Always reload template when templateId changes, even if store has a template
-    // This ensures navigation between templates works correctly
-    const template = getTemplateById(templateId);
+    // Use template from loader data
+    const template = loaderData.template;
 
     if (template) {
-      // Create a copy for editing (with organization ID)
+      // Ensure organizationId is set correctly
       const editableTemplate = {
         ...template,
-        organizationId: organizationSlug || "", // Using slug as placeholder until Phase 8
+        organizationId: organizationSlug || "",
       };
       setCurrentTemplate(editableTemplate);
       selectSection(null); // Reset selected section when loading new template
@@ -94,7 +188,13 @@ export default function BuilderEditorRoute({
     } else {
       setTemplateNotFound(true);
     }
-  }, [templateId, organizationSlug, setCurrentTemplate, selectSection]);
+  }, [
+    templateId,
+    organizationSlug,
+    loaderData.template,
+    setCurrentTemplate,
+    selectSection,
+  ]);
 
   if (templateNotFound) {
     return (

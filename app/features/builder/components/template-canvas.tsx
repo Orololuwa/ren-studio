@@ -14,11 +14,22 @@ import { SectionWrapper } from "./section-wrapper";
 // Create default section config for new sections with mock data
 function createDefaultSectionConfig(
   type: string,
+  existingSections: TemplateSection[] = [],
 ): Omit<TemplateSection, "id" | "order"> {
   const component = componentLibrary[type];
   if (!component) {
     throw new Error(`Component type ${type} not found`);
   }
+
+  // Try to find an existing section of the same type to inherit styles from
+  const existingSectionOfType = existingSections.find(
+    (section) => section.type === type,
+  );
+
+  // If no section of same type, use any existing section's style pattern (excluding header)
+  const styleReference =
+    existingSectionOfType ||
+    existingSections.find((section) => section.type !== "header");
 
   // Mock data for each section type
   const mockData: Record<string, Record<string, unknown>> = {
@@ -106,9 +117,37 @@ function createDefaultSectionConfig(
     },
   };
 
+  // Build default styles from template or component defaults
+  let defaultStyles: Record<string, string>;
+
+  // If we have an existing section of the same type, use its styles directly
+  if (existingSectionOfType) {
+    defaultStyles = { ...existingSectionOfType.styles };
+  } else if (styleReference && type !== "header") {
+    // If no section of same type, use another section's style pattern (excluding header)
+    // Start with template styles as base (not component defaults) to avoid adding marginTop
+    defaultStyles = { ...styleReference.styles };
+    // Remove header-specific properties that shouldn't be copied to other sections
+    delete defaultStyles.backgroundColor;
+    delete defaultStyles.color;
+    delete defaultStyles.textAlign;
+  } else if (type === "header") {
+    // For header, use header section styles if available
+    const headerSection = existingSections.find((s) => s.type === "header");
+    if (headerSection) {
+      defaultStyles = { ...headerSection.styles };
+    } else {
+      // Fall back to component defaults only if no template exists
+      defaultStyles = { ...component.defaultStyles };
+    }
+  } else {
+    // No template sections exist, use component defaults
+    defaultStyles = { ...component.defaultStyles };
+  }
+
   return {
     data: mockData[type] || { ...component.defaultData },
-    styles: { ...component.defaultStyles },
+    styles: defaultStyles,
     type: component.type as TemplateSection["type"],
   };
 }
@@ -135,7 +174,10 @@ export function TemplateCanvas() {
       // Check if dragging from palette to canvas
       if (activeId.startsWith("palette-")) {
         const sectionType = activeId.replace("palette-", "");
-        const baseSection = createDefaultSectionConfig(sectionType);
+        const baseSection = createDefaultSectionConfig(
+          sectionType,
+          currentTemplate.sections,
+        );
         const maxOrder = Math.max(
           ...currentTemplate.sections.map((s) => s.order),
           -1,
