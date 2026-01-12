@@ -26,6 +26,7 @@ import {
   TooltipTrigger,
 } from "~/components/ui/tooltip";
 import { retrieveTemplatesByOrganizationIdAndType } from "~/features/builder/shared/builder-model.server";
+import { TemplatePreviewThumbnail } from "~/features/builder/shared/components/template-preview-thumbnail";
 import { getTemplatesByType } from "~/features/builder/shared/templates";
 import { getInstance } from "~/features/localization/i18next-middleware.server";
 import { organizationMembershipContext } from "~/features/organizations/organizations-middleware.server";
@@ -294,11 +295,10 @@ export default function BuilderRoute({ loaderData }: Route.ComponentProps) {
                       key={template.id}
                     >
                       <CardHeader>
-                        <div className="bg-muted/50 aspect-4/3 rounded-lg mb-4 flex items-center justify-center">
-                          <span className="text-muted-foreground text-sm">
-                            {template.name} Preview
-                          </span>
-                        </div>
+                        <TemplatePreviewThumbnail
+                          organizationSlug={organizationSlug}
+                          template={template}
+                        />
                         <CardTitle
                           data-testid={`template-card-title-${template.id}`}
                         >
