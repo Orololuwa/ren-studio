@@ -861,8 +861,12 @@ export function SectionRenderer({
 
       case "invoice-header": {
         const logoUrl = (section.data.companyLogo as string) || "";
+        // Check if section has a color style to determine if we should use white text
+        const hasColorStyle = sectionStyles.color;
+        const textColorClass = hasColorStyle ? "" : "text-gray-900";
+        const secondaryTextColorClass = hasColorStyle ? "" : "text-gray-600";
         return (
-          <div className="text-gray-900" style={sectionStyles}>
+          <div style={sectionStyles}>
             <div className="flex justify-between mb-6">
               <div>
                 {logoUrl && (
@@ -897,7 +901,7 @@ export function SectionRenderer({
                     </button>
                   </div>
                 )}
-                <h2 className="text-gray-900 text-xl font-bold mb-2">
+                <h2 className={`${textColorClass} text-xl font-bold mb-2`}>
                   <button
                     className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left"
                     onClick={(e) =>
@@ -923,7 +927,7 @@ export function SectionRenderer({
                     {(section.data.companyName as string) || "Company Name"}
                   </button>
                 </h2>
-                <div className="text-sm text-gray-600">
+                <div className={`text-sm ${secondaryTextColorClass}`}>
                   <button
                     className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left"
                     onClick={(e) =>
@@ -1004,10 +1008,12 @@ export function SectionRenderer({
                 </div>
               </div>
               <div className="text-right">
-                <h1 className="text-2xl font-bold mb-4">INVOICE</h1>
+                <h1 className={`${textColorClass} text-2xl font-bold mb-4`}>
+                  INVOICE
+                </h1>
                 <div className="text-sm space-y-1">
                   <div>
-                    <span className="text-gray-600">Invoice #: </span>
+                    <span className={secondaryTextColorClass}>Invoice #: </span>
                     <button
                       className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left"
                       onClick={(e) =>
@@ -1034,7 +1040,7 @@ export function SectionRenderer({
                     </button>
                   </div>
                   <div>
-                    <span className="text-gray-600">Date: </span>
+                    <span className={secondaryTextColorClass}>Date: </span>
                     <button
                       className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left"
                       onClick={(e) =>
@@ -1062,7 +1068,9 @@ export function SectionRenderer({
                   </div>
                   {(section.data.dueDate as string | undefined) && (
                     <div>
-                      <span className="text-gray-600">Due Date: </span>
+                      <span className={secondaryTextColorClass}>
+                        Due Date:{" "}
+                      </span>
                       <button
                         className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left"
                         onClick={(e) =>

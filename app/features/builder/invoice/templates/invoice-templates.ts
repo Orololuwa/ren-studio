@@ -93,10 +93,10 @@ export const invoiceTemplates: Template[] = [
   {
     createdAt: new Date(),
     globalStyles: {
-      backgroundColor: "#ffffff",
-      fontFamily: "Arial, sans-serif",
+      backgroundColor: "#eff6ff",
+      fontFamily: "Inter, system-ui, -apple-system, sans-serif",
       fontSize: "14px",
-      textColor: "#000000",
+      color: "#0F2854",
     },
     id: "invoice-professional",
     name: "Professional Invoice",
@@ -106,7 +106,7 @@ export const invoiceTemplates: Template[] = [
       {
         data: {
           companyLogo:
-            "https://iwvduhvsxhjpxapdochp.supabase.co/storage/v1/object/public/app-images/organization-logos/logoipsum-404.svg",
+            "https://iwvduhvsxhjpxapdochp.supabase.co/storage/v1/object/public/app-images/organization-logos/logoipsum-288.svg",
           companyName: "Your Company Name",
           companyAddress:
             "123 Business Street\nSuite 100\nCity, State 12345\nUnited States",
@@ -126,9 +126,12 @@ export const invoiceTemplates: Template[] = [
         id: "invoice-header-2",
         order: 0,
         styles: {
-          borderBottom: "2px solid #e5e7eb",
+          backgroundColor: "#4988C4",
+          color: "#ffffff",
           padding: "2rem",
           paddingBottom: "1.5rem",
+          borderTopLeftRadius: "8px",
+          borderTopRightRadius: "8px",
         },
         type: "invoice-header",
       },
@@ -164,7 +167,9 @@ export const invoiceTemplates: Template[] = [
         id: "invoice-items-2",
         order: 1,
         styles: {
-          borderBottom: "2px solid #e5e7eb",
+          backgroundColor: "#ffffff",
+          color: "#0F2854",
+          borderBottom: "2px solid #4988C4",
           padding: "1.5rem 2rem",
         },
         type: "invoice-items",
@@ -184,7 +189,11 @@ export const invoiceTemplates: Template[] = [
         id: "invoice-footer-2",
         order: 2,
         styles: {
+          backgroundColor: "#ffffff",
+          color: "#0F2854",
           padding: "1.5rem 2rem 2rem",
+          borderBottomLeftRadius: "8px",
+          borderBottomRightRadius: "8px",
         },
         type: "invoice-footer",
       },

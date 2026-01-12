@@ -183,6 +183,9 @@ function generateInvoiceHTML(
     .map((section) => renderInvoiceSectionToHTML(section))
     .join("\n");
 
+  // Get text color from global styles (supports both 'color' and 'textColor')
+  const textColor = globalStyles.color || globalStyles.textColor || "#000000";
+
   return `
 <!DOCTYPE html>
 <html lang="en">
@@ -200,6 +203,7 @@ function generateInvoiceHTML(
     body {
       ${globalCSS}
       line-height: 1.6;
+      color: ${textColor};
     }
     
     .template-container {
@@ -242,6 +246,34 @@ function generateInvoiceHTML(
       color: #6b7280;
       margin-bottom: 0.25rem;
       white-space: pre-line;
+    }
+    
+    /* When header has dark background, inherit text color */
+    .section-invoice-header[style*="background"] .invoice-company-address,
+    .section-invoice-header[style*="background"] .invoice-company-contact,
+    .section-invoice-header[style*="background"] .invoice-label,
+    .section-invoice-header[style*="background"] .invoice-client-address {
+      color: inherit;
+      opacity: 0.9;
+    }
+    
+    /* When section has color set, use it for text elements */
+    .section-invoice-items[style*="color"] .invoice-items-table,
+    .section-invoice-items[style*="color"] .invoice-items-table td,
+    .section-invoice-items[style*="color"] .invoice-items-table th {
+      color: inherit;
+    }
+    
+    .section-invoice-footer[style*="color"] .invoice-total-label,
+    .section-invoice-footer[style*="color"] .invoice-payment-terms,
+    .section-invoice-footer[style*="color"] .invoice-notes {
+      color: inherit;
+      opacity: 0.8;
+    }
+    
+    .section-invoice-footer[style*="color"] .invoice-total-value,
+    .section-invoice-footer[style*="color"] .invoice-total-final {
+      color: inherit;
     }
     
     .invoice-meta {
@@ -295,6 +327,14 @@ function generateInvoiceHTML(
       white-space: pre-line;
     }
     
+    /* Ensure text is visible on dark header backgrounds */
+    .section-invoice-header[style*="background"] h1,
+    .section-invoice-header[style*="background"] h2,
+    .section-invoice-header[style*="background"] h3,
+    .section-invoice-header[style*="background"] .invoice-client-name {
+      color: inherit;
+    }
+    
     .section-invoice-items {
       margin: 2rem 0;
     }
@@ -307,6 +347,11 @@ function generateInvoiceHTML(
     
     .invoice-items-table thead {
       background-color: #f3f4f6;
+    }
+    
+    /* Darker header for professional template */
+    .section-invoice-items[style*="background-color: #ffffff"] .invoice-items-table thead {
+      background-color: #f1f5f9;
     }
     
     .invoice-items-table th {
