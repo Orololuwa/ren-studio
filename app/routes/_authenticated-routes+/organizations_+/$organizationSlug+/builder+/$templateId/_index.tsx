@@ -6,8 +6,16 @@ import {
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
+import { ArrowLeft } from "lucide-react";
 import { useEffect, useState } from "react";
-import { data, href, useNavigate, useParams } from "react-router";
+import {
+  data,
+  href,
+  useLocation,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from "react-router";
 import { z } from "zod";
 
 import type { Route } from "../$templateId/+types/_index";
@@ -166,6 +174,7 @@ export default function BuilderEditorRoute({
 }: Route.ComponentProps) {
   const params = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [previewOpen, setPreviewOpen] = useState(false);
   const [templateNotFound, setTemplateNotFound] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -224,7 +233,12 @@ export default function BuilderEditorRoute({
           </p>
           <Button
             onClick={() => {
-              navigate(`/organizations/${organizationSlug}/builder`);
+              // Preserve search params when navigating back
+              const searchString = searchParams.toString();
+              const backUrl = `/organizations/${organizationSlug}/builder${
+                searchString ? `?${searchString}` : ""
+              }`;
+              navigate(backUrl);
             }}
             variant="outline"
           >
@@ -255,12 +269,30 @@ export default function BuilderEditorRoute({
         {/* Canvas on the left */}
         <div className="flex-1 flex flex-col overflow-hidden">
           <div className="border-b p-4 flex items-center justify-between bg-background">
-            <h2
-              className="text-lg font-semibold"
-              data-testid="template-editor-title"
-            >
-              {currentTemplate?.name || "Untitled Template"}
-            </h2>
+            <div className="flex items-center gap-3">
+              <Button
+                className="h-8 w-8"
+                onClick={() => {
+                  // Preserve search params when navigating back
+                  const searchString = searchParams.toString();
+                  const backUrl = `/organizations/${organizationSlug}/builder${
+                    searchString ? `?${searchString}` : ""
+                  }`;
+                  navigate(backUrl);
+                }}
+                size="icon"
+                variant="ghost"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                <span className="sr-only">Go back</span>
+              </Button>
+              <h2
+                className="text-lg font-semibold"
+                data-testid="template-editor-title"
+              >
+                {currentTemplate?.name || "Untitled Template"}
+              </h2>
+            </div>
             <div className="flex gap-2">
               <Button
                 data-testid="preview-button"

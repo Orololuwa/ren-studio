@@ -159,8 +159,12 @@ export default function BuilderRoute({ loaderData }: Route.ComponentProps) {
   };
 
   const handleCustomize = (templateId: string) => {
-    // Navigate to editor with template loaded
-    navigate(`/organizations/${organizationSlug}/builder/${templateId}`);
+    // Navigate to editor with template loaded, preserving search params
+    const searchString = searchParams.toString();
+    const url = `/organizations/${organizationSlug}/builder/${templateId}${
+      searchString ? `?${searchString}` : ""
+    }`;
+    navigate(url);
   };
 
   const templates =
