@@ -1,4 +1,5 @@
 import { invoiceTemplates } from "../../invoice/templates/invoice-templates";
+import { receiptTemplates } from "../../receipt/templates/receipt-templates";
 import { resumeTemplates } from "../../resume/templates/resume-templates";
 import type { Template } from "../types";
 
@@ -8,6 +9,7 @@ import type { Template } from "../types";
 export const predefinedTemplates: Record<string, Template[]> = {
   certificate: [],
   invoice: invoiceTemplates,
+  receipt: receiptTemplates,
   "report-cards": [],
   resume: resumeTemplates,
 };

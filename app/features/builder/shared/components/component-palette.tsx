@@ -45,6 +45,8 @@ export function ComponentPalette({
     switch (type) {
       case "invoice":
         return ["invoice-header", "invoice-items", "invoice-footer"];
+      case "receipt":
+        return ["receipt-header", "receipt-items", "receipt-footer"];
       case "resume":
         return [
           "header",

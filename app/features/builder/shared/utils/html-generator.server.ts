@@ -3,6 +3,10 @@ import {
   generateInvoicePreviewHTML,
 } from "../../invoice/utils/html-generator-invoice.server";
 import {
+  generateReceiptExportHTML,
+  generateReceiptPreviewHTML,
+} from "../../receipt/utils/html-generator-receipt.server";
+import {
   generateResumeExportHTML,
   generateResumePreviewHTML,
 } from "../../resume/utils/html-generator-resume.server";
@@ -21,6 +25,8 @@ export function generatePreviewHTML(
       return generateResumePreviewHTML(sections, globalStyles);
     case "invoice":
       return generateInvoicePreviewHTML(sections, globalStyles);
+    case "receipt":
+      return generateReceiptPreviewHTML(sections, globalStyles);
     default:
       // Fallback for unsupported types - return basic HTML
       return `
@@ -54,6 +60,8 @@ export function generateExportHTML(
       return generateResumeExportHTML(sections, globalStyles);
     case "invoice":
       return generateInvoiceExportHTML(sections, globalStyles);
+    case "receipt":
+      return generateReceiptExportHTML(sections, globalStyles);
     default:
       // Fallback for unsupported types - return basic HTML
       return `

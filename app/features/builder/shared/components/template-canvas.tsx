@@ -157,6 +157,42 @@ function createDefaultSectionConfig(
       paymentTerms: "Net 30",
       notes: "Thank you for your business!",
     },
+    "receipt-header": {
+      storeLogo:
+        "https://iwvduhvsxhjpxapdochp.supabase.co/storage/v1/object/public/app-images/organization-logos/logoipsum-404.svg",
+      storeName: "Your Store Name",
+      storeAddress: "123 Main St\nCity, State 12345",
+      storeEmail: "info@store.com",
+      storePhone: "+1 (555) 123-4567",
+      receiptNumber: "RCP-001",
+      receiptDate: new Date().toLocaleDateString(),
+      transactionId: "TXN-2024-001",
+    },
+    "receipt-items": {
+      items: [
+        {
+          description: "Product or Service",
+          quantity: "1",
+          unitPrice: "50.00",
+          total: "50.00",
+        },
+        {
+          description: "Another Product or Service",
+          quantity: "2",
+          unitPrice: "25.00",
+          total: "50.00",
+        },
+      ],
+    },
+    "receipt-footer": {
+      subtotal: "100.00",
+      taxAmount: "8.00",
+      discount: "0.00",
+      total: "108.00",
+      paymentMethod: "Credit Card ending in 1234",
+      transactionId: "TXN-2024-001",
+      thankYouMessage: "Thank you for your purchase!",
+    },
   };
 
   // Build default styles from template or component defaults

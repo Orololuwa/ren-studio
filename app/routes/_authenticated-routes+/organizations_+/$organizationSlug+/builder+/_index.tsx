@@ -5,6 +5,7 @@ import {
   FileText,
   GraduationCap,
   Receipt,
+  ShoppingBag,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { href, useNavigate, useSearchParams } from "react-router";
@@ -55,18 +56,24 @@ export async function loader({ params, context }: Route.LoaderArgs) {
     organizationId: organization.id,
     type: "report-cards",
   });
+  const dbReceipt = await retrieveTemplatesByOrganizationIdAndType({
+    organizationId: organization.id,
+    type: "receipt",
+  });
 
   // Load predefined templates
   const predefinedResume = getTemplatesByType("resume");
   const predefinedInvoice = getTemplatesByType("invoice");
   const predefinedCertificate = getTemplatesByType("certificate");
   const predefinedReportCards = getTemplatesByType("report-cards");
+  const predefinedReceipt = getTemplatesByType("receipt");
 
   // Merge database templates with predefined templates
   // Database templates come first, then predefined templates
   const templatesByType = {
     certificate: [...dbCertificate, ...predefinedCertificate],
     invoice: [...dbInvoice, ...predefinedInvoice],
+    receipt: [...dbReceipt, ...predefinedReceipt],
     "report-cards": [...dbReportCards, ...predefinedReportCards],
     resume: [...dbResume, ...predefinedResume],
   };
@@ -98,6 +105,11 @@ const builderTypes = [
     icon: Receipt,
     label: "Invoice",
     value: "invoice",
+  },
+  {
+    icon: ShoppingBag,
+    label: "Receipt",
+    value: "receipt",
   },
   {
     icon: Award,

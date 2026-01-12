@@ -296,6 +296,16 @@ enum TemplateType {
   invoice
   certificate
   reportCards
+  receipt
+  quote
+  proposal
+  contract
+  purchaseOrder
+  estimate
+  statement
+  letter
+  form
+  label
 }
 
 model Template {

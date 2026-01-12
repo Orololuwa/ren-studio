@@ -1601,6 +1601,646 @@ export function SectionRenderer({
         );
       }
 
+      case "receipt-header": {
+        const logoUrl = (section.data.storeLogo as string) || "";
+        // Check if section has a color style to determine if we should use white text
+        const hasColorStyle = sectionStyles.color;
+        const textColorClass = hasColorStyle ? "" : "text-gray-900";
+        const secondaryTextColorClass = hasColorStyle ? "" : "text-gray-600";
+        return (
+          <div style={sectionStyles}>
+            <div className="flex justify-between mb-6">
+              <div>
+                {logoUrl && (
+                  <div className="mb-4">
+                    <button
+                      className="cursor-pointer hover:opacity-80 transition-opacity"
+                      onClick={(e) =>
+                        handleFieldClick(
+                          e,
+                          ["storeLogo"],
+                          logoUrl,
+                          "Store Logo URL",
+                          false,
+                        )
+                      }
+                      onKeyDown={(e) =>
+                        handleFieldKeyDown(
+                          e,
+                          ["storeLogo"],
+                          logoUrl,
+                          "Store Logo URL",
+                          false,
+                        )
+                      }
+                      type="button"
+                    >
+                      <img
+                        alt="Store Logo"
+                        className="h-12 object-contain"
+                        src={logoUrl}
+                      />
+                    </button>
+                  </div>
+                )}
+                <h2 className={`${textColorClass} text-xl font-bold mb-2`}>
+                  <button
+                    className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left"
+                    onClick={(e) =>
+                      handleFieldClick(
+                        e,
+                        ["storeName"],
+                        section.data.storeName as string,
+                        "Store Name",
+                        false,
+                      )
+                    }
+                    onKeyDown={(e) =>
+                      handleFieldKeyDown(
+                        e,
+                        ["storeName"],
+                        section.data.storeName as string,
+                        "Store Name",
+                        false,
+                      )
+                    }
+                    type="button"
+                  >
+                    {(section.data.storeName as string) || "Store Name"}
+                  </button>
+                </h2>
+                <div className={`text-sm ${secondaryTextColorClass}`}>
+                  <button
+                    className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left"
+                    onClick={(e) =>
+                      handleFieldClick(
+                        e,
+                        ["storeAddress"],
+                        section.data.storeAddress as string,
+                        "Store Address",
+                        false,
+                      )
+                    }
+                    onKeyDown={(e) =>
+                      handleFieldKeyDown(
+                        e,
+                        ["storeAddress"],
+                        section.data.storeAddress as string,
+                        "Store Address",
+                        false,
+                      )
+                    }
+                    type="button"
+                  >
+                    {(section.data.storeAddress as string) || "Store Address"}
+                  </button>
+                  {(section.data.storeEmail as string | undefined) && (
+                    <button
+                      className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left"
+                      onClick={(e) =>
+                        handleFieldClick(
+                          e,
+                          ["storeEmail"],
+                          section.data.storeEmail as string,
+                          "Store Email",
+                          false,
+                        )
+                      }
+                      onKeyDown={(e) =>
+                        handleFieldKeyDown(
+                          e,
+                          ["storeEmail"],
+                          section.data.storeEmail as string,
+                          "Store Email",
+                          false,
+                        )
+                      }
+                      type="button"
+                    >
+                      {section.data.storeEmail as string}
+                    </button>
+                  )}
+                  {(section.data.storePhone as string | undefined) && (
+                    <button
+                      className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left"
+                      onClick={(e) =>
+                        handleFieldClick(
+                          e,
+                          ["storePhone"],
+                          section.data.storePhone as string,
+                          "Store Phone",
+                          false,
+                        )
+                      }
+                      onKeyDown={(e) =>
+                        handleFieldKeyDown(
+                          e,
+                          ["storePhone"],
+                          section.data.storePhone as string,
+                          "Store Phone",
+                          false,
+                        )
+                      }
+                      type="button"
+                    >
+                      {section.data.storePhone as string}
+                    </button>
+                  )}
+                </div>
+              </div>
+              <div className="text-right">
+                <h1 className={`${textColorClass} text-2xl font-bold mb-4`}>
+                  RECEIPT
+                </h1>
+                <div className="text-sm space-y-1">
+                  <div>
+                    <span className={secondaryTextColorClass}>Receipt #: </span>
+                    <button
+                      className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left"
+                      onClick={(e) =>
+                        handleFieldClick(
+                          e,
+                          ["receiptNumber"],
+                          section.data.receiptNumber as string,
+                          "Receipt Number",
+                          false,
+                        )
+                      }
+                      onKeyDown={(e) =>
+                        handleFieldKeyDown(
+                          e,
+                          ["receiptNumber"],
+                          section.data.receiptNumber as string,
+                          "Receipt Number",
+                          false,
+                        )
+                      }
+                      type="button"
+                    >
+                      {(section.data.receiptNumber as string) || "RCP-001"}
+                    </button>
+                  </div>
+                  <div>
+                    <span className={secondaryTextColorClass}>Date: </span>
+                    <button
+                      className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left"
+                      onClick={(e) =>
+                        handleFieldClick(
+                          e,
+                          ["receiptDate"],
+                          section.data.receiptDate as string,
+                          "Receipt Date",
+                          false,
+                        )
+                      }
+                      onKeyDown={(e) =>
+                        handleFieldKeyDown(
+                          e,
+                          ["receiptDate"],
+                          section.data.receiptDate as string,
+                          "Receipt Date",
+                          false,
+                        )
+                      }
+                      type="button"
+                    >
+                      {(section.data.receiptDate as string) || "Date"}
+                    </button>
+                  </div>
+                  {(section.data.transactionId as string | undefined) && (
+                    <div>
+                      <span className={secondaryTextColorClass}>
+                        Transaction ID:{" "}
+                      </span>
+                      <button
+                        className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left"
+                        onClick={(e) =>
+                          handleFieldClick(
+                            e,
+                            ["transactionId"],
+                            section.data.transactionId as string,
+                            "Transaction ID",
+                            false,
+                          )
+                        }
+                        onKeyDown={(e) =>
+                          handleFieldKeyDown(
+                            e,
+                            ["transactionId"],
+                            section.data.transactionId as string,
+                            "Transaction ID",
+                            false,
+                          )
+                        }
+                        type="button"
+                      >
+                        {section.data.transactionId as string}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      case "receipt-items": {
+        const items = Array.isArray(section.data.items)
+          ? (section.data.items as InvoiceItem[])
+          : [];
+        const hasColorStyle = sectionStyles.color;
+        const textColorClass = hasColorStyle ? "" : "text-gray-900";
+        return (
+          <div className={textColorClass} style={sectionStyles}>
+            <table className="w-full border-collapse">
+              <thead>
+                <tr className="border-b-2 border-gray-300">
+                  <th className="text-left p-2 font-semibold">Description</th>
+                  <th className="text-right p-2 font-semibold">Quantity</th>
+                  <th className="text-right p-2 font-semibold">Unit Price</th>
+                  <th className="text-right p-2 font-semibold">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {items.length === 0 ? (
+                  <tr>
+                    <td className="p-2 text-gray-500" colSpan={4}>
+                      No items added. Click to add items in the properties
+                      panel.
+                    </td>
+                  </tr>
+                ) : (
+                  items.map((item, idx) => (
+                    <tr
+                      className="border-b border-gray-200"
+                      key={`item-${item.description}-${item.quantity}-${item.unitPrice}-${idx}`}
+                    >
+                      <td className="p-2">
+                        <button
+                          className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left w-full"
+                          onClick={(e) =>
+                            handleFieldClick(
+                              e,
+                              ["items", String(idx), "description"],
+                              item.description,
+                              "Description",
+                              false,
+                            )
+                          }
+                          onKeyDown={(e) =>
+                            handleFieldKeyDown(
+                              e,
+                              ["items", String(idx), "description"],
+                              item.description,
+                              "Description",
+                              false,
+                            )
+                          }
+                          type="button"
+                        >
+                          {item.description || "Item Description"}
+                        </button>
+                      </td>
+                      <td className="p-2 text-right">
+                        <button
+                          className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-right"
+                          onClick={(e) =>
+                            handleFieldClick(
+                              e,
+                              ["items", String(idx), "quantity"],
+                              item.quantity,
+                              "Quantity",
+                              false,
+                            )
+                          }
+                          onKeyDown={(e) =>
+                            handleFieldKeyDown(
+                              e,
+                              ["items", String(idx), "quantity"],
+                              item.quantity,
+                              "Quantity",
+                              false,
+                            )
+                          }
+                          type="button"
+                        >
+                          {item.quantity || "0"}
+                        </button>
+                      </td>
+                      <td className="p-2 text-right">
+                        <button
+                          className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-right"
+                          onClick={(e) =>
+                            handleFieldClick(
+                              e,
+                              ["items", String(idx), "unitPrice"],
+                              item.unitPrice,
+                              "Unit Price",
+                              false,
+                            )
+                          }
+                          onKeyDown={(e) =>
+                            handleFieldKeyDown(
+                              e,
+                              ["items", String(idx), "unitPrice"],
+                              item.unitPrice,
+                              "Unit Price",
+                              false,
+                            )
+                          }
+                          type="button"
+                        >
+                          {formatCurrency(item.unitPrice)}
+                        </button>
+                      </td>
+                      <td className="p-2 text-right font-semibold">
+                        <button
+                          className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-right"
+                          onClick={(e) =>
+                            handleFieldClick(
+                              e,
+                              ["items", String(idx), "total"],
+                              item.total,
+                              "Total",
+                              false,
+                            )
+                          }
+                          onKeyDown={(e) =>
+                            handleFieldKeyDown(
+                              e,
+                              ["items", String(idx), "total"],
+                              item.total,
+                              "Total",
+                              false,
+                            )
+                          }
+                          type="button"
+                        >
+                          {formatCurrency(item.total)}
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        );
+      }
+
+      case "receipt-footer": {
+        const hasColorStyle = sectionStyles.color;
+        const textColorClass = hasColorStyle ? "" : "text-gray-900";
+        return (
+          <div className={textColorClass} style={sectionStyles}>
+            <div className="flex justify-end">
+              <div className="w-64 space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Subtotal:</span>
+                  <span>
+                    <button
+                      className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-right"
+                      onClick={(e) =>
+                        handleFieldClick(
+                          e,
+                          ["subtotal"],
+                          section.data.subtotal as string,
+                          "Subtotal",
+                          false,
+                        )
+                      }
+                      onKeyDown={(e) =>
+                        handleFieldKeyDown(
+                          e,
+                          ["subtotal"],
+                          section.data.subtotal as string,
+                          "Subtotal",
+                          false,
+                        )
+                      }
+                      type="button"
+                    >
+                      {formatCurrency(
+                        section.data.subtotal as
+                          | string
+                          | number
+                          | null
+                          | undefined,
+                      )}
+                    </button>
+                  </span>
+                </div>
+                {(section.data.taxAmount as string | number | undefined) &&
+                  Number(section.data.taxAmount) > 0 && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Tax:</span>
+                      <span>
+                        <button
+                          className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-right"
+                          onClick={(e) =>
+                            handleFieldClick(
+                              e,
+                              ["taxAmount"],
+                              section.data.taxAmount as string,
+                              "Tax Amount",
+                              false,
+                            )
+                          }
+                          onKeyDown={(e) =>
+                            handleFieldKeyDown(
+                              e,
+                              ["taxAmount"],
+                              section.data.taxAmount as string,
+                              "Tax Amount",
+                              false,
+                            )
+                          }
+                          type="button"
+                        >
+                          {formatCurrency(
+                            section.data.taxAmount as
+                              | string
+                              | number
+                              | null
+                              | undefined,
+                          )}
+                        </button>
+                      </span>
+                    </div>
+                  )}
+                {(section.data.discount as string | number | undefined) &&
+                  Number(section.data.discount) > 0 && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Discount:</span>
+                      <span>
+                        <button
+                          className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-right"
+                          onClick={(e) =>
+                            handleFieldClick(
+                              e,
+                              ["discount"],
+                              section.data.discount as string,
+                              "Discount",
+                              false,
+                            )
+                          }
+                          onKeyDown={(e) =>
+                            handleFieldKeyDown(
+                              e,
+                              ["discount"],
+                              section.data.discount as string,
+                              "Discount",
+                              false,
+                            )
+                          }
+                          type="button"
+                        >
+                          -
+                          {formatCurrency(
+                            section.data.discount as
+                              | string
+                              | number
+                              | null
+                              | undefined,
+                          )}
+                        </button>
+                      </span>
+                    </div>
+                  )}
+                <div className="flex justify-between border-t-2 border-gray-300 pt-2 font-bold text-lg">
+                  <span>Total:</span>
+                  <span>
+                    <button
+                      className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-right"
+                      onClick={(e) =>
+                        handleFieldClick(
+                          e,
+                          ["total"],
+                          section.data.total as string,
+                          "Total",
+                          false,
+                        )
+                      }
+                      onKeyDown={(e) =>
+                        handleFieldKeyDown(
+                          e,
+                          ["total"],
+                          section.data.total as string,
+                          "Total",
+                          false,
+                        )
+                      }
+                      type="button"
+                    >
+                      {formatCurrency(
+                        section.data.total as
+                          | string
+                          | number
+                          | null
+                          | undefined,
+                      )}
+                    </button>
+                  </span>
+                </div>
+              </div>
+            </div>
+            {(section.data.paymentMethod as string | undefined) && (
+              <div className="mt-4">
+                <p className="text-sm text-gray-600">
+                  <span className="font-semibold">Payment Method: </span>
+                  <button
+                    className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5"
+                    onClick={(e) =>
+                      handleFieldClick(
+                        e,
+                        ["paymentMethod"],
+                        section.data.paymentMethod as string,
+                        "Payment Method",
+                        false,
+                      )
+                    }
+                    onKeyDown={(e) =>
+                      handleFieldKeyDown(
+                        e,
+                        ["paymentMethod"],
+                        section.data.paymentMethod as string,
+                        "Payment Method",
+                        false,
+                      )
+                    }
+                    type="button"
+                  >
+                    {section.data.paymentMethod as string}
+                  </button>
+                </p>
+              </div>
+            )}
+            {(section.data.transactionId as string | undefined) && (
+              <div className="mt-2">
+                <p className="text-sm text-gray-600">
+                  <span className="font-semibold">Transaction ID: </span>
+                  <button
+                    className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5"
+                    onClick={(e) =>
+                      handleFieldClick(
+                        e,
+                        ["transactionId"],
+                        section.data.transactionId as string,
+                        "Transaction ID",
+                        false,
+                      )
+                    }
+                    onKeyDown={(e) =>
+                      handleFieldKeyDown(
+                        e,
+                        ["transactionId"],
+                        section.data.transactionId as string,
+                        "Transaction ID",
+                        false,
+                      )
+                    }
+                    type="button"
+                  >
+                    {section.data.transactionId as string}
+                  </button>
+                </p>
+              </div>
+            )}
+            {(section.data.thankYouMessage as string | undefined) && (
+              <div className="mt-4">
+                <p className="text-sm text-gray-600">
+                  <button
+                    className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left w-full"
+                    onClick={(e) =>
+                      handleFieldClick(
+                        e,
+                        ["thankYouMessage"],
+                        section.data.thankYouMessage as string,
+                        "Thank You Message",
+                        false,
+                      )
+                    }
+                    onKeyDown={(e) =>
+                      handleFieldKeyDown(
+                        e,
+                        ["thankYouMessage"],
+                        section.data.thankYouMessage as string,
+                        "Thank You Message",
+                        false,
+                      )
+                    }
+                    type="button"
+                  >
+                    {section.data.thankYouMessage as string}
+                  </button>
+                </p>
+              </div>
+            )}
+          </div>
+        );
+      }
+
       default:
         return (
           <div className="text-gray-900" style={sectionStyles}>

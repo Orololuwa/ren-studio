@@ -8,9 +8,16 @@ function convertPrismaTemplateTypeToTS(prismaType: string): Template["type"] {
   if (!prismaType) {
     return "resume"; // Default fallback
   }
-  if (prismaType === TemplateType.reportCards) {
-    return "report-cards";
+  // Map Prisma camelCase to TypeScript kebab-case
+  const typeMap: Record<string, Template["type"]> = {
+    [TemplateType.reportCards]: "report-cards",
+    [TemplateType.purchaseOrder]: "purchase-order",
+  };
+
+  if (typeMap[prismaType]) {
+    return typeMap[prismaType];
   }
+
   return prismaType as Template["type"];
 }
 
@@ -18,9 +25,33 @@ function convertPrismaTemplateTypeToTS(prismaType: string): Template["type"] {
 function convertTSTemplateTypeToPrisma(
   tsType: Template["type"],
 ): (typeof TemplateType)[keyof typeof TemplateType] {
-  if (tsType === "report-cards") {
-    return TemplateType.reportCards;
+  // Map TypeScript kebab-case to Prisma camelCase
+  const typeMap: Record<
+    string,
+    (typeof TemplateType)[keyof typeof TemplateType]
+  > = {
+    "report-cards": TemplateType.reportCards,
+    "purchase-order": TemplateType.purchaseOrder,
+    // Direct mappings (same name in both)
+    resume: TemplateType.resume,
+    invoice: TemplateType.invoice,
+    certificate: TemplateType.certificate,
+    receipt: TemplateType.receipt,
+    quote: TemplateType.quote,
+    proposal: TemplateType.proposal,
+    contract: TemplateType.contract,
+    estimate: TemplateType.estimate,
+    statement: TemplateType.statement,
+    letter: TemplateType.letter,
+    form: TemplateType.form,
+    label: TemplateType.label,
+  };
+
+  if (typeMap[tsType]) {
+    return typeMap[tsType];
   }
+
+  // Fallback - should not happen if all types are mapped
   return tsType as (typeof TemplateType)[keyof typeof TemplateType];
 }
 

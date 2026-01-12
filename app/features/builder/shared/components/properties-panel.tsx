@@ -1559,6 +1559,399 @@ export function PropertiesPanel() {
         );
       }
 
+      case "receipt-header": {
+        return (
+          <div className="space-y-4">
+            <div>
+              <Label className="text-xs" htmlFor="storeLogo">
+                Store Logo URL
+              </Label>
+              <Input
+                className="mt-1"
+                id="storeLogo"
+                onChange={(e) => updateData("storeLogo", e.target.value)}
+                placeholder="https://example.com/logo.png"
+                type="url"
+                value={String(section.data.storeLogo || "")}
+              />
+              {Boolean(section.data.storeLogo) && (
+                <div className="mt-2">
+                  <img
+                    alt="Logo Preview"
+                    className="h-12 object-contain border rounded"
+                    src={String(section.data.storeLogo)}
+                  />
+                </div>
+              )}
+            </div>
+            <div>
+              <Label className="text-xs" htmlFor="storeName">
+                Store Name
+              </Label>
+              <Input
+                className="mt-1"
+                id="storeName"
+                onChange={(e) => updateData("storeName", e.target.value)}
+                placeholder="Your Store Name"
+                value={String(section.data.storeName || "")}
+              />
+            </div>
+            <div>
+              <Label className="text-xs" htmlFor="storeAddress">
+                Store Address
+              </Label>
+              <textarea
+                className="mt-1 flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                id="storeAddress"
+                onChange={(e) => updateData("storeAddress", e.target.value)}
+                placeholder="123 Main St&#10;City, State 12345"
+                value={String(section.data.storeAddress || "")}
+              />
+            </div>
+            <div>
+              <Label className="text-xs" htmlFor="storeEmail">
+                Store Email
+              </Label>
+              <Input
+                className="mt-1"
+                id="storeEmail"
+                onChange={(e) => updateData("storeEmail", e.target.value)}
+                placeholder="info@store.com"
+                type="email"
+                value={String(section.data.storeEmail || "")}
+              />
+            </div>
+            <div>
+              <Label className="text-xs" htmlFor="storePhone">
+                Store Phone
+              </Label>
+              <Input
+                className="mt-1"
+                id="storePhone"
+                onChange={(e) => updateData("storePhone", e.target.value)}
+                placeholder="+1 (555) 123-4567"
+                type="tel"
+                value={String(section.data.storePhone || "")}
+              />
+            </div>
+            <div>
+              <Label className="text-xs" htmlFor="receiptNumber">
+                Receipt Number
+              </Label>
+              <Input
+                className="mt-1"
+                id="receiptNumber"
+                onChange={(e) => updateData("receiptNumber", e.target.value)}
+                placeholder="RCP-001"
+                value={String(section.data.receiptNumber || "")}
+              />
+            </div>
+            <div>
+              <Label className="text-xs" htmlFor="receiptDate">
+                Receipt Date
+              </Label>
+              <Input
+                className="mt-1"
+                id="receiptDate"
+                onChange={(e) => updateData("receiptDate", e.target.value)}
+                placeholder="01/15/2024"
+                value={String(section.data.receiptDate || "")}
+              />
+            </div>
+            <div>
+              <Label className="text-xs" htmlFor="transactionId">
+                Transaction ID (Optional)
+              </Label>
+              <Input
+                className="mt-1"
+                id="transactionId"
+                onChange={(e) => updateData("transactionId", e.target.value)}
+                placeholder="TXN-2024-001"
+                value={String(section.data.transactionId || "")}
+              />
+            </div>
+          </div>
+        );
+      }
+
+      case "receipt-items": {
+        const items = (
+          Array.isArray(section.data.items) ? section.data.items : []
+        ) as InvoiceItem[];
+
+        const addItem = () => {
+          const newItem: InvoiceItem = {
+            description: "",
+            quantity: "1",
+            unitPrice: "0.00",
+            total: "0.00",
+          };
+          updateData("items", [...items, newItem]);
+        };
+
+        const deleteItem = (idx: number) => {
+          const newItems = items.filter((_, i) => i !== idx);
+          updateData("items", newItems);
+        };
+
+        const updateItem = (
+          idx: number,
+          field: keyof InvoiceItem,
+          value: string,
+        ) => {
+          const newItems = [...items];
+          if (newItems[idx]) {
+            newItems[idx] = { ...newItems[idx], [field]: value };
+            // Auto-calculate total if quantity or unitPrice changes
+            if (field === "quantity" || field === "unitPrice") {
+              const qty = Number.parseFloat(newItems[idx].quantity || "0");
+              const price = Number.parseFloat(newItems[idx].unitPrice || "0");
+              newItems[idx].total = (qty * price).toFixed(2);
+            }
+          }
+          updateData("items", newItems);
+        };
+
+        return (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <Label className="text-xs font-medium">Receipt Items</Label>
+              <Button
+                onClick={addItem}
+                size="sm"
+                type="button"
+                variant="outline"
+              >
+                <Plus className="w-4 h-4 mr-1" />
+                Add Item
+              </Button>
+            </div>
+            <div className="space-y-4">
+              {items.map((item, idx) => (
+                <div
+                  className="p-3 border rounded-lg space-y-3 bg-background"
+                  key={`item-${item.description}-${item.quantity}-${item.unitPrice}-${idx}`}
+                >
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs font-medium">
+                      Item {idx + 1}
+                    </Label>
+                    <Button
+                      onClick={() => deleteItem(idx)}
+                      size="sm"
+                      type="button"
+                      variant="ghost"
+                    >
+                      <Trash2 className="w-4 h-4 text-destructive" />
+                    </Button>
+                  </div>
+                  <div>
+                    <Label className="text-xs" htmlFor={`item-desc-${idx}`}>
+                      Description
+                    </Label>
+                    <Input
+                      className="mt-1"
+                      id={`item-desc-${idx}`}
+                      onChange={(e) =>
+                        updateItem(idx, "description", e.target.value)
+                      }
+                      placeholder="Product or Service Description"
+                      value={item.description || ""}
+                    />
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    <div>
+                      <Label className="text-xs" htmlFor={`item-qty-${idx}`}>
+                        Quantity
+                      </Label>
+                      <Input
+                        className="mt-1"
+                        id={`item-qty-${idx}`}
+                        onChange={(e) =>
+                          updateItem(idx, "quantity", e.target.value)
+                        }
+                        placeholder="1"
+                        type="number"
+                        value={item.quantity || ""}
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs" htmlFor={`item-price-${idx}`}>
+                        Unit Price
+                      </Label>
+                      <Input
+                        className="mt-1"
+                        id={`item-price-${idx}`}
+                        onChange={(e) =>
+                          updateItem(idx, "unitPrice", e.target.value)
+                        }
+                        placeholder="0.00"
+                        step="0.01"
+                        type="number"
+                        value={item.unitPrice || ""}
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs" htmlFor={`item-total-${idx}`}>
+                        Total
+                      </Label>
+                      <Input
+                        className="mt-1"
+                        id={`item-total-${idx}`}
+                        onChange={(e) =>
+                          updateItem(idx, "total", e.target.value)
+                        }
+                        placeholder="0.00"
+                        step="0.01"
+                        type="number"
+                        value={item.total || ""}
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {items.length === 0 && (
+                <div className="text-sm text-muted-foreground text-center py-4">
+                  No items added. Click "Add Item" to add receipt line items.
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      }
+
+      case "receipt-footer": {
+        return (
+          <div className="space-y-4">
+            <div>
+              <Label className="text-xs" htmlFor="subtotal">
+                Subtotal
+              </Label>
+              <Input
+                className="mt-1"
+                id="subtotal"
+                onChange={(e) => {
+                  updateData("subtotal", e.target.value);
+                  const subtotal = Number.parseFloat(e.target.value || "0");
+                  const taxAmount = Number.parseFloat(
+                    String(section.data.taxAmount || "0"),
+                  );
+                  const discount = Number.parseFloat(
+                    String(section.data.discount || "0"),
+                  );
+                  const total = subtotal + taxAmount - discount;
+                  updateData("total", total.toFixed(2));
+                }}
+                placeholder="0.00"
+                step="0.01"
+                type="number"
+                value={String(section.data.subtotal || "")}
+              />
+            </div>
+            <div>
+              <Label className="text-xs" htmlFor="taxAmount">
+                Tax Amount
+              </Label>
+              <Input
+                className="mt-1"
+                id="taxAmount"
+                onChange={(e) => {
+                  updateData("taxAmount", e.target.value);
+                  const subtotal = Number.parseFloat(
+                    String(section.data.subtotal || "0"),
+                  );
+                  const taxAmount = Number.parseFloat(e.target.value || "0");
+                  const discount = Number.parseFloat(
+                    String(section.data.discount || "0"),
+                  );
+                  const total = subtotal + taxAmount - discount;
+                  updateData("total", total.toFixed(2));
+                }}
+                placeholder="0.00"
+                step="0.01"
+                type="number"
+                value={String(section.data.taxAmount || "")}
+              />
+            </div>
+            <div>
+              <Label className="text-xs" htmlFor="discount">
+                Discount
+              </Label>
+              <Input
+                className="mt-1"
+                id="discount"
+                onChange={(e) => {
+                  updateData("discount", e.target.value);
+                  const subtotal = Number.parseFloat(
+                    String(section.data.subtotal || "0"),
+                  );
+                  const taxAmount = Number.parseFloat(
+                    String(section.data.taxAmount || "0"),
+                  );
+                  const discount = Number.parseFloat(e.target.value || "0");
+                  const total = subtotal + taxAmount - discount;
+                  updateData("total", total.toFixed(2));
+                }}
+                placeholder="0.00"
+                step="0.01"
+                type="number"
+                value={String(section.data.discount || "")}
+              />
+            </div>
+            <div>
+              <Label className="text-xs" htmlFor="total">
+                Total
+              </Label>
+              <Input
+                className="mt-1 font-semibold"
+                id="total"
+                onChange={(e) => updateData("total", e.target.value)}
+                placeholder="0.00"
+                step="0.01"
+                type="number"
+                value={String(section.data.total || "")}
+              />
+            </div>
+            <div>
+              <Label className="text-xs" htmlFor="paymentMethod">
+                Payment Method
+              </Label>
+              <Input
+                className="mt-1"
+                id="paymentMethod"
+                onChange={(e) => updateData("paymentMethod", e.target.value)}
+                placeholder="Credit Card ending in 1234"
+                value={String(section.data.paymentMethod || "")}
+              />
+            </div>
+            <div>
+              <Label className="text-xs" htmlFor="transactionId">
+                Transaction ID (Optional)
+              </Label>
+              <Input
+                className="mt-1"
+                id="transactionId"
+                onChange={(e) => updateData("transactionId", e.target.value)}
+                placeholder="TXN-2024-001"
+                value={String(section.data.transactionId || "")}
+              />
+            </div>
+            <div>
+              <Label className="text-xs" htmlFor="thankYouMessage">
+                Thank You Message
+              </Label>
+              <textarea
+                className="mt-1 flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                id="thankYouMessage"
+                onChange={(e) => updateData("thankYouMessage", e.target.value)}
+                placeholder="Thank you for your purchase!"
+                value={String(section.data.thankYouMessage || "")}
+              />
+            </div>
+          </div>
+        );
+      }
+
       default:
         return (
           <div className="text-sm text-muted-foreground">
