@@ -51,7 +51,22 @@ const saveTemplateSchema = z.object({
     return val;
   }),
   templateId: z.string().optional(),
-  type: z.enum(["resume", "invoice", "certificate", "report-cards"]),
+  type: z.enum([
+    "resume",
+    "invoice",
+    "certificate",
+    "report-cards",
+    "quote",
+    "proposal",
+    "contract",
+    "purchase-order",
+    "receipt",
+    "estimate",
+    "statement",
+    "letter",
+    "form",
+    "label",
+  ]),
 });
 
 const actionSchema = saveTemplateSchema;

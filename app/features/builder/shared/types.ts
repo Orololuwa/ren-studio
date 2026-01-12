@@ -2,7 +2,17 @@ export type TemplateType =
   | "resume"
   | "invoice"
   | "certificate"
-  | "report-cards";
+  | "report-cards"
+  | "quote"
+  | "proposal"
+  | "contract"
+  | "purchase-order"
+  | "receipt"
+  | "estimate"
+  | "statement"
+  | "letter"
+  | "form"
+  | "label";
 
 export type SectionType =
   | "header"
@@ -20,7 +30,35 @@ export type SectionType =
   | "certificate-header"
   | "certificate-body"
   | "report-header"
-  | "report-grades";
+  | "report-grades"
+  | "quote-header"
+  | "quote-items"
+  | "quote-footer"
+  | "proposal-header"
+  | "proposal-body"
+  | "proposal-footer"
+  | "contract-header"
+  | "contract-body"
+  | "contract-signature"
+  | "purchase-order-header"
+  | "purchase-order-items"
+  | "purchase-order-footer"
+  | "receipt-header"
+  | "receipt-items"
+  | "receipt-footer"
+  | "estimate-header"
+  | "estimate-items"
+  | "estimate-footer"
+  | "statement-header"
+  | "statement-transactions"
+  | "statement-footer"
+  | "letter-header"
+  | "letter-body"
+  | "letter-footer"
+  | "form-header"
+  | "form-field"
+  | "form-footer"
+  | "label-content";
 
 export interface SectionStyles {
   // Spacing

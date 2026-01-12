@@ -23,7 +23,22 @@ const exportSchema = z.object({
     }
     return val;
   }),
-  type: z.enum(["resume", "invoice", "certificate", "report-cards"]),
+  type: z.enum([
+    "resume",
+    "invoice",
+    "certificate",
+    "report-cards",
+    "quote",
+    "proposal",
+    "contract",
+    "purchase-order",
+    "receipt",
+    "estimate",
+    "statement",
+    "letter",
+    "form",
+    "label",
+  ]),
 });
 
 export async function action({ request, context }: Route.ActionArgs) {

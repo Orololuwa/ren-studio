@@ -115,6 +115,16 @@ const VALID_BUILDER_TYPES = [
   "invoice",
   "certificate",
   "report-cards",
+  "quote",
+  "proposal",
+  "contract",
+  "purchase-order",
+  "receipt",
+  "estimate",
+  "statement",
+  "letter",
+  "form",
+  "label",
 ] as const;
 type BuilderType = (typeof VALID_BUILDER_TYPES)[number];
 
