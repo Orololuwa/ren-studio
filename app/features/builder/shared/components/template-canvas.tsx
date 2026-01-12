@@ -11,7 +11,7 @@ import { componentLibrary } from "./component-library-registry";
 import { SectionRenderer } from "./section-renderer";
 import { SectionWrapper } from "./section-wrapper";
 
-// Create default section config for new sections with mock data
+// Create default section config for new sections using template data
 function createDefaultSectionConfig(
   type: string,
   existingSections: TemplateSection[] = [],
@@ -30,170 +30,6 @@ function createDefaultSectionConfig(
   const styleReference =
     existingSectionOfType ||
     existingSections.find((section) => section.type !== "header");
-
-  // Mock data for each section type
-  const mockData: Record<string, Record<string, unknown>> = {
-    certifications: {
-      entries: [
-        {
-          date: "2023",
-          issuer: "Amazon Web Services",
-          link: "https://www.credly.com/badges/example",
-          name: "AWS Certified Solutions Architect",
-        },
-      ],
-    },
-    education: {
-      entries: [
-        {
-          degree: "Bachelor of Science in Computer Science",
-          institution: "University of Technology",
-          year: "2018",
-        },
-        {
-          degree: "Advanced Web Development Certificate",
-          institution: "Online Course Platform",
-          year: "2019",
-        },
-      ],
-    },
-    experience: {
-      entries: [
-        {
-          company: "Tech Company Inc.",
-          description:
-            "<ul><li>Led development of key features and mentored junior developers</li><li>Improved system performance and code quality</li><li>Collaborated with cross-functional teams</li></ul>",
-          endDate: "Present",
-          position: "Senior Developer",
-          startDate: "2020",
-        },
-        {
-          company: "StartupXYZ",
-          description:
-            "<ul><li>Built and maintained web applications using modern frameworks</li><li>Collaborated with cross-functional teams</li><li>Implemented best practices and coding standards</li></ul>",
-          endDate: "2020",
-          position: "Full Stack Developer",
-          startDate: "2018",
-        },
-      ],
-    },
-    header: {
-      contact: "",
-      email: "john.doe@example.com",
-      location: "San Francisco, CA",
-      name: "John Doe",
-      phone: "+1 (555) 123-4567",
-      socialLinks: [
-        { link: "https://linkedin.com/in/johndoe", name: "LinkedIn" },
-        { link: "https://github.com/johndoe", name: "GitHub" },
-      ],
-      title: "Software Engineer",
-    },
-    languages: {
-      entries: [
-        { language: "English", proficiency: "Native" },
-        { language: "Spanish", proficiency: "Fluent" },
-      ],
-    },
-    projects: {
-      entries: [
-        {
-          date: "2023",
-          description:
-            "<p>Built a full-stack e-commerce platform with React and Node.js.</p>",
-          link: "https://github.com/user/project",
-          name: "E-commerce Platform",
-          technologies: ["React", "Node.js", "PostgreSQL"],
-        },
-      ],
-    },
-    skills: {
-      category: "Technical Skills",
-      items: ["React", "TypeScript", "Node.js", "PostgreSQL", "AWS", "Docker"],
-    },
-    summary: {
-      content:
-        "<p>Experienced professional with expertise in modern technologies and best practices. Passionate about building scalable solutions and delivering high-quality results.</p>",
-    },
-    "invoice-header": {
-      companyLogo:
-        "https://iwvduhvsxhjpxapdochp.supabase.co/storage/v1/object/public/app-images/organization-logos/logoipsum-404.svg",
-      companyName: "Your Company Name",
-      companyAddress: "123 Business St\nCity, State 12345",
-      companyEmail: "contact@company.com",
-      companyPhone: "+1 (555) 123-4567",
-      invoiceNumber: "INV-001",
-      invoiceDate: new Date().toLocaleDateString(),
-      dueDate: new Date(
-        Date.now() + 30 * 24 * 60 * 60 * 1000,
-      ).toLocaleDateString(),
-      billToName: "Client Name",
-      billToAddress: "456 Client Ave\nCity, State 67890",
-      shipToName: "",
-      shipToAddress: "",
-    },
-    "invoice-items": {
-      items: [
-        {
-          description: "Service or Product Description",
-          quantity: "1",
-          unitPrice: "100.00",
-          total: "100.00",
-        },
-        {
-          description: "Another Service or Product",
-          quantity: "2",
-          unitPrice: "50.00",
-          total: "100.00",
-        },
-      ],
-    },
-    "invoice-footer": {
-      subtotal: "200.00",
-      taxRate: "10",
-      taxAmount: "20.00",
-      discount: "0.00",
-      total: "220.00",
-      paymentTerms: "Net 30",
-      notes: "Thank you for your business!",
-    },
-    "receipt-header": {
-      storeLogo:
-        "https://iwvduhvsxhjpxapdochp.supabase.co/storage/v1/object/public/app-images/organization-logos/logoipsum-404.svg",
-      storeName: "Your Store Name",
-      storeAddress: "123 Main St\nCity, State 12345",
-      storeEmail: "info@store.com",
-      storePhone: "+1 (555) 123-4567",
-      receiptNumber: "RCP-001",
-      receiptDate: new Date().toLocaleDateString(),
-      transactionId: "TXN-2024-001",
-    },
-    "receipt-items": {
-      items: [
-        {
-          description: "Product or Service",
-          quantity: "1",
-          unitPrice: "50.00",
-          total: "50.00",
-        },
-        {
-          description: "Another Product or Service",
-          quantity: "2",
-          unitPrice: "25.00",
-          total: "50.00",
-        },
-      ],
-    },
-    "receipt-footer": {
-      subtotal: "100.00",
-      taxAmount: "8.00",
-      discount: "0.00",
-      total: "108.00",
-      paymentMethod: "Credit Card ending in 1234",
-      transactionId: "TXN-2024-001",
-      thankYouMessage: "Thank you for your purchase!",
-    },
-  };
 
   // Build default styles from template or component defaults
   let defaultStyles: Record<string, string>;
@@ -223,8 +59,19 @@ function createDefaultSectionConfig(
     defaultStyles = { ...component.defaultStyles };
   }
 
+  // Build default data from template or component defaults
+  let defaultData: Record<string, unknown>;
+
+  // If we have an existing section of the same type, use its data
+  if (existingSectionOfType) {
+    defaultData = { ...existingSectionOfType.data };
+  } else {
+    // No existing section of this type, use component defaults
+    defaultData = { ...component.defaultData };
+  }
+
   return {
-    data: mockData[type] || { ...component.defaultData },
+    data: defaultData,
     styles: defaultStyles,
     type: component.type as TemplateSection["type"],
   };
