@@ -1,9 +1,7 @@
 import {
-  Award,
   ChevronLeft,
   ChevronRight,
   FileText,
-  GraduationCap,
   Receipt,
   ShoppingBag,
 } from "lucide-react";
@@ -110,16 +108,6 @@ const builderTypes = [
     icon: ShoppingBag,
     label: "Receipt",
     value: "receipt",
-  },
-  {
-    icon: Award,
-    label: "Certificate",
-    value: "certificate",
-  },
-  {
-    icon: GraduationCap,
-    label: "Report Cards",
-    value: "report-cards",
   },
 ] as const;
 
