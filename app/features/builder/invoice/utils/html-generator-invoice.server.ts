@@ -24,7 +24,10 @@ function objectToCSS(styles: SectionStyles): string {
     .join(" ");
 }
 
-function renderInvoiceSectionToHTML(section: TemplateSection): string {
+function renderInvoiceSectionToHTML(
+  section: TemplateSection,
+  currency: string = "USD",
+): string {
   const inlineStyles = objectToCSS(section.styles);
 
   switch (section.type) {
@@ -101,8 +104,8 @@ function renderInvoiceSectionToHTML(section: TemplateSection): string {
                 <tr class="invoice-item-row">
                   <td>${escapeHtml(item.description || "")}</td>
                   <td class="invoice-item-number">${escapeHtml(item.quantity || "0")}</td>
-                  <td class="invoice-item-number">${escapeHtml(formatCurrency(item.unitPrice))}</td>
-                  <td class="invoice-item-number">${escapeHtml(formatCurrency(item.total))}</td>
+                  <td class="invoice-item-number">${escapeHtml(formatCurrency(item.unitPrice, "en-US", currency))}</td>
+                  <td class="invoice-item-number">${escapeHtml(formatCurrency(item.total, "en-US", currency))}</td>
                 </tr>
               `,
                       )
@@ -121,14 +124,14 @@ function renderInvoiceSectionToHTML(section: TemplateSection): string {
             <div class="invoice-totals-wrapper">
               <div class="invoice-total-row">
                 <span class="invoice-total-label">Subtotal:</span>
-                <span class="invoice-total-value">${escapeHtml(formatCurrency(section.data.subtotal as string | number | undefined))}</span>
+                <span class="invoice-total-value">${escapeHtml(formatCurrency(section.data.subtotal as string | number | undefined, "en-US", currency))}</span>
               </div>
               ${
                 section.data.taxRate
                   ? `
               <div class="invoice-total-row">
                 <span class="invoice-total-label">Tax (${escapeHtml(String(section.data.taxRate))}%):</span>
-                <span class="invoice-total-value">${escapeHtml(formatCurrency(section.data.taxAmount as string | number | undefined))}</span>
+                <span class="invoice-total-value">${escapeHtml(formatCurrency(section.data.taxAmount as string | number | undefined, "en-US", currency))}</span>
               </div>
               `
                   : ""
@@ -138,14 +141,14 @@ function renderInvoiceSectionToHTML(section: TemplateSection): string {
                   ? `
               <div class="invoice-total-row">
                 <span class="invoice-total-label">Discount:</span>
-                <span class="invoice-total-value">-${escapeHtml(formatCurrency(section.data.discount as string | number | undefined))}</span>
+                <span class="invoice-total-value">-${escapeHtml(formatCurrency(section.data.discount as string | number | undefined, "en-US", currency))}</span>
               </div>
               `
                   : ""
               }
               <div class="invoice-total-row invoice-total-final">
                 <span class="invoice-total-label">Total:</span>
-                <span class="invoice-total-value">${escapeHtml(formatCurrency(section.data.total as string | number | undefined))}</span>
+                <span class="invoice-total-value">${escapeHtml(formatCurrency(section.data.total as string | number | undefined, "en-US", currency))}</span>
               </div>
             </div>
           </div>
@@ -179,8 +182,10 @@ function generateInvoiceHTML(
 ): string {
   const sortedSections = [...sections].sort((a, b) => a.order - b.order);
   const globalCSS = objectToCSS(globalStyles as SectionStyles);
+  // Get currency from global styles, default to USD
+  const currency = (globalStyles.currency as string) || "USD";
   const sectionsHTML = sortedSections
-    .map((section) => renderInvoiceSectionToHTML(section))
+    .map((section) => renderInvoiceSectionToHTML(section, currency))
     .join("\n");
 
   // Get text color from global styles (supports both 'color' and 'textColor')

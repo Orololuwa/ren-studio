@@ -24,7 +24,10 @@ function objectToCSS(styles: SectionStyles): string {
     .join(" ");
 }
 
-function renderReceiptSectionToHTML(section: TemplateSection): string {
+function renderReceiptSectionToHTML(
+  section: TemplateSection,
+  currency: string = "USD",
+): string {
   const inlineStyles = objectToCSS(section.styles);
 
   switch (section.type) {
@@ -83,8 +86,8 @@ function renderReceiptSectionToHTML(section: TemplateSection): string {
                 <tr class="receipt-item-row">
                   <td>${escapeHtml(item.description || "")}</td>
                   <td class="receipt-item-number">${escapeHtml(item.quantity || "0")}</td>
-                  <td class="receipt-item-number">${escapeHtml(formatCurrency(item.unitPrice))}</td>
-                  <td class="receipt-item-number">${escapeHtml(formatCurrency(item.total))}</td>
+                  <td class="receipt-item-number">${escapeHtml(formatCurrency(item.unitPrice, "en-US", currency))}</td>
+                  <td class="receipt-item-number">${escapeHtml(formatCurrency(item.total, "en-US", currency))}</td>
                 </tr>
               `,
                       )
@@ -103,14 +106,14 @@ function renderReceiptSectionToHTML(section: TemplateSection): string {
             <div class="receipt-totals-wrapper">
               <div class="receipt-total-row">
                 <span class="receipt-total-label">Subtotal:</span>
-                <span class="receipt-total-value">${escapeHtml(formatCurrency(section.data.subtotal as string | number | undefined))}</span>
+                <span class="receipt-total-value">${escapeHtml(formatCurrency(section.data.subtotal as string | number | undefined, "en-US", currency))}</span>
               </div>
               ${
                 section.data.taxAmount && Number(section.data.taxAmount) > 0
                   ? `
               <div class="receipt-total-row">
                 <span class="receipt-total-label">Tax:</span>
-                <span class="receipt-total-value">${escapeHtml(formatCurrency(section.data.taxAmount as string | number | undefined))}</span>
+                <span class="receipt-total-value">${escapeHtml(formatCurrency(section.data.taxAmount as string | number | undefined, "en-US", currency))}</span>
               </div>
               `
                   : ""
@@ -120,14 +123,14 @@ function renderReceiptSectionToHTML(section: TemplateSection): string {
                   ? `
               <div class="receipt-total-row">
                 <span class="receipt-total-label">Discount:</span>
-                <span class="receipt-total-value">-${escapeHtml(formatCurrency(section.data.discount as string | number | undefined))}</span>
+                <span class="receipt-total-value">-${escapeHtml(formatCurrency(section.data.discount as string | number | undefined, "en-US", currency))}</span>
               </div>
               `
                   : ""
               }
               <div class="receipt-total-row receipt-total-final">
                 <span class="receipt-total-label">Total:</span>
-                <span class="receipt-total-value">${escapeHtml(formatCurrency(section.data.total as string | number | undefined))}</span>
+                <span class="receipt-total-value">${escapeHtml(formatCurrency(section.data.total as string | number | undefined, "en-US", currency))}</span>
               </div>
             </div>
           </div>
@@ -166,8 +169,10 @@ function generateReceiptHTML(
 ): string {
   const sortedSections = [...sections].sort((a, b) => a.order - b.order);
   const globalCSS = objectToCSS(globalStyles as SectionStyles);
+  // Get currency from global styles, default to USD
+  const currency = (globalStyles.currency as string) || "USD";
   const sectionsHTML = sortedSections
-    .map((section) => renderReceiptSectionToHTML(section))
+    .map((section) => renderReceiptSectionToHTML(section, currency))
     .join("\n");
 
   // Get text color from global styles (supports both 'color' and 'textColor')

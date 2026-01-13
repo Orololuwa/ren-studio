@@ -14,6 +14,7 @@ interface BuilderState {
   reorderSections: (sections: TemplateSection[]) => void;
   selectSection: (id: string | null) => void;
   setDirty: (dirty: boolean) => void;
+  updateGlobalStyles: (updates: Partial<Record<string, string>>) => void;
   reset: () => void;
 }
 
@@ -117,6 +118,28 @@ export const useBuilderStore = create<BuilderState>((set) => ({
   setCurrentTemplate: (template) =>
     set({ currentTemplate: template, isDirty: false }),
   setDirty: (dirty) => set({ isDirty: dirty }),
+
+  updateGlobalStyles: (updates) =>
+    set((state) => {
+      if (!state.currentTemplate) return state;
+      // Filter out undefined values to maintain Record<string, string> type
+      const filteredUpdates = Object.fromEntries(
+        Object.entries(updates).filter(([, value]) => value !== undefined) as [
+          string,
+          string,
+        ][],
+      );
+      return {
+        currentTemplate: {
+          ...state.currentTemplate,
+          globalStyles: {
+            ...state.currentTemplate.globalStyles,
+            ...filteredUpdates,
+          },
+        },
+        isDirty: true,
+      };
+    }),
 
   updateSection: (id, updates) =>
     set((state) => {

@@ -11,7 +11,6 @@ import { useEffect, useState } from "react";
 import {
   data,
   href,
-  useLocation,
   useNavigate,
   useParams,
   useSearchParams,
@@ -20,6 +19,19 @@ import { z } from "zod";
 
 import type { Route } from "../$templateId/+types/_index";
 import { Button } from "~/components/ui/button";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "~/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "~/components/ui/popover";
 import {
   retrieveTemplateFromDatabaseById,
   saveTemplateToDatabase,
@@ -78,6 +90,97 @@ const saveTemplateSchema = z.object({
 });
 
 const actionSchema = saveTemplateSchema;
+
+// Helper function to get currency symbol from currency code
+function getCurrencySymbol(currencyCode: string): string {
+  try {
+    // Try with en-US first
+    const formatter = new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: currencyCode,
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    });
+    const parts = formatter.formatToParts(0);
+    const symbolPart = parts.find((part) => part.type === "currency");
+
+    // If we got a symbol (not the code), return it
+    if (symbolPart && symbolPart.value !== currencyCode) {
+      return symbolPart.value;
+    }
+
+    // Fallback: try with locale specific to the currency
+    const localeMap: Record<string, string> = {
+      NGN: "en-NG", // Nigerian English
+      ZAR: "en-ZA", // South African English
+      EGP: "ar-EG", // Egyptian Arabic
+      KES: "en-KE", // Kenyan English
+      GHS: "en-GH", // Ghanaian English
+      TZS: "en-TZ", // Tanzanian English
+      UGX: "en-UG", // Ugandan English
+      ETB: "en-ET", // Ethiopian English
+      MAD: "ar-MA", // Moroccan Arabic
+    };
+
+    const preferredLocale = localeMap[currencyCode];
+    if (preferredLocale) {
+      try {
+        const altFormatter = new Intl.NumberFormat(preferredLocale, {
+          style: "currency",
+          currency: currencyCode,
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 0,
+        });
+        const altParts = altFormatter.formatToParts(0);
+        const altSymbolPart = altParts.find((part) => part.type === "currency");
+        if (altSymbolPart && altSymbolPart.value !== currencyCode) {
+          return altSymbolPart.value;
+        }
+      } catch {
+        // Continue to fallback
+      }
+    }
+
+    // Final fallback: return currency code
+    return currencyCode;
+  } catch {
+    // Fallback to currency code if formatting fails
+    return currencyCode;
+  }
+}
+
+const COMMON_CURRENCIES = [
+  { code: "USD", name: "US Dollar ($)" },
+  { code: "EUR", name: "Euro (€)" },
+  { code: "GBP", name: "British Pound (£)" },
+  { code: "JPY", name: "Japanese Yen (¥)" },
+  { code: "CAD", name: "Canadian Dollar (C$)" },
+  { code: "AUD", name: "Australian Dollar (A$)" },
+  { code: "CHF", name: "Swiss Franc (CHF)" },
+  { code: "CNY", name: "Chinese Yuan (¥)" },
+  { code: "INR", name: "Indian Rupee (₹)" },
+  { code: "BRL", name: "Brazilian Real (R$)" },
+  { code: "MXN", name: "Mexican Peso (MX$)" },
+  { code: "SGD", name: "Singapore Dollar (S$)" },
+  { code: "HKD", name: "Hong Kong Dollar (HK$)" },
+  { code: "NZD", name: "New Zealand Dollar (NZ$)" },
+  { code: "SEK", name: "Swedish Krona (kr)" },
+  { code: "NOK", name: "Norwegian Krone (kr)" },
+  { code: "DKK", name: "Danish Krone (kr)" },
+  { code: "PLN", name: "Polish Zloty (zł)" },
+  { code: "RUB", name: "Russian Ruble (₽)" },
+  { code: "NGN", name: "Nigerian Naira (₦)" },
+  { code: "ZAR", name: "South African Rand (R)" },
+  { code: "EGP", name: "Egyptian Pound (E£)" },
+  { code: "KES", name: "Kenyan Shilling (KSh)" },
+  { code: "GHS", name: "Ghanaian Cedi (₵)" },
+  { code: "TZS", name: "Tanzanian Shilling (TSh)" },
+  { code: "UGX", name: "Ugandan Shilling (USh)" },
+  { code: "ETB", name: "Ethiopian Birr (Br)" },
+  { code: "MAD", name: "Moroccan Dirham (د.م.)" },
+  { code: "XOF", name: "West African CFA Franc (CFA)" },
+  { code: "XAF", name: "Central African CFA Franc (FCFA)" },
+] as const;
 
 export async function loader({ params, context }: Route.LoaderArgs) {
   const { organization } = context.get(organizationMembershipContext);
@@ -178,11 +281,13 @@ export default function BuilderEditorRoute({
   const [previewOpen, setPreviewOpen] = useState(false);
   const [templateNotFound, setTemplateNotFound] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [currencyOpen, setCurrencyOpen] = useState(false);
   const {
     currentTemplate,
     setCurrentTemplate,
     selectSection,
     selectedSectionId,
+    updateGlobalStyles,
   } = useBuilderStore();
 
   const sensors = useSensors(
@@ -204,10 +309,43 @@ export default function BuilderEditorRoute({
     const template = loaderData.template;
 
     if (template) {
+      // Check sessionStorage for saved currency preference for this template
+      const storageKey = `template-currency-${templateId}`;
+      const savedCurrency =
+        typeof window !== "undefined"
+          ? sessionStorage.getItem(storageKey)
+          : null;
+
+      // Determine currency: prioritize template's saved currency, then sessionStorage, then default
+      let currencyToUse: string | undefined = template.globalStyles.currency as
+        | string
+        | undefined;
+
+      if (
+        (template.type === "invoice" || template.type === "receipt") &&
+        !currencyToUse
+      ) {
+        currencyToUse = savedCurrency || "USD";
+      }
+
+      // Sync template currency to sessionStorage if it exists
+      if (
+        currencyToUse &&
+        currencyToUse !== savedCurrency &&
+        typeof window !== "undefined"
+      ) {
+        sessionStorage.setItem(storageKey, currencyToUse);
+      }
+
       // Ensure organizationId is set correctly
       const editableTemplate = {
         ...template,
         organizationId: organizationSlug || "",
+        // Set currency if determined
+        globalStyles: {
+          ...template.globalStyles,
+          ...(currencyToUse ? { currency: currencyToUse } : {}),
+        },
       };
       setCurrentTemplate(editableTemplate);
       selectSection(null); // Reset selected section when loading new template
@@ -293,7 +431,98 @@ export default function BuilderEditorRoute({
                 {currentTemplate?.name || "Untitled Template"}
               </h2>
             </div>
-            <div className="flex gap-2">
+            <div className="flex items-center gap-2">
+              {(currentTemplate?.type === "invoice" ||
+                currentTemplate?.type === "receipt") && (
+                <Popover onOpenChange={setCurrencyOpen} open={currencyOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      aria-expanded={currencyOpen}
+                      className="w-[180px] justify-between"
+                      role="combobox"
+                      variant="outline"
+                    >
+                      {currentTemplate?.globalStyles.currency
+                        ? (() => {
+                            const currencyCode = currentTemplate?.globalStyles
+                              .currency as string;
+                            const symbol = getCurrencySymbol(currencyCode);
+                            // Only show code if symbol is different from code
+                            return symbol !== currencyCode
+                              ? `${symbol} ${currencyCode}`
+                              : currencyCode;
+                          })()
+                        : "Select currency"}
+                      <svg
+                        aria-hidden="true"
+                        className="ml-2 h-4 w-4 shrink-0 opacity-50"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path d="m6 9 6 6 6-6" />
+                      </svg>
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[180px] p-0">
+                    <Command>
+                      <CommandInput placeholder="Search currency..." />
+                      <CommandList>
+                        <CommandEmpty>No currency found.</CommandEmpty>
+                        <CommandGroup>
+                          {COMMON_CURRENCIES.map((currency) => (
+                            <CommandItem
+                              key={currency.code}
+                              onSelect={() => {
+                                const currencyCode = currency.code;
+                                updateGlobalStyles({ currency: currencyCode });
+                                // Save to sessionStorage for persistence
+                                if (
+                                  templateId &&
+                                  typeof window !== "undefined"
+                                ) {
+                                  sessionStorage.setItem(
+                                    `template-currency-${templateId}`,
+                                    currencyCode,
+                                  );
+                                }
+                                setCurrencyOpen(false);
+                              }}
+                              value={`${currency.code} ${currency.name}`}
+                            >
+                              <svg
+                                aria-hidden="true"
+                                className={`mr-2 h-4 w-4 ${
+                                  (
+                                    currentTemplate?.globalStyles
+                                      .currency as string
+                                  ) === currency.code
+                                    ? "opacity-100"
+                                    : "opacity-0"
+                                }`}
+                                fill="none"
+                                stroke="currentColor"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                viewBox="0 0 24 24"
+                                xmlns="http://www.w3.org/2000/svg"
+                              >
+                                <path d="M20 6 9 17l-5-5" />
+                              </svg>
+                              {currency.name}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+              )}
               <Button
                 data-testid="preview-button"
                 onClick={() => setPreviewOpen(true)}

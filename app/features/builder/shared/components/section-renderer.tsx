@@ -37,7 +37,7 @@ export function SectionRenderer({
   isSelected,
   onSelect,
 }: SectionRendererProps) {
-  const { updateSection } = useBuilderStore();
+  const { updateSection, currentTemplate } = useBuilderStore();
   const [editingField, setEditingField] = useState<{
     path: string[];
     value: string;
@@ -45,6 +45,9 @@ export function SectionRenderer({
     isRichText: boolean;
   } | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Get currency from template globalStyles, default to USD
+  const currency = (currentTemplate?.globalStyles.currency as string) || "USD";
 
   const handleFieldClick = (
     e: React.MouseEvent,
@@ -1318,7 +1321,7 @@ export function SectionRenderer({
                           }
                           type="button"
                         >
-                          {formatCurrency(item.unitPrice)}
+                          {formatCurrency(item.unitPrice, "en-US", currency)}
                         </button>
                       </td>
                       <td className="p-2 text-right font-semibold">
@@ -1344,7 +1347,7 @@ export function SectionRenderer({
                           }
                           type="button"
                         >
-                          {formatCurrency(item.total)}
+                          {formatCurrency(item.total, "en-US", currency)}
                         </button>
                       </td>
                     </tr>
@@ -1392,6 +1395,8 @@ export function SectionRenderer({
                           | number
                           | null
                           | undefined,
+                        "en-US",
+                        currency,
                       )}
                     </button>
                   </span>
@@ -1455,6 +1460,8 @@ export function SectionRenderer({
                             | number
                             | null
                             | undefined,
+                          "en-US",
+                          currency,
                         )}
                       </button>
                     </span>
@@ -1494,6 +1501,8 @@ export function SectionRenderer({
                               | number
                               | null
                               | undefined,
+                            "en-US",
+                            currency,
                           )}
                         </button>
                       </span>
@@ -1530,6 +1539,8 @@ export function SectionRenderer({
                           | number
                           | null
                           | undefined,
+                        "en-US",
+                        currency,
                       )}
                     </button>
                   </span>
@@ -1951,7 +1962,7 @@ export function SectionRenderer({
                           }
                           type="button"
                         >
-                          {formatCurrency(item.unitPrice)}
+                          {formatCurrency(item.unitPrice, "en-US", currency)}
                         </button>
                       </td>
                       <td className="p-2 text-right font-semibold">
@@ -1977,7 +1988,7 @@ export function SectionRenderer({
                           }
                           type="button"
                         >
-                          {formatCurrency(item.total)}
+                          {formatCurrency(item.total, "en-US", currency)}
                         </button>
                       </td>
                     </tr>
@@ -2027,6 +2038,8 @@ export function SectionRenderer({
                           | number
                           | null
                           | undefined,
+                        "en-US",
+                        currency,
                       )}
                     </button>
                   </span>
@@ -2058,13 +2071,14 @@ export function SectionRenderer({
                           }
                           type="button"
                         >
-                          {formatCurrency(
-                            section.data.taxAmount as
-                              | string
-                              | number
-                              | null
-                              | undefined,
-                          )}
+                          {formatCurrency(undefined, "en-US", currency) ||
+                            formatCurrency(
+                              section.data.taxAmount as
+                                | string
+                                | number
+                                | null
+                                | undefined,
+                            )}
                         </button>
                       </span>
                     </div>
@@ -2103,6 +2117,8 @@ export function SectionRenderer({
                               | number
                               | null
                               | undefined,
+                            "en-US",
+                            currency,
                           )}
                         </button>
                       </span>
@@ -2139,6 +2155,8 @@ export function SectionRenderer({
                           | number
                           | null
                           | undefined,
+                        "en-US",
+                        currency,
                       )}
                     </button>
                   </span>
