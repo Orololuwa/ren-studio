@@ -216,7 +216,7 @@ export function TemplateCanvas() {
 
     return (
       <div
-        className={`min-h-[600px] p-4 rounded-lg transition-colors ${
+        className={`min-h-[600px] p-4 rounded-lg transition-colors bg-card ${
           isOver
             ? "bg-blue-50 border-2 border-blue-500 border-dashed"
             : "border-2 border-transparent"
@@ -279,10 +279,10 @@ export function TemplateCanvas() {
 
   return (
     <div
-      className="flex-1 bg-gray-100 p-8 overflow-auto"
+      className="flex-1 bg-muted p-8 overflow-auto"
       data-testid="template-canvas"
     >
-      <div className="max-w-4xl mx-auto bg-white shadow-lg rounded-lg p-8">
+      <div className="max-w-4xl mx-auto bg-card shadow-lg rounded-lg p-8">
         <DroppableCanvas />
       </div>
     </div>

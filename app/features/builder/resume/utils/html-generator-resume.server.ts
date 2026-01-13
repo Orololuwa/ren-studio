@@ -257,6 +257,10 @@ function generateResumeHTML(
     .map((section) => renderResumeSectionToHTML(section))
     .join("\n");
 
+  // Get background color from global styles (supports both 'backgroundColor' and 'background')
+  const backgroundColor =
+    globalStyles.backgroundColor || globalStyles.background || "#ffffff";
+
   return `
 <!DOCTYPE html>
 <html lang="en">
@@ -279,8 +283,9 @@ function generateResumeHTML(
     .template-container {
       max-width: 210mm;
       margin: 0 auto;
-      background: white;
+      background: ${backgroundColor};
       padding: 0;
+      min-height: 100vh;
     }
     
     .section-header h1 {
@@ -473,6 +478,32 @@ function generateResumeHTML(
         print-color-adjust: exact;
         orphans: 3;
         widows: 3;
+      }
+      
+      /* Ensure borders are preserved and visible in print */
+      .section-header,
+      .section-summary,
+      .section-experience,
+      .section-education,
+      .section-skills,
+      .section-certifications,
+      .section-projects,
+      .section-languages {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      
+      /* Preserve border styles (even though sections shouldn't break) */
+      .section-header[style*="border"],
+      .section-summary[style*="border"],
+      .section-experience[style*="border"],
+      .section-education[style*="border"],
+      .section-skills[style*="border"],
+      .section-certifications[style*="border"],
+      .section-projects[style*="border"],
+      .section-languages[style*="border"] {
+        box-decoration-break: clone;
+        -webkit-box-decoration-break: clone;
       }
       
       /* Prevent sections from breaking across pages */

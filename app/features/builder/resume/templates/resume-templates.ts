@@ -209,10 +209,11 @@ export const resumeTemplates: Template[] = [
   {
     createdAt: new Date(),
     globalStyles: {
-      backgroundColor: "#DCD7C955",
+      backgroundColor: "#DCD7C9",
       fontFamily: "Georgia, serif",
       fontSize: "14px",
       textColor: "#2C3639",
+      borderLeft: "6px solid #3F4E4F",
     },
     id: "resume-classic-elegant",
     name: "Classic Elegant",
@@ -247,7 +248,6 @@ export const resumeTemplates: Template[] = [
         id: "summary-2",
         order: 1,
         styles: {
-          borderLeft: "4px solid #3F4E4F",
           paddingBottom: "0.5rem",
           paddingLeft: "1.5rem",
           paddingRight: "1rem",
@@ -273,7 +273,6 @@ export const resumeTemplates: Template[] = [
         id: "experience-2",
         order: 2,
         styles: {
-          borderLeft: "4px solid #3F4E4F",
           paddingBottom: "0.5rem",
           paddingLeft: "1.5rem",
           paddingRight: "1rem",
@@ -296,7 +295,6 @@ export const resumeTemplates: Template[] = [
         id: "education-2",
         order: 3,
         styles: {
-          borderLeft: "4px solid #3F4E4F",
           paddingBottom: "0.5rem",
           paddingLeft: "1.5rem",
           paddingRight: "1rem",
@@ -321,7 +319,6 @@ export const resumeTemplates: Template[] = [
         id: "skills-2",
         order: 4,
         styles: {
-          borderLeft: "4px solid #3F4E4F",
           paddingBottom: "0.5rem",
           paddingLeft: "1.5rem",
           paddingRight: "1rem",
@@ -347,7 +344,6 @@ export const resumeTemplates: Template[] = [
         id: "projects-2",
         order: 5,
         styles: {
-          borderLeft: "4px solid #3F4E4F",
           paddingBottom: "0.5rem",
           paddingLeft: "1.5rem",
           paddingRight: "1rem",
@@ -371,7 +367,6 @@ export const resumeTemplates: Template[] = [
         id: "certifications-2",
         order: 6,
         styles: {
-          borderLeft: "4px solid #3F4E4F",
           paddingBottom: "0.5rem",
           paddingLeft: "1.5rem",
           paddingRight: "1rem",
@@ -391,7 +386,6 @@ export const resumeTemplates: Template[] = [
         id: "languages-2",
         order: 7,
         styles: {
-          borderLeft: "4px solid #3F4E4F",
           paddingBottom: "0.5rem",
           paddingLeft: "1.5rem",
           paddingRight: "1rem",
