@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { Fragment, useState } from "react";
 
 import { formatCurrency } from "../../invoice/utils/currency-formatter";
 import { useBuilderStore } from "../store/builder-store";
@@ -69,7 +69,45 @@ export function SectionRenderer({
 
     // Handle nested paths (e.g., ["entries", "0", "description"] or ["items", "0", "description"])
     if (path.length === 1 && path[0]) {
-      updatedData[path[0]] = newValue;
+      const fieldName = path[0];
+      updatedData[fieldName] = newValue;
+
+      // Handle bidirectional sync for tax and discount when editing from canvas
+      if (
+        section.type === "invoice-footer" ||
+        section.type === "receipt-footer"
+      ) {
+        const subtotal = Number.parseFloat(String(updatedData.subtotal || "0"));
+
+        // Handle tax rate/amount sync
+        if (fieldName === "taxRate") {
+          const taxRate = Number.parseFloat(newValue || "0");
+          const taxAmount = subtotal > 0 ? (subtotal * taxRate) / 100 : 0;
+          updatedData.taxAmount = taxAmount.toFixed(2);
+        } else if (fieldName === "taxAmount") {
+          const taxAmount = Number.parseFloat(newValue || "0");
+          const taxRate = subtotal > 0 ? (taxAmount / subtotal) * 100 : 0;
+          updatedData.taxRate = taxRate.toFixed(2);
+        }
+
+        // Handle discount rate/amount sync
+        if (fieldName === "discountRate") {
+          const discountRate = Number.parseFloat(newValue || "0");
+          const discount = subtotal > 0 ? (subtotal * discountRate) / 100 : 0;
+          updatedData.discount = discount.toFixed(2);
+        } else if (fieldName === "discount") {
+          const discount = Number.parseFloat(newValue || "0");
+          const discountRate = subtotal > 0 ? (discount / subtotal) * 100 : 0;
+          updatedData.discountRate = discountRate.toFixed(2);
+        }
+
+        // Recalculate total
+        const taxAmount = Number.parseFloat(
+          String(updatedData.taxAmount || "0"),
+        );
+        const discount = Number.parseFloat(String(updatedData.discount || "0"));
+        updatedData.total = (subtotal + taxAmount - discount).toFixed(2);
+      }
     } else if (
       path.length === 3 &&
       (path[0] === "entries" || path[0] === "items") &&
@@ -88,11 +126,95 @@ export function SectionRenderer({
           ...(array[index] as Record<string, unknown>),
           [field]: newValue,
         };
+
+        // Auto-calculate item total if quantity or unitPrice changed
+        if (
+          arrayName === "items" &&
+          (field === "quantity" || field === "unitPrice")
+        ) {
+          const item = array[index] as InvoiceItem;
+          const qty = Number.parseFloat(item.quantity || "0");
+          const price = Number.parseFloat(item.unitPrice || "0");
+          item.total = (qty * price).toFixed(2);
+        }
+
         updatedData[arrayName] = array;
       }
     }
 
     updateSection(section.id, { data: updatedData });
+
+    // Recalculate subtotal and footer totals if items section was edited
+    if (section.type === "invoice-items" || section.type === "receipt-items") {
+      const items = Array.isArray(updatedData.items)
+        ? (updatedData.items as InvoiceItem[])
+        : [];
+
+      const subtotal = items.reduce((sum, item) => {
+        const qty = Number.parseFloat(item.quantity || "0");
+        const price = Number.parseFloat(item.unitPrice || "0");
+        return sum + qty * price;
+      }, 0);
+
+      // Find and update the footer section
+      const footerSection = currentTemplate?.sections.find(
+        (s) => s.type === "invoice-footer" || s.type === "receipt-footer",
+      );
+
+      if (footerSection) {
+        const footerData = { ...footerSection.data };
+        footerData.subtotal = subtotal.toFixed(2);
+
+        // Get current modes
+        const taxMode = (footerData.taxMode as string) || "percentage";
+        const discountMode =
+          (footerData.discountMode as string) || "percentage";
+
+        // Recalculate tax based on mode
+        if (taxMode === "percentage") {
+          const taxRate = Number.parseFloat(String(footerData.taxRate || "0"));
+          if (taxRate > 0 && subtotal > 0) {
+            footerData.taxAmount = ((subtotal * taxRate) / 100).toFixed(2);
+          }
+        } else {
+          // Amount mode: recalculate percentage from amount
+          const taxAmount = Number.parseFloat(
+            String(footerData.taxAmount || "0"),
+          );
+          if (taxAmount > 0 && subtotal > 0) {
+            footerData.taxRate = ((taxAmount / subtotal) * 100).toFixed(2);
+          }
+        }
+
+        // Recalculate discount based on mode
+        if (discountMode === "percentage") {
+          const discountRate = Number.parseFloat(
+            String(footerData.discountRate || "0"),
+          );
+          if (discountRate > 0 && subtotal > 0) {
+            footerData.discount = ((subtotal * discountRate) / 100).toFixed(2);
+          }
+        } else {
+          // Amount mode: recalculate percentage from amount
+          const discount = Number.parseFloat(
+            String(footerData.discount || "0"),
+          );
+          if (discount > 0 && subtotal > 0) {
+            footerData.discountRate = ((discount / subtotal) * 100).toFixed(2);
+          }
+        }
+
+        // Recalculate total
+        const taxAmount = Number.parseFloat(
+          String(footerData.taxAmount || "0"),
+        );
+        const discount = Number.parseFloat(String(footerData.discount || "0"));
+        footerData.total = (subtotal + taxAmount - discount).toFixed(2);
+
+        updateSection(footerSection.id, { data: footerData });
+      }
+    }
+
     // Explicitly mark that we want to close
     setIsModalOpen(false);
     setEditingField(null);
@@ -1360,6 +1482,9 @@ export function SectionRenderer({
       }
 
       case "invoice-footer": {
+        const taxMode = (section.data.taxMode as string) || "percentage";
+        const discountMode =
+          (section.data.discountMode as string) || "percentage";
         return (
           <div className="text-gray-900" style={sectionStyles}>
             <div className="flex justify-end">
@@ -1401,110 +1526,193 @@ export function SectionRenderer({
                     </button>
                   </span>
                 </div>
-                {(section.data.taxRate as string | number | undefined) && (
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">
-                      Tax (
-                      <button
-                        className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5"
-                        onClick={(e) =>
-                          handleFieldClick(
-                            e,
-                            ["taxRate"],
-                            section.data.taxRate as string,
-                            "Tax Rate",
-                            false,
-                          )
-                        }
-                        onKeyDown={(e) =>
-                          handleFieldKeyDown(
-                            e,
-                            ["taxRate"],
-                            section.data.taxRate as string,
-                            "Tax Rate",
-                            false,
-                          )
-                        }
-                        type="button"
-                      >
-                        {(section.data.taxRate as string | number) || ""}%
-                      </button>
-                      ):
-                    </span>
-                    <span>
-                      <button
-                        className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-right"
-                        onClick={(e) =>
-                          handleFieldClick(
-                            e,
-                            ["taxAmount"],
-                            section.data.taxAmount as string,
-                            "Tax Amount",
-                            false,
-                          )
-                        }
-                        onKeyDown={(e) =>
-                          handleFieldKeyDown(
-                            e,
-                            ["taxAmount"],
-                            section.data.taxAmount as string,
-                            "Tax Amount",
-                            false,
-                          )
-                        }
-                        type="button"
-                      >
-                        {formatCurrency(
-                          section.data.taxAmount as
-                            | string
-                            | number
-                            | null
-                            | undefined,
-                          "en-US",
-                          currency,
+                {(section.data.taxAmount as string | number | undefined) &&
+                  Number(section.data.taxAmount) > 0 && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">
+                        {section.data.showTaxRate !== false &&
+                        section.data.taxRate &&
+                        Number(section.data.taxRate) > 0 ? (
+                          <Fragment>
+                            Tax (
+                            {taxMode === "percentage" ? (
+                              <button
+                                className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5"
+                                onClick={(e) =>
+                                  handleFieldClick(
+                                    e,
+                                    ["taxRate"],
+                                    section.data.taxRate as string,
+                                    "Tax Rate",
+                                    false,
+                                  )
+                                }
+                                onKeyDown={(e) =>
+                                  handleFieldKeyDown(
+                                    e,
+                                    ["taxRate"],
+                                    section.data.taxRate as string,
+                                    "Tax Rate",
+                                    false,
+                                  )
+                                }
+                                type="button"
+                              >
+                                {String(section.data.taxRate || "")}%
+                              </button>
+                            ) : (
+                              <span>{String(section.data.taxRate || "")}%</span>
+                            )}
+                            ):
+                          </Fragment>
+                        ) : (
+                          "Tax:"
                         )}
-                      </button>
-                    </span>
-                  </div>
-                )}
+                      </span>
+                      <span>
+                        {taxMode === "amount" ? (
+                          <button
+                            className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-right"
+                            onClick={(e) =>
+                              handleFieldClick(
+                                e,
+                                ["taxAmount"],
+                                section.data.taxAmount as string,
+                                "Tax Amount",
+                                false,
+                              )
+                            }
+                            onKeyDown={(e) =>
+                              handleFieldKeyDown(
+                                e,
+                                ["taxAmount"],
+                                section.data.taxAmount as string,
+                                "Tax Amount",
+                                false,
+                              )
+                            }
+                            type="button"
+                          >
+                            {formatCurrency(
+                              section.data.taxAmount as
+                                | string
+                                | number
+                                | null
+                                | undefined,
+                              "en-US",
+                              currency,
+                            )}
+                          </button>
+                        ) : (
+                          <span>
+                            {formatCurrency(
+                              section.data.taxAmount as
+                                | string
+                                | number
+                                | null
+                                | undefined,
+                              "en-US",
+                              currency,
+                            )}
+                          </span>
+                        )}
+                      </span>
+                    </div>
+                  )}
                 {(section.data.discount as string | number | undefined) &&
                   Number(section.data.discount) > 0 && (
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Discount:</span>
+                      <span className="text-gray-600">
+                        {section.data.showDiscountRate !== false &&
+                        section.data.discountRate &&
+                        Number(section.data.discountRate) > 0 ? (
+                          <Fragment>
+                            Discount (
+                            {discountMode === "percentage" ? (
+                              <button
+                                className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5"
+                                onClick={(e) =>
+                                  handleFieldClick(
+                                    e,
+                                    ["discountRate"],
+                                    section.data.discountRate as string,
+                                    "Discount Rate",
+                                    false,
+                                  )
+                                }
+                                onKeyDown={(e) =>
+                                  handleFieldKeyDown(
+                                    e,
+                                    ["discountRate"],
+                                    section.data.discountRate as string,
+                                    "Discount Rate",
+                                    false,
+                                  )
+                                }
+                                type="button"
+                              >
+                                {String(section.data.discountRate || "")}%
+                              </button>
+                            ) : (
+                              <span>
+                                {String(section.data.discountRate || "")}%
+                              </span>
+                            )}
+                            ):
+                          </Fragment>
+                        ) : (
+                          "Discount:"
+                        )}
+                      </span>
                       <span>
-                        <button
-                          className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-right"
-                          onClick={(e) =>
-                            handleFieldClick(
-                              e,
-                              ["discount"],
-                              section.data.discount as string,
-                              "Discount",
-                              false,
-                            )
-                          }
-                          onKeyDown={(e) =>
-                            handleFieldKeyDown(
-                              e,
-                              ["discount"],
-                              section.data.discount as string,
-                              "Discount",
-                              false,
-                            )
-                          }
-                          type="button"
-                        >
-                          -
-                          {formatCurrency(
-                            section.data.discount as
-                              | string
-                              | number
-                              | null
-                              | undefined,
-                            "en-US",
-                            currency,
-                          )}
-                        </button>
+                        {discountMode === "amount" ? (
+                          <button
+                            className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-right"
+                            onClick={(e) =>
+                              handleFieldClick(
+                                e,
+                                ["discount"],
+                                section.data.discount as string,
+                                "Discount",
+                                false,
+                              )
+                            }
+                            onKeyDown={(e) =>
+                              handleFieldKeyDown(
+                                e,
+                                ["discount"],
+                                section.data.discount as string,
+                                "Discount",
+                                false,
+                              )
+                            }
+                            type="button"
+                          >
+                            -
+                            {formatCurrency(
+                              section.data.discount as
+                                | string
+                                | number
+                                | null
+                                | undefined,
+                              "en-US",
+                              currency,
+                            )}
+                          </button>
+                        ) : (
+                          <span>
+                            -
+                            {formatCurrency(
+                              section.data.discount as
+                                | string
+                                | number
+                                | null
+                                | undefined,
+                              "en-US",
+                              currency,
+                            )}
+                          </span>
+                        )}
                       </span>
                     </div>
                   )}
@@ -2003,6 +2211,9 @@ export function SectionRenderer({
       case "receipt-footer": {
         const hasColorStyle = sectionStyles.color;
         const textColorClass = hasColorStyle ? "" : "text-gray-900";
+        const taxMode = (section.data.taxMode as string) || "percentage";
+        const discountMode =
+          (section.data.discountMode as string) || "percentage";
         return (
           <div className={textColorClass} style={sectionStyles}>
             <div className="flex justify-end">
@@ -2047,80 +2258,190 @@ export function SectionRenderer({
                 {(section.data.taxAmount as string | number | undefined) &&
                   Number(section.data.taxAmount) > 0 && (
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Tax:</span>
+                      <span className="text-gray-600">
+                        {section.data.showTaxRate !== false &&
+                        section.data.taxRate &&
+                        Number(section.data.taxRate) > 0 ? (
+                          <Fragment>
+                            Tax (
+                            {taxMode === "percentage" ? (
+                              <button
+                                className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5"
+                                onClick={(e) =>
+                                  handleFieldClick(
+                                    e,
+                                    ["taxRate"],
+                                    section.data.taxRate as string,
+                                    "Tax Rate",
+                                    false,
+                                  )
+                                }
+                                onKeyDown={(e) =>
+                                  handleFieldKeyDown(
+                                    e,
+                                    ["taxRate"],
+                                    section.data.taxRate as string,
+                                    "Tax Rate",
+                                    false,
+                                  )
+                                }
+                                type="button"
+                              >
+                                {String(section.data.taxRate || "")}%
+                              </button>
+                            ) : (
+                              <span>{String(section.data.taxRate || "")}%</span>
+                            )}
+                            ):
+                          </Fragment>
+                        ) : (
+                          "Tax:"
+                        )}
+                      </span>
                       <span>
-                        <button
-                          className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-right"
-                          onClick={(e) =>
-                            handleFieldClick(
-                              e,
-                              ["taxAmount"],
-                              section.data.taxAmount as string,
-                              "Tax Amount",
-                              false,
-                            )
-                          }
-                          onKeyDown={(e) =>
-                            handleFieldKeyDown(
-                              e,
-                              ["taxAmount"],
-                              section.data.taxAmount as string,
-                              "Tax Amount",
-                              false,
-                            )
-                          }
-                          type="button"
-                        >
-                          {formatCurrency(undefined, "en-US", currency) ||
-                            formatCurrency(
+                        {taxMode === "amount" ? (
+                          <button
+                            className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-right"
+                            onClick={(e) =>
+                              handleFieldClick(
+                                e,
+                                ["taxAmount"],
+                                section.data.taxAmount as string,
+                                "Tax Amount",
+                                false,
+                              )
+                            }
+                            onKeyDown={(e) =>
+                              handleFieldKeyDown(
+                                e,
+                                ["taxAmount"],
+                                section.data.taxAmount as string,
+                                "Tax Amount",
+                                false,
+                              )
+                            }
+                            type="button"
+                          >
+                            {formatCurrency(
                               section.data.taxAmount as
                                 | string
                                 | number
                                 | null
                                 | undefined,
+                              "en-US",
+                              currency,
                             )}
-                        </button>
+                          </button>
+                        ) : (
+                          <span>
+                            {formatCurrency(
+                              section.data.taxAmount as
+                                | string
+                                | number
+                                | null
+                                | undefined,
+                              "en-US",
+                              currency,
+                            )}
+                          </span>
+                        )}
                       </span>
                     </div>
                   )}
                 {(section.data.discount as string | number | undefined) &&
                   Number(section.data.discount) > 0 && (
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Discount:</span>
+                      <span className="text-gray-600">
+                        {section.data.showDiscountRate !== false &&
+                        section.data.discountRate &&
+                        Number(section.data.discountRate) > 0 ? (
+                          <Fragment>
+                            Discount (
+                            {discountMode === "percentage" ? (
+                              <button
+                                className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5"
+                                onClick={(e) =>
+                                  handleFieldClick(
+                                    e,
+                                    ["discountRate"],
+                                    section.data.discountRate as string,
+                                    "Discount Rate",
+                                    false,
+                                  )
+                                }
+                                onKeyDown={(e) =>
+                                  handleFieldKeyDown(
+                                    e,
+                                    ["discountRate"],
+                                    section.data.discountRate as string,
+                                    "Discount Rate",
+                                    false,
+                                  )
+                                }
+                                type="button"
+                              >
+                                {String(section.data.discountRate || "")}%
+                              </button>
+                            ) : (
+                              <span>
+                                {String(section.data.discountRate || "")}%
+                              </span>
+                            )}
+                            ):
+                          </Fragment>
+                        ) : (
+                          "Discount:"
+                        )}
+                      </span>
                       <span>
-                        <button
-                          className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-right"
-                          onClick={(e) =>
-                            handleFieldClick(
-                              e,
-                              ["discount"],
-                              section.data.discount as string,
-                              "Discount",
-                              false,
-                            )
-                          }
-                          onKeyDown={(e) =>
-                            handleFieldKeyDown(
-                              e,
-                              ["discount"],
-                              section.data.discount as string,
-                              "Discount",
-                              false,
-                            )
-                          }
-                          type="button"
-                        >
-                          -
-                          {formatCurrency(
-                            section.data.discount as
-                              | string
-                              | number
-                              | null
-                              | undefined,
-                            "en-US",
-                            currency,
-                          )}
-                        </button>
+                        {discountMode === "amount" ? (
+                          <button
+                            className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-right"
+                            onClick={(e) =>
+                              handleFieldClick(
+                                e,
+                                ["discount"],
+                                section.data.discount as string,
+                                "Discount",
+                                false,
+                              )
+                            }
+                            onKeyDown={(e) =>
+                              handleFieldKeyDown(
+                                e,
+                                ["discount"],
+                                section.data.discount as string,
+                                "Discount",
+                                false,
+                              )
+                            }
+                            type="button"
+                          >
+                            -
+                            {formatCurrency(
+                              section.data.discount as
+                                | string
+                                | number
+                                | null
+                                | undefined,
+                              "en-US",
+                              currency,
+                            )}
+                          </button>
+                        ) : (
+                          <span>
+                            -
+                            {formatCurrency(
+                              section.data.discount as
+                                | string
+                                | number
+                                | null
+                                | undefined,
+                              "en-US",
+                              currency,
+                            )}
+                          </span>
+                        )}
                       </span>
                     </div>
                   )}

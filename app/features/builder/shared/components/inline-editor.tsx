@@ -1,6 +1,8 @@
 /* eslint-disable jsx-a11y/no-static-element-interactions */
+import type * as React from "react";
 import { useEffect, useRef, useState } from "react";
 
+import { CurrencyInput, NumberInput, QuantityInput } from "./number-input";
 import { Button } from "~/components/ui/button";
 import {
   Dialog,
@@ -56,7 +58,7 @@ interface InlineEditorProps {
 export function InlineEditor({
   open,
   onOpenChange,
-  fieldPath: _fieldPath,
+  fieldPath,
   value,
   label,
   isRichText,
@@ -67,6 +69,48 @@ export function InlineEditor({
     useState<React.ComponentType<ReactQuillProps> | null>(null);
   const [isMounted, setIsMounted] = useState(false);
   const allowCloseRef = useRef(false);
+
+  // Determine if this is a numeric field and what type
+  const getNumericFieldType = () => {
+    if (!fieldPath || fieldPath.length === 0) return null;
+
+    const fieldName = fieldPath[fieldPath.length - 1]?.toLowerCase() || "";
+    const labelLower = label.toLowerCase();
+
+    // Quantity fields
+    if (fieldName === "quantity" || labelLower.includes("quantity")) {
+      return "quantity";
+    }
+
+    // Currency/amount fields
+    if (
+      fieldName === "unitprice" ||
+      fieldName === "total" ||
+      fieldName === "subtotal" ||
+      fieldName === "taxamount" ||
+      fieldName === "discount" ||
+      labelLower.includes("unit price") ||
+      labelLower.includes("total") ||
+      labelLower.includes("subtotal") ||
+      labelLower.includes("tax amount") ||
+      labelLower.includes("discount")
+    ) {
+      return "currency";
+    }
+
+    // Percentage fields (tax rate)
+    if (
+      fieldName === "taxrate" ||
+      labelLower.includes("tax rate") ||
+      labelLower.includes("%")
+    ) {
+      return "percentage";
+    }
+
+    return null;
+  };
+
+  const numericFieldType = getNumericFieldType();
 
   useEffect(() => {
     setIsMounted(true);
@@ -243,6 +287,94 @@ export function InlineEditor({
                       <p className="text-gray-500">Loading editor...</p>
                     </div>
                   )}
+                </div>
+              ) : numericFieldType === "quantity" ? (
+                <div
+                  // eslint-disable-next-line jsx-a11y/no-static-element-interactions
+                  onClick={(e) => e.stopPropagation()}
+                  onKeyDown={(e) => e.stopPropagation()}
+                  onMouseDown={(e) => e.stopPropagation()}
+                  onPointerDown={(e) => e.stopPropagation()}
+                  role="presentation"
+                >
+                  <QuantityInput
+                    data-testid={`inline-editor-input-${label.toLowerCase().replace(/\s+/g, "-")}`}
+                    id="editor"
+                    onChange={(val: string) => setEditedValue(val)}
+                    onClick={(e: React.MouseEvent<HTMLInputElement>) =>
+                      e.stopPropagation()
+                    }
+                    onFocus={(e: React.FocusEvent<HTMLInputElement>) =>
+                      e.stopPropagation()
+                    }
+                    onMouseDown={(e: React.MouseEvent<HTMLInputElement>) =>
+                      e.stopPropagation()
+                    }
+                    onPointerDown={(e: React.PointerEvent<HTMLInputElement>) =>
+                      e.stopPropagation()
+                    }
+                    value={editedValue}
+                  />
+                </div>
+              ) : numericFieldType === "currency" ? (
+                <div
+                  // eslint-disable-next-line jsx-a11y/no-static-element-interactions
+                  onClick={(e) => e.stopPropagation()}
+                  onKeyDown={(e) => e.stopPropagation()}
+                  onMouseDown={(e) => e.stopPropagation()}
+                  onPointerDown={(e) => e.stopPropagation()}
+                  role="presentation"
+                >
+                  <CurrencyInput
+                    data-testid={`inline-editor-input-${label.toLowerCase().replace(/\s+/g, "-")}`}
+                    id="editor"
+                    onChange={(val: string) => setEditedValue(val)}
+                    onClick={(e: React.MouseEvent<HTMLInputElement>) =>
+                      e.stopPropagation()
+                    }
+                    onFocus={(e: React.FocusEvent<HTMLInputElement>) =>
+                      e.stopPropagation()
+                    }
+                    onMouseDown={(e: React.MouseEvent<HTMLInputElement>) =>
+                      e.stopPropagation()
+                    }
+                    onPointerDown={(e: React.PointerEvent<HTMLInputElement>) =>
+                      e.stopPropagation()
+                    }
+                    value={editedValue}
+                  />
+                </div>
+              ) : numericFieldType === "percentage" ? (
+                <div
+                  // eslint-disable-next-line jsx-a11y/no-static-element-interactions
+                  onClick={(e) => e.stopPropagation()}
+                  onKeyDown={(e) => e.stopPropagation()}
+                  onMouseDown={(e) => e.stopPropagation()}
+                  onPointerDown={(e) => e.stopPropagation()}
+                  role="presentation"
+                >
+                  <NumberInput
+                    allowNegative={false}
+                    data-testid={`inline-editor-input-${label.toLowerCase().replace(/\s+/g, "-")}`}
+                    decimalScale={2}
+                    fixedDecimalScale={false}
+                    id="editor"
+                    onChange={(val: string) => setEditedValue(val)}
+                    onClick={(e: React.MouseEvent<HTMLInputElement>) =>
+                      e.stopPropagation()
+                    }
+                    onFocus={(e: React.FocusEvent<HTMLInputElement>) =>
+                      e.stopPropagation()
+                    }
+                    onMouseDown={(e: React.MouseEvent<HTMLInputElement>) =>
+                      e.stopPropagation()
+                    }
+                    onPointerDown={(e: React.PointerEvent<HTMLInputElement>) =>
+                      e.stopPropagation()
+                    }
+                    thousandSeparator={false}
+                    value={editedValue}
+                  />
                 </div>
               ) : (
                 <div

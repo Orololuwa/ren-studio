@@ -72,9 +72,14 @@ export const invoiceTemplates: Template[] = [
       {
         data: {
           subtotal: "3500.00",
+          taxMode: "percentage",
           taxRate: "10",
           taxAmount: "350.00",
+          showTaxRate: true,
+          discountMode: "percentage",
+          discountRate: "0.00",
           discount: "0.00",
+          showDiscountRate: true,
           total: "3850.00",
           paymentTerms: "Net 30",
           notes:
@@ -175,9 +180,14 @@ export const invoiceTemplates: Template[] = [
       {
         data: {
           subtotal: "14500.00",
+          taxMode: "percentage",
           taxRate: "8.5",
           taxAmount: "1232.50",
+          showTaxRate: true,
+          discountMode: "amount",
+          discountRate: "3.45",
           discount: "500.00",
+          showDiscountRate: true,
           total: "15232.50",
           paymentTerms:
             "Net 30 - Payment due within 30 days. Late payments subject to 1.5% monthly interest.",

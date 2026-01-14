@@ -118,6 +118,20 @@ function renderInvoiceSectionToHTML(
     }
 
     case "invoice-footer": {
+      const taxMode = (section.data.taxMode as string) || "percentage";
+      const discountMode =
+        (section.data.discountMode as string) || "percentage";
+      const showTaxRate = section.data.showTaxRate !== false;
+      const showDiscountRate = section.data.showDiscountRate !== false;
+      const taxAmount = Number.parseFloat(
+        String(section.data.taxAmount || "0"),
+      );
+      const discount = Number.parseFloat(String(section.data.discount || "0"));
+      const taxRate = Number.parseFloat(String(section.data.taxRate || "0"));
+      const discountRate = Number.parseFloat(
+        String(section.data.discountRate || "0"),
+      );
+
       return `
         <section class="section-invoice-footer" style="${inlineStyles}">
           <div class="invoice-totals">
@@ -127,20 +141,34 @@ function renderInvoiceSectionToHTML(
                 <span class="invoice-total-value">${escapeHtml(formatCurrency(section.data.subtotal as string | number | undefined, "en-US", currency))}</span>
               </div>
               ${
-                section.data.taxRate
+                taxAmount > 0
                   ? `
               <div class="invoice-total-row">
-                <span class="invoice-total-label">Tax (${escapeHtml(String(section.data.taxRate))}%):</span>
+                <span class="invoice-total-label">${
+                  taxMode === "percentage" ||
+                  (taxMode === "amount" && showTaxRate && taxRate > 0)
+                    ? `Tax (${escapeHtml(String(section.data.taxRate || "0"))}%):`
+                    : "Tax:"
+                }</span>
                 <span class="invoice-total-value">${escapeHtml(formatCurrency(section.data.taxAmount as string | number | undefined, "en-US", currency))}</span>
               </div>
               `
                   : ""
               }
               ${
-                section.data.discount && Number(section.data.discount) > 0
+                discount > 0
                   ? `
               <div class="invoice-total-row">
-                <span class="invoice-total-label">Discount:</span>
+                <span class="invoice-total-label">${
+                  discountMode === "percentage" ||
+                  (
+                    discountMode === "amount" &&
+                      showDiscountRate &&
+                      discountRate > 0
+                  )
+                    ? `Discount (${escapeHtml(String(section.data.discountRate || "0"))}%):`
+                    : "Discount:"
+                }</span>
                 <span class="invoice-total-value">-${escapeHtml(formatCurrency(section.data.discount as string | number | undefined, "en-US", currency))}</span>
               </div>
               `

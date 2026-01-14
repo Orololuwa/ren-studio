@@ -11,6 +11,7 @@ import type {
   ProjectEntry,
   SocialLink,
 } from "../types";
+import { CurrencyInput, NumberInput, QuantityInput } from "./number-input";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
@@ -177,6 +178,70 @@ export function PropertiesPanel() {
     updateSection(section.id, {
       data: { ...section.data, [key]: value },
     });
+  };
+
+  // Helper function to calculate subtotal from items and update footer
+  const calculateAndUpdateSubtotal = (items: InvoiceItem[]) => {
+    if (!currentTemplate) return;
+
+    const subtotal = items.reduce((sum, item) => {
+      const qty = Number.parseFloat(item.quantity || "0");
+      const price = Number.parseFloat(item.unitPrice || "0");
+      return sum + qty * price;
+    }, 0);
+
+    // Find and update the footer section (invoice-footer or receipt-footer)
+    const footerSection = currentTemplate.sections.find(
+      (s) => s.type === "invoice-footer" || s.type === "receipt-footer",
+    );
+
+    if (footerSection) {
+      const footerData = { ...footerSection.data };
+      footerData.subtotal = subtotal.toFixed(2);
+
+      // Get current modes
+      const taxMode = (footerData.taxMode as string) || "percentage";
+      const discountMode = (footerData.discountMode as string) || "percentage";
+
+      // Recalculate tax based on mode
+      if (taxMode === "percentage") {
+        const taxRate = Number.parseFloat(String(footerData.taxRate || "0"));
+        if (taxRate > 0 && subtotal > 0) {
+          footerData.taxAmount = ((subtotal * taxRate) / 100).toFixed(2);
+        }
+      } else {
+        // Amount mode: recalculate percentage from amount
+        const taxAmount = Number.parseFloat(
+          String(footerData.taxAmount || "0"),
+        );
+        if (taxAmount > 0 && subtotal > 0) {
+          footerData.taxRate = ((taxAmount / subtotal) * 100).toFixed(2);
+        }
+      }
+
+      // Recalculate discount based on mode
+      if (discountMode === "percentage") {
+        const discountRate = Number.parseFloat(
+          String(footerData.discountRate || "0"),
+        );
+        if (discountRate > 0 && subtotal > 0) {
+          footerData.discount = ((subtotal * discountRate) / 100).toFixed(2);
+        }
+      } else {
+        // Amount mode: recalculate percentage from amount
+        const discount = Number.parseFloat(String(footerData.discount || "0"));
+        if (discount > 0 && subtotal > 0) {
+          footerData.discountRate = ((discount / subtotal) * 100).toFixed(2);
+        }
+      }
+
+      // Recalculate total
+      const taxAmount = Number.parseFloat(String(footerData.taxAmount || "0"));
+      const discount = Number.parseFloat(String(footerData.discount || "0"));
+      footerData.total = (subtotal + taxAmount - discount).toFixed(2);
+
+      updateSection(footerSection.id, { data: footerData });
+    }
   };
 
   const renderContentEditor = () => {
@@ -1285,12 +1350,17 @@ export function PropertiesPanel() {
             unitPrice: "0.00",
             total: "0.00",
           };
-          updateData("items", [...items, newItem]);
+          const newItems = [...items, newItem];
+          updateData("items", newItems);
+          // Auto-calculate subtotal in footer
+          calculateAndUpdateSubtotal(newItems);
         };
 
         const deleteItem = (idx: number) => {
           const newItems = items.filter((_, i) => i !== idx);
           updateData("items", newItems);
+          // Auto-calculate subtotal in footer
+          calculateAndUpdateSubtotal(newItems);
         };
 
         const updateItem = (
@@ -1309,6 +1379,8 @@ export function PropertiesPanel() {
             }
           }
           updateData("items", newItems);
+          // Auto-calculate subtotal in footer
+          calculateAndUpdateSubtotal(newItems);
         };
 
         return (
@@ -1329,7 +1401,7 @@ export function PropertiesPanel() {
               {items.map((item, idx) => (
                 <div
                   className="p-3 border rounded-lg space-y-3 bg-background"
-                  key={`item-${item.description}-${item.quantity}-${item.unitPrice}-${idx}`}
+                  key={`${section.id}-item-${idx}`}
                 >
                   <div className="flex items-center justify-between">
                     <Label className="text-xs font-medium">
@@ -1363,14 +1435,13 @@ export function PropertiesPanel() {
                       <Label className="text-xs" htmlFor={`item-qty-${idx}`}>
                         Quantity
                       </Label>
-                      <Input
+                      <QuantityInput
                         className="mt-1"
                         id={`item-qty-${idx}`}
-                        onChange={(e) =>
-                          updateItem(idx, "quantity", e.target.value)
+                        onChange={(value: string) =>
+                          updateItem(idx, "quantity", value)
                         }
                         placeholder="1"
-                        type="number"
                         value={item.quantity || ""}
                       />
                     </div>
@@ -1378,15 +1449,12 @@ export function PropertiesPanel() {
                       <Label className="text-xs" htmlFor={`item-price-${idx}`}>
                         Unit Price
                       </Label>
-                      <Input
+                      <CurrencyInput
                         className="mt-1"
                         id={`item-price-${idx}`}
-                        onChange={(e) =>
-                          updateItem(idx, "unitPrice", e.target.value)
+                        onChange={(value: string) =>
+                          updateItem(idx, "unitPrice", value)
                         }
-                        placeholder="0.00"
-                        step="0.01"
-                        type="number"
                         value={item.unitPrice || ""}
                       />
                     </div>
@@ -1394,15 +1462,10 @@ export function PropertiesPanel() {
                       <Label className="text-xs" htmlFor={`item-total-${idx}`}>
                         Total
                       </Label>
-                      <Input
+                      <CurrencyInput
                         className="mt-1"
+                        disabled
                         id={`item-total-${idx}`}
-                        onChange={(e) =>
-                          updateItem(idx, "total", e.target.value)
-                        }
-                        placeholder="0.00"
-                        step="0.01"
-                        type="number"
                         value={item.total || ""}
                       />
                     </div>
@@ -1420,7 +1483,90 @@ export function PropertiesPanel() {
       }
 
       case "invoice-footer": {
-        // Auto-calculate totals when subtotal, tax rate, or discount changes
+        const subtotal = Number.parseFloat(
+          String(section.data.subtotal || "0"),
+        );
+        const taxMode = (section.data.taxMode as string) || "percentage";
+        const discountMode =
+          (section.data.discountMode as string) || "percentage";
+        const showTaxRate = section.data.showTaxRate !== false;
+        const showDiscountRate = section.data.showDiscountRate !== false;
+
+        const handleTaxModeChange = (mode: string) => {
+          updateData("taxMode", mode);
+        };
+
+        const handleDiscountModeChange = (mode: string) => {
+          updateData("discountMode", mode);
+        };
+
+        const handleTaxRateChange = (value: string) => {
+          const taxRate = Number.parseFloat(value || "0");
+          const taxAmount = subtotal > 0 ? (subtotal * taxRate) / 100 : 0;
+          const currentDiscount = Number.parseFloat(
+            String(section.data.discount || "0"),
+          );
+          // Update both values in a single call to ensure they update together
+          updateSection(section.id, {
+            data: {
+              ...section.data,
+              taxRate: value,
+              taxAmount: taxAmount.toFixed(2),
+              total: (subtotal + taxAmount - currentDiscount).toFixed(2),
+            },
+          });
+        };
+
+        const handleTaxAmountChange = (value: string) => {
+          const taxAmount = Number.parseFloat(value || "0");
+          const taxRate = subtotal > 0 ? (taxAmount / subtotal) * 100 : 0;
+          const currentDiscount = Number.parseFloat(
+            String(section.data.discount || "0"),
+          );
+          // Update both values in a single call to ensure they update together
+          updateSection(section.id, {
+            data: {
+              ...section.data,
+              taxAmount: value,
+              taxRate: taxRate.toFixed(2),
+              total: (subtotal + taxAmount - currentDiscount).toFixed(2),
+            },
+          });
+        };
+
+        const handleDiscountRateChange = (value: string) => {
+          const discountRate = Number.parseFloat(value || "0");
+          const discount = subtotal > 0 ? (subtotal * discountRate) / 100 : 0;
+          const currentTaxAmount = Number.parseFloat(
+            String(section.data.taxAmount || "0"),
+          );
+          // Update both values in a single call to ensure they update together
+          updateSection(section.id, {
+            data: {
+              ...section.data,
+              discountRate: value,
+              discount: discount.toFixed(2),
+              total: (subtotal + currentTaxAmount - discount).toFixed(2),
+            },
+          });
+        };
+
+        const handleDiscountAmountChange = (value: string) => {
+          const discount = Number.parseFloat(value || "0");
+          const discountRate = subtotal > 0 ? (discount / subtotal) * 100 : 0;
+          const currentTaxAmount = Number.parseFloat(
+            String(section.data.taxAmount || "0"),
+          );
+          // Update both values in a single call to ensure they update together
+          updateSection(section.id, {
+            data: {
+              ...section.data,
+              discount: value,
+              discountRate: discountRate.toFixed(2),
+              total: (subtotal + currentTaxAmount - discount).toFixed(2),
+            },
+          });
+        };
 
         return (
           <div className="space-y-4">
@@ -1428,106 +1574,218 @@ export function PropertiesPanel() {
               <Label className="text-xs" htmlFor="subtotal">
                 Subtotal
               </Label>
-              <Input
+              <CurrencyInput
                 className="mt-1"
+                disabled
                 id="subtotal"
-                onChange={(e) => updateData("subtotal", e.target.value)}
-                placeholder="0.00"
-                step="0.01"
-                type="number"
                 value={String(section.data.subtotal || "")}
               />
             </div>
-            <div>
-              <Label className="text-xs" htmlFor="taxRate">
-                Tax Rate (%)
-              </Label>
-              <Input
-                className="mt-1"
-                id="taxRate"
-                onChange={(e) => {
-                  updateData("taxRate", e.target.value);
-                  const rate = Number.parseFloat(e.target.value || "0");
-                  const subtotal = Number.parseFloat(
-                    String(section.data.subtotal || "0"),
-                  );
-                  if (rate > 0 && subtotal > 0) {
-                    const taxAmount = (subtotal * rate) / 100;
-                    updateData("taxAmount", taxAmount.toFixed(2));
-                    const discount = Number.parseFloat(
-                      String(section.data.discount || "0"),
-                    );
-                    const total = subtotal + taxAmount - discount;
-                    updateData("total", total.toFixed(2));
-                  }
-                }}
-                placeholder="10"
-                step="0.01"
-                type="number"
-                value={String(section.data.taxRate || "")}
-              />
+
+            {/* Tax Section */}
+            <div className="p-3 border rounded-lg space-y-3 bg-muted/30">
+              <div className="flex items-center justify-between">
+                <Label className="text-xs font-medium">Tax</Label>
+                <div className="flex items-center gap-1 text-xs">
+                  <button
+                    className={`px-2 py-1 rounded ${taxMode === "percentage" ? "bg-primary text-primary-foreground" : "bg-muted"}`}
+                    onClick={() => handleTaxModeChange("percentage")}
+                    type="button"
+                  >
+                    %
+                  </button>
+                  <button
+                    className={`px-2 py-1 rounded ${taxMode === "amount" ? "bg-primary text-primary-foreground" : "bg-muted"}`}
+                    onClick={() => handleTaxModeChange("amount")}
+                    type="button"
+                  >
+                    $
+                  </button>
+                </div>
+              </div>
+
+              {taxMode === "percentage" ? (
+                <>
+                  <div>
+                    <Label className="text-xs" htmlFor="taxRate">
+                      Tax Rate (%)
+                    </Label>
+                    <NumberInput
+                      allowNegative={false}
+                      className="mt-1"
+                      decimalScale={2}
+                      fixedDecimalScale={false}
+                      id="taxRate"
+                      onChange={handleTaxRateChange}
+                      placeholder="10"
+                      thousandSeparator={false}
+                      value={String(section.data.taxRate || "")}
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-muted-foreground">
+                      Tax Amount (calculated)
+                    </Label>
+                    <CurrencyInput
+                      className="mt-1 bg-muted/50"
+                      disabled
+                      value={String(section.data.taxAmount || "0.00")}
+                    />
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div>
+                    <Label className="text-xs" htmlFor="taxAmount">
+                      Tax Amount
+                    </Label>
+                    <CurrencyInput
+                      className="mt-1"
+                      id="taxAmount"
+                      onChange={handleTaxAmountChange}
+                      value={String(section.data.taxAmount || "")}
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      checked={showTaxRate}
+                      className="h-4 w-4 rounded border-gray-300"
+                      id="showTaxRate"
+                      onChange={(e) =>
+                        updateData("showTaxRate", e.target.checked)
+                      }
+                      type="checkbox"
+                    />
+                    <Label className="text-xs" htmlFor="showTaxRate">
+                      Show percentage on document
+                    </Label>
+                  </div>
+                  {showTaxRate && (
+                    <div>
+                      <Label className="text-xs text-muted-foreground">
+                        Tax Rate (calculated)
+                      </Label>
+                      <NumberInput
+                        allowNegative={false}
+                        className="mt-1 bg-muted/50"
+                        decimalScale={2}
+                        disabled
+                        fixedDecimalScale={false}
+                        thousandSeparator={false}
+                        value={String(section.data.taxRate || "0.00")}
+                      />
+                    </div>
+                  )}
+                </>
+              )}
             </div>
-            <div>
-              <Label className="text-xs" htmlFor="taxAmount">
-                Tax Amount
-              </Label>
-              <Input
-                className="mt-1"
-                id="taxAmount"
-                onChange={(e) => {
-                  updateData("taxAmount", e.target.value);
-                  const subtotal = Number.parseFloat(
-                    String(section.data.subtotal || "0"),
-                  );
-                  const taxAmount = Number.parseFloat(e.target.value || "0");
-                  const discount = Number.parseFloat(
-                    String(section.data.discount || "0"),
-                  );
-                  const total = subtotal + taxAmount - discount;
-                  updateData("total", total.toFixed(2));
-                }}
-                placeholder="0.00"
-                step="0.01"
-                type="number"
-                value={String(section.data.taxAmount || "")}
-              />
+
+            {/* Discount Section */}
+            <div className="p-3 border rounded-lg space-y-3 bg-muted/30">
+              <div className="flex items-center justify-between">
+                <Label className="text-xs font-medium">Discount</Label>
+                <div className="flex items-center gap-1 text-xs">
+                  <button
+                    className={`px-2 py-1 rounded ${discountMode === "percentage" ? "bg-primary text-primary-foreground" : "bg-muted"}`}
+                    onClick={() => handleDiscountModeChange("percentage")}
+                    type="button"
+                  >
+                    %
+                  </button>
+                  <button
+                    className={`px-2 py-1 rounded ${discountMode === "amount" ? "bg-primary text-primary-foreground" : "bg-muted"}`}
+                    onClick={() => handleDiscountModeChange("amount")}
+                    type="button"
+                  >
+                    $
+                  </button>
+                </div>
+              </div>
+
+              {discountMode === "percentage" ? (
+                <>
+                  <div>
+                    <Label className="text-xs" htmlFor="discountRate">
+                      Discount Rate (%)
+                    </Label>
+                    <NumberInput
+                      allowNegative={false}
+                      className="mt-1"
+                      decimalScale={2}
+                      fixedDecimalScale={false}
+                      id="discountRate"
+                      onChange={handleDiscountRateChange}
+                      placeholder="5"
+                      thousandSeparator={false}
+                      value={String(section.data.discountRate || "")}
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-muted-foreground">
+                      Discount Amount (calculated)
+                    </Label>
+                    <CurrencyInput
+                      className="mt-1 bg-muted/50"
+                      disabled
+                      value={String(section.data.discount || "0.00")}
+                    />
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div>
+                    <Label className="text-xs" htmlFor="discount">
+                      Discount Amount
+                    </Label>
+                    <CurrencyInput
+                      className="mt-1"
+                      id="discount"
+                      onChange={handleDiscountAmountChange}
+                      value={String(section.data.discount || "")}
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      checked={showDiscountRate}
+                      className="h-4 w-4 rounded border-gray-300"
+                      id="showDiscountRate"
+                      onChange={(e) =>
+                        updateData("showDiscountRate", e.target.checked)
+                      }
+                      type="checkbox"
+                    />
+                    <Label className="text-xs" htmlFor="showDiscountRate">
+                      Show percentage on document
+                    </Label>
+                  </div>
+                  {showDiscountRate && (
+                    <div>
+                      <Label className="text-xs text-muted-foreground">
+                        Discount Rate (calculated)
+                      </Label>
+                      <NumberInput
+                        allowNegative={false}
+                        className="mt-1 bg-muted/50"
+                        decimalScale={2}
+                        disabled
+                        fixedDecimalScale={false}
+                        thousandSeparator={false}
+                        value={String(section.data.discountRate || "0.00")}
+                      />
+                    </div>
+                  )}
+                </>
+              )}
             </div>
-            <div>
-              <Label className="text-xs" htmlFor="discount">
-                Discount
-              </Label>
-              <Input
-                className="mt-1"
-                id="discount"
-                onChange={(e) => {
-                  updateData("discount", e.target.value);
-                  const subtotal = Number.parseFloat(
-                    String(section.data.subtotal || "0"),
-                  );
-                  const taxAmount = Number.parseFloat(
-                    String(section.data.taxAmount || "0"),
-                  );
-                  const discount = Number.parseFloat(e.target.value || "0");
-                  const total = subtotal + taxAmount - discount;
-                  updateData("total", total.toFixed(2));
-                }}
-                placeholder="0.00"
-                step="0.01"
-                type="number"
-                value={String(section.data.discount || "")}
-              />
-            </div>
+
             <div>
               <Label className="text-xs" htmlFor="total">
                 Total
               </Label>
-              <Input
+              <CurrencyInput
                 className="mt-1 font-semibold"
+                disabled
                 id="total"
-                onChange={(e) => updateData("total", e.target.value)}
-                placeholder="0.00"
-                step="0.01"
-                type="number"
                 value={String(section.data.total || "")}
               />
             </div>
@@ -1686,12 +1944,17 @@ export function PropertiesPanel() {
             unitPrice: "0.00",
             total: "0.00",
           };
-          updateData("items", [...items, newItem]);
+          const newItems = [...items, newItem];
+          updateData("items", newItems);
+          // Auto-calculate subtotal in footer
+          calculateAndUpdateSubtotal(newItems);
         };
 
         const deleteItem = (idx: number) => {
           const newItems = items.filter((_, i) => i !== idx);
           updateData("items", newItems);
+          // Auto-calculate subtotal in footer
+          calculateAndUpdateSubtotal(newItems);
         };
 
         const updateItem = (
@@ -1710,6 +1973,8 @@ export function PropertiesPanel() {
             }
           }
           updateData("items", newItems);
+          // Auto-calculate subtotal in footer
+          calculateAndUpdateSubtotal(newItems);
         };
 
         return (
@@ -1730,7 +1995,7 @@ export function PropertiesPanel() {
               {items.map((item, idx) => (
                 <div
                   className="p-3 border rounded-lg space-y-3 bg-background"
-                  key={`item-${item.description}-${item.quantity}-${item.unitPrice}-${idx}`}
+                  key={`${section.id}-item-${idx}`}
                 >
                   <div className="flex items-center justify-between">
                     <Label className="text-xs font-medium">
@@ -1764,14 +2029,13 @@ export function PropertiesPanel() {
                       <Label className="text-xs" htmlFor={`item-qty-${idx}`}>
                         Quantity
                       </Label>
-                      <Input
+                      <QuantityInput
                         className="mt-1"
                         id={`item-qty-${idx}`}
-                        onChange={(e) =>
-                          updateItem(idx, "quantity", e.target.value)
+                        onChange={(value: string) =>
+                          updateItem(idx, "quantity", value)
                         }
                         placeholder="1"
-                        type="number"
                         value={item.quantity || ""}
                       />
                     </div>
@@ -1779,15 +2043,12 @@ export function PropertiesPanel() {
                       <Label className="text-xs" htmlFor={`item-price-${idx}`}>
                         Unit Price
                       </Label>
-                      <Input
+                      <CurrencyInput
                         className="mt-1"
                         id={`item-price-${idx}`}
-                        onChange={(e) =>
-                          updateItem(idx, "unitPrice", e.target.value)
+                        onChange={(value: string) =>
+                          updateItem(idx, "unitPrice", value)
                         }
-                        placeholder="0.00"
-                        step="0.01"
-                        type="number"
                         value={item.unitPrice || ""}
                       />
                     </div>
@@ -1795,15 +2056,10 @@ export function PropertiesPanel() {
                       <Label className="text-xs" htmlFor={`item-total-${idx}`}>
                         Total
                       </Label>
-                      <Input
+                      <CurrencyInput
                         className="mt-1"
+                        disabled
                         id={`item-total-${idx}`}
-                        onChange={(e) =>
-                          updateItem(idx, "total", e.target.value)
-                        }
-                        placeholder="0.00"
-                        step="0.01"
-                        type="number"
                         value={item.total || ""}
                       />
                     </div>
@@ -1821,94 +2077,309 @@ export function PropertiesPanel() {
       }
 
       case "receipt-footer": {
+        const subtotal = Number.parseFloat(
+          String(section.data.subtotal || "0"),
+        );
+        const taxMode = (section.data.taxMode as string) || "percentage";
+        const discountMode =
+          (section.data.discountMode as string) || "percentage";
+        const showTaxRate = section.data.showTaxRate !== false;
+        const showDiscountRate = section.data.showDiscountRate !== false;
+
+        const handleTaxModeChange = (mode: string) => {
+          updateData("taxMode", mode);
+        };
+
+        const handleDiscountModeChange = (mode: string) => {
+          updateData("discountMode", mode);
+        };
+
+        const handleTaxRateChange = (value: string) => {
+          const taxRate = Number.parseFloat(value || "0");
+          const taxAmount = subtotal > 0 ? (subtotal * taxRate) / 100 : 0;
+          const currentDiscount = Number.parseFloat(
+            String(section.data.discount || "0"),
+          );
+          // Update both values in a single call to ensure they update together
+          updateSection(section.id, {
+            data: {
+              ...section.data,
+              taxRate: value,
+              taxAmount: taxAmount.toFixed(2),
+              total: (subtotal + taxAmount - currentDiscount).toFixed(2),
+            },
+          });
+        };
+
+        const handleTaxAmountChange = (value: string) => {
+          const taxAmount = Number.parseFloat(value || "0");
+          const taxRate = subtotal > 0 ? (taxAmount / subtotal) * 100 : 0;
+          const currentDiscount = Number.parseFloat(
+            String(section.data.discount || "0"),
+          );
+          // Update both values in a single call to ensure they update together
+          updateSection(section.id, {
+            data: {
+              ...section.data,
+              taxAmount: value,
+              taxRate: taxRate.toFixed(2),
+              total: (subtotal + taxAmount - currentDiscount).toFixed(2),
+            },
+          });
+        };
+
+        const handleDiscountRateChange = (value: string) => {
+          const discountRate = Number.parseFloat(value || "0");
+          const discount = subtotal > 0 ? (subtotal * discountRate) / 100 : 0;
+          const currentTaxAmount = Number.parseFloat(
+            String(section.data.taxAmount || "0"),
+          );
+          // Update both values in a single call to ensure they update together
+          updateSection(section.id, {
+            data: {
+              ...section.data,
+              discountRate: value,
+              discount: discount.toFixed(2),
+              total: (subtotal + currentTaxAmount - discount).toFixed(2),
+            },
+          });
+        };
+
+        const handleDiscountAmountChange = (value: string) => {
+          const discount = Number.parseFloat(value || "0");
+          const discountRate = subtotal > 0 ? (discount / subtotal) * 100 : 0;
+          const currentTaxAmount = Number.parseFloat(
+            String(section.data.taxAmount || "0"),
+          );
+          // Update both values in a single call to ensure they update together
+          updateSection(section.id, {
+            data: {
+              ...section.data,
+              discount: value,
+              discountRate: discountRate.toFixed(2),
+              total: (subtotal + currentTaxAmount - discount).toFixed(2),
+            },
+          });
+        };
+
         return (
           <div className="space-y-4">
             <div>
               <Label className="text-xs" htmlFor="subtotal">
                 Subtotal
               </Label>
-              <Input
+              <CurrencyInput
                 className="mt-1"
+                disabled
                 id="subtotal"
-                onChange={(e) => {
-                  updateData("subtotal", e.target.value);
-                  const subtotal = Number.parseFloat(e.target.value || "0");
-                  const taxAmount = Number.parseFloat(
-                    String(section.data.taxAmount || "0"),
-                  );
-                  const discount = Number.parseFloat(
-                    String(section.data.discount || "0"),
-                  );
-                  const total = subtotal + taxAmount - discount;
-                  updateData("total", total.toFixed(2));
-                }}
-                placeholder="0.00"
-                step="0.01"
-                type="number"
                 value={String(section.data.subtotal || "")}
               />
             </div>
-            <div>
-              <Label className="text-xs" htmlFor="taxAmount">
-                Tax Amount
-              </Label>
-              <Input
-                className="mt-1"
-                id="taxAmount"
-                onChange={(e) => {
-                  updateData("taxAmount", e.target.value);
-                  const subtotal = Number.parseFloat(
-                    String(section.data.subtotal || "0"),
-                  );
-                  const taxAmount = Number.parseFloat(e.target.value || "0");
-                  const discount = Number.parseFloat(
-                    String(section.data.discount || "0"),
-                  );
-                  const total = subtotal + taxAmount - discount;
-                  updateData("total", total.toFixed(2));
-                }}
-                placeholder="0.00"
-                step="0.01"
-                type="number"
-                value={String(section.data.taxAmount || "")}
-              />
+
+            {/* Tax Section */}
+            <div className="p-3 border rounded-lg space-y-3 bg-muted/30">
+              <div className="flex items-center justify-between">
+                <Label className="text-xs font-medium">Tax</Label>
+                <div className="flex items-center gap-1 text-xs">
+                  <button
+                    className={`px-2 py-1 rounded ${taxMode === "percentage" ? "bg-primary text-primary-foreground" : "bg-muted"}`}
+                    onClick={() => handleTaxModeChange("percentage")}
+                    type="button"
+                  >
+                    %
+                  </button>
+                  <button
+                    className={`px-2 py-1 rounded ${taxMode === "amount" ? "bg-primary text-primary-foreground" : "bg-muted"}`}
+                    onClick={() => handleTaxModeChange("amount")}
+                    type="button"
+                  >
+                    $
+                  </button>
+                </div>
+              </div>
+
+              {taxMode === "percentage" ? (
+                <>
+                  <div>
+                    <Label className="text-xs" htmlFor="taxRate">
+                      Tax Rate (%)
+                    </Label>
+                    <NumberInput
+                      allowNegative={false}
+                      className="mt-1"
+                      decimalScale={2}
+                      fixedDecimalScale={false}
+                      id="taxRate"
+                      onChange={handleTaxRateChange}
+                      placeholder="10"
+                      thousandSeparator={false}
+                      value={String(section.data.taxRate || "")}
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-muted-foreground">
+                      Tax Amount (calculated)
+                    </Label>
+                    <CurrencyInput
+                      className="mt-1 bg-muted/50"
+                      disabled
+                      value={String(section.data.taxAmount || "0.00")}
+                    />
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div>
+                    <Label className="text-xs" htmlFor="taxAmount">
+                      Tax Amount
+                    </Label>
+                    <CurrencyInput
+                      className="mt-1"
+                      id="taxAmount"
+                      onChange={handleTaxAmountChange}
+                      value={String(section.data.taxAmount || "")}
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      checked={showTaxRate}
+                      className="h-4 w-4 rounded border-gray-300"
+                      id="showTaxRate"
+                      onChange={(e) =>
+                        updateData("showTaxRate", e.target.checked)
+                      }
+                      type="checkbox"
+                    />
+                    <Label className="text-xs" htmlFor="showTaxRate">
+                      Show percentage on document
+                    </Label>
+                  </div>
+                  {showTaxRate && (
+                    <div>
+                      <Label className="text-xs text-muted-foreground">
+                        Tax Rate (calculated)
+                      </Label>
+                      <NumberInput
+                        allowNegative={false}
+                        className="mt-1 bg-muted/50"
+                        decimalScale={2}
+                        disabled
+                        fixedDecimalScale={false}
+                        thousandSeparator={false}
+                        value={String(section.data.taxRate || "0.00")}
+                      />
+                    </div>
+                  )}
+                </>
+              )}
             </div>
-            <div>
-              <Label className="text-xs" htmlFor="discount">
-                Discount
-              </Label>
-              <Input
-                className="mt-1"
-                id="discount"
-                onChange={(e) => {
-                  updateData("discount", e.target.value);
-                  const subtotal = Number.parseFloat(
-                    String(section.data.subtotal || "0"),
-                  );
-                  const taxAmount = Number.parseFloat(
-                    String(section.data.taxAmount || "0"),
-                  );
-                  const discount = Number.parseFloat(e.target.value || "0");
-                  const total = subtotal + taxAmount - discount;
-                  updateData("total", total.toFixed(2));
-                }}
-                placeholder="0.00"
-                step="0.01"
-                type="number"
-                value={String(section.data.discount || "")}
-              />
+
+            {/* Discount Section */}
+            <div className="p-3 border rounded-lg space-y-3 bg-muted/30">
+              <div className="flex items-center justify-between">
+                <Label className="text-xs font-medium">Discount</Label>
+                <div className="flex items-center gap-1 text-xs">
+                  <button
+                    className={`px-2 py-1 rounded ${discountMode === "percentage" ? "bg-primary text-primary-foreground" : "bg-muted"}`}
+                    onClick={() => handleDiscountModeChange("percentage")}
+                    type="button"
+                  >
+                    %
+                  </button>
+                  <button
+                    className={`px-2 py-1 rounded ${discountMode === "amount" ? "bg-primary text-primary-foreground" : "bg-muted"}`}
+                    onClick={() => handleDiscountModeChange("amount")}
+                    type="button"
+                  >
+                    $
+                  </button>
+                </div>
+              </div>
+
+              {discountMode === "percentage" ? (
+                <>
+                  <div>
+                    <Label className="text-xs" htmlFor="discountRate">
+                      Discount Rate (%)
+                    </Label>
+                    <NumberInput
+                      allowNegative={false}
+                      className="mt-1"
+                      decimalScale={2}
+                      fixedDecimalScale={false}
+                      id="discountRate"
+                      onChange={handleDiscountRateChange}
+                      placeholder="5"
+                      thousandSeparator={false}
+                      value={String(section.data.discountRate || "")}
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-muted-foreground">
+                      Discount Amount (calculated)
+                    </Label>
+                    <CurrencyInput
+                      className="mt-1 bg-muted/50"
+                      disabled
+                      value={String(section.data.discount || "0.00")}
+                    />
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div>
+                    <Label className="text-xs" htmlFor="discount">
+                      Discount Amount
+                    </Label>
+                    <CurrencyInput
+                      className="mt-1"
+                      id="discount"
+                      onChange={handleDiscountAmountChange}
+                      value={String(section.data.discount || "")}
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      checked={showDiscountRate}
+                      className="h-4 w-4 rounded border-gray-300"
+                      id="showDiscountRate"
+                      onChange={(e) =>
+                        updateData("showDiscountRate", e.target.checked)
+                      }
+                      type="checkbox"
+                    />
+                    <Label className="text-xs" htmlFor="showDiscountRate">
+                      Show percentage on document
+                    </Label>
+                  </div>
+                  {showDiscountRate && (
+                    <div>
+                      <Label className="text-xs text-muted-foreground">
+                        Discount Rate (calculated)
+                      </Label>
+                      <NumberInput
+                        allowNegative={false}
+                        className="mt-1 bg-muted/50"
+                        decimalScale={2}
+                        disabled
+                        fixedDecimalScale={false}
+                        thousandSeparator={false}
+                        value={String(section.data.discountRate || "0.00")}
+                      />
+                    </div>
+                  )}
+                </>
+              )}
             </div>
+
             <div>
               <Label className="text-xs" htmlFor="total">
                 Total
               </Label>
-              <Input
+              <CurrencyInput
                 className="mt-1 font-semibold"
+                disabled
                 id="total"
-                onChange={(e) => updateData("total", e.target.value)}
-                placeholder="0.00"
-                step="0.01"
-                type="number"
                 value={String(section.data.total || "")}
               />
             </div>

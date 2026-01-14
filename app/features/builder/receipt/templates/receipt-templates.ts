@@ -66,8 +66,14 @@ export const receiptTemplates: Template[] = [
       {
         data: {
           subtotal: "135.00",
+          taxMode: "percentage",
+          taxRate: "8.00",
           taxAmount: "10.80",
+          showTaxRate: true,
+          discountMode: "percentage",
+          discountRate: "0.00",
           discount: "0.00",
+          showDiscountRate: true,
           total: "145.80",
           paymentMethod: "Credit Card ending in 1234",
           transactionId: "TXN-2024-001",
@@ -156,8 +162,14 @@ export const receiptTemplates: Template[] = [
       {
         data: {
           subtotal: "364.96",
+          taxMode: "percentage",
+          taxRate: "8.00",
           taxAmount: "29.20",
+          showTaxRate: true,
+          discountMode: "amount",
+          discountRate: "6.85",
           discount: "25.00",
+          showDiscountRate: true,
           total: "369.16",
           paymentMethod: "Visa ending in 5678",
           transactionId: "TXN-2024-001-ABC123",
