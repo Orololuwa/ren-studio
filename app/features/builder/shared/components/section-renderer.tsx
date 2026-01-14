@@ -1447,30 +1447,7 @@ export function SectionRenderer({
                         </button>
                       </td>
                       <td className="p-2 text-right font-semibold">
-                        <button
-                          className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-right"
-                          onClick={(e) =>
-                            handleFieldClick(
-                              e,
-                              ["items", String(idx), "total"],
-                              item.total,
-                              "Total",
-                              false,
-                            )
-                          }
-                          onKeyDown={(e) =>
-                            handleFieldKeyDown(
-                              e,
-                              ["items", String(idx), "total"],
-                              item.total,
-                              "Total",
-                              false,
-                            )
-                          }
-                          type="button"
-                        >
-                          {formatCurrency(item.total, "en-US", currency)}
-                        </button>
+                        {formatCurrency(item.total, "en-US", currency)}
                       </td>
                     </tr>
                   ))
@@ -1491,39 +1468,16 @@ export function SectionRenderer({
               <div className="w-64 space-y-2">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Subtotal:</span>
-                  <span>
-                    <button
-                      className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-right"
-                      onClick={(e) =>
-                        handleFieldClick(
-                          e,
-                          ["subtotal"],
-                          section.data.subtotal as string,
-                          "Subtotal",
-                          false,
-                        )
-                      }
-                      onKeyDown={(e) =>
-                        handleFieldKeyDown(
-                          e,
-                          ["subtotal"],
-                          section.data.subtotal as string,
-                          "Subtotal",
-                          false,
-                        )
-                      }
-                      type="button"
-                    >
-                      {formatCurrency(
-                        section.data.subtotal as
-                          | string
-                          | number
-                          | null
-                          | undefined,
-                        "en-US",
-                        currency,
-                      )}
-                    </button>
+                  <span className="text-right">
+                    {formatCurrency(
+                      section.data.subtotal as
+                        | string
+                        | number
+                        | null
+                        | undefined,
+                      "en-US",
+                      currency,
+                    )}
                   </span>
                 </div>
                 {(section.data.taxAmount as string | number | undefined) &&
@@ -1718,39 +1672,12 @@ export function SectionRenderer({
                   )}
                 <div className="flex justify-between border-t-2 border-gray-300 pt-2 font-bold text-lg">
                   <span>Total:</span>
-                  <span>
-                    <button
-                      className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-right"
-                      onClick={(e) =>
-                        handleFieldClick(
-                          e,
-                          ["total"],
-                          section.data.total as string,
-                          "Total",
-                          false,
-                        )
-                      }
-                      onKeyDown={(e) =>
-                        handleFieldKeyDown(
-                          e,
-                          ["total"],
-                          section.data.total as string,
-                          "Total",
-                          false,
-                        )
-                      }
-                      type="button"
-                    >
-                      {formatCurrency(
-                        section.data.total as
-                          | string
-                          | number
-                          | null
-                          | undefined,
-                        "en-US",
-                        currency,
-                      )}
-                    </button>
+                  <span className="text-right">
+                    {formatCurrency(
+                      section.data.total as string | number | null | undefined,
+                      "en-US",
+                      currency,
+                    )}
                   </span>
                 </div>
               </div>
@@ -2174,30 +2101,7 @@ export function SectionRenderer({
                         </button>
                       </td>
                       <td className="p-2 text-right font-semibold">
-                        <button
-                          className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-right"
-                          onClick={(e) =>
-                            handleFieldClick(
-                              e,
-                              ["items", String(idx), "total"],
-                              item.total,
-                              "Total",
-                              false,
-                            )
-                          }
-                          onKeyDown={(e) =>
-                            handleFieldKeyDown(
-                              e,
-                              ["items", String(idx), "total"],
-                              item.total,
-                              "Total",
-                              false,
-                            )
-                          }
-                          type="button"
-                        >
-                          {formatCurrency(item.total, "en-US", currency)}
-                        </button>
+                        {formatCurrency(item.total, "en-US", currency)}
                       </td>
                     </tr>
                   ))
@@ -2220,39 +2124,16 @@ export function SectionRenderer({
               <div className="w-64 space-y-2">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Subtotal:</span>
-                  <span>
-                    <button
-                      className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-right"
-                      onClick={(e) =>
-                        handleFieldClick(
-                          e,
-                          ["subtotal"],
-                          section.data.subtotal as string,
-                          "Subtotal",
-                          false,
-                        )
-                      }
-                      onKeyDown={(e) =>
-                        handleFieldKeyDown(
-                          e,
-                          ["subtotal"],
-                          section.data.subtotal as string,
-                          "Subtotal",
-                          false,
-                        )
-                      }
-                      type="button"
-                    >
-                      {formatCurrency(
-                        section.data.subtotal as
-                          | string
-                          | number
-                          | null
-                          | undefined,
-                        "en-US",
-                        currency,
-                      )}
-                    </button>
+                  <span className="text-right">
+                    {formatCurrency(
+                      section.data.subtotal as
+                        | string
+                        | number
+                        | null
+                        | undefined,
+                      "en-US",
+                      currency,
+                    )}
                   </span>
                 </div>
                 {(section.data.taxAmount as string | number | undefined) &&
@@ -2447,39 +2328,12 @@ export function SectionRenderer({
                   )}
                 <div className="flex justify-between border-t-2 border-gray-300 pt-2 font-bold text-lg">
                   <span>Total:</span>
-                  <span>
-                    <button
-                      className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-right"
-                      onClick={(e) =>
-                        handleFieldClick(
-                          e,
-                          ["total"],
-                          section.data.total as string,
-                          "Total",
-                          false,
-                        )
-                      }
-                      onKeyDown={(e) =>
-                        handleFieldKeyDown(
-                          e,
-                          ["total"],
-                          section.data.total as string,
-                          "Total",
-                          false,
-                        )
-                      }
-                      type="button"
-                    >
-                      {formatCurrency(
-                        section.data.total as
-                          | string
-                          | number
-                          | null
-                          | undefined,
-                        "en-US",
-                        currency,
-                      )}
-                    </button>
+                  <span className="text-right">
+                    {formatCurrency(
+                      section.data.total as string | number | null | undefined,
+                      "en-US",
+                      currency,
+                    )}
                   </span>
                 </div>
               </div>
