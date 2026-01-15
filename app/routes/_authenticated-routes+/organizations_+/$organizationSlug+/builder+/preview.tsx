@@ -38,6 +38,16 @@ const previewSchema = z.object({
     "form",
     "label",
   ]),
+  colorPalette: z
+    .union([z.array(z.string()), z.string()])
+    .optional()
+    .transform((val) => {
+      if (!val) return undefined;
+      if (typeof val === "string") {
+        return JSON.parse(val) as string[];
+      }
+      return val;
+    }),
 });
 
 export async function action({ request, context }: Route.ActionArgs) {
@@ -56,6 +66,7 @@ export async function action({ request, context }: Route.ActionArgs) {
       body.sections as TemplateSection[],
       body.globalStyles,
       body.type,
+      body.colorPalette,
     );
 
     return new Response(html, {

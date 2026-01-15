@@ -165,6 +165,8 @@ export interface TemplateSection {
   order: number;
   data: Record<string, unknown>;
   styles: SectionStyles;
+  colorPalette?: string[]; // Section-specific palette (only when usingGlobalPalette is false)
+  usingGlobalPalette?: boolean; // Defaults to true
 }
 
 export interface Template {
@@ -176,6 +178,7 @@ export interface Template {
   globalStyles: Record<string, string>;
   createdAt: Date;
   updatedAt: Date;
+  colorPalette: string[];
 }
 
 export interface ComponentDefinition {

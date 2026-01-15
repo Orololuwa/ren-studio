@@ -85,6 +85,7 @@ export async function retrieveTemplateFromDatabaseById({
 
   return {
     createdAt: template.createdAt,
+    colorPalette: (template.colorPalette as unknown as string[]) || [],
     globalStyles: template.globalStyles as unknown as Record<string, string>,
     id: template.id,
     name: template.name,
@@ -126,6 +127,7 @@ export async function retrieveTemplatesByOrganizationIdAndType({
 
   return templates.map((template) => ({
     createdAt: template.createdAt,
+    colorPalette: (template.colorPalette as unknown as string[]) || [],
     globalStyles: template.globalStyles as unknown as Record<string, string>,
     id: template.id,
     name: template.name,
@@ -149,6 +151,9 @@ export async function createTemplateInDatabase(
 ): Promise<Template> {
   const created = await prisma.template.create({
     data: {
+      colorPalette: template.colorPalette
+        ? (template.colorPalette as unknown as Prisma.JsonArray)
+        : undefined,
       globalStyles: template.globalStyles as unknown as Prisma.JsonObject,
       name: template.name,
       organizationId: template.organizationId,
@@ -159,6 +164,7 @@ export async function createTemplateInDatabase(
 
   return {
     createdAt: created.createdAt,
+    colorPalette: (created.colorPalette as unknown as string[]) || [],
     globalStyles: created.globalStyles as unknown as Record<string, string>,
     id: created.id,
     name: created.name,
@@ -221,6 +227,12 @@ export async function updateTemplateInDatabase({
     updateData.globalStyles = data.globalStyles as unknown as Prisma.JsonObject;
   }
 
+  if (data.colorPalette !== undefined) {
+    updateData.colorPalette = data.colorPalette
+      ? (data.colorPalette as unknown as Prisma.JsonArray)
+      : undefined;
+  }
+
   const updated = await prisma.template.update({
     data: updateData,
     where: {
@@ -230,6 +242,7 @@ export async function updateTemplateInDatabase({
 
   return {
     createdAt: updated.createdAt,
+    colorPalette: (updated.colorPalette as unknown as string[]) || [],
     globalStyles: updated.globalStyles as unknown as Record<string, string>,
     id: updated.id,
     name: updated.name,
@@ -268,6 +281,7 @@ export async function saveTemplateToDatabase({
       // Update existing template
       return (await updateTemplateInDatabase({
         data: {
+          colorPalette: template.colorPalette,
           globalStyles: template.globalStyles,
           name: template.name,
           sections: template.sections,
@@ -281,6 +295,7 @@ export async function saveTemplateToDatabase({
 
   // Create new template
   return await createTemplateInDatabase({
+    colorPalette: template.colorPalette,
     globalStyles: template.globalStyles,
     name: template.name,
     organizationId,

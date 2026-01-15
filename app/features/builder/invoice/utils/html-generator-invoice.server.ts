@@ -1,4 +1,8 @@
 import type { SectionStyles, TemplateSection } from "../../shared/types";
+import {
+  getSectionColorPalette,
+  resolveStyleColors,
+} from "../../shared/utils/color-resolver";
 import { formatCurrency } from "./currency-formatter";
 
 function escapeHtml(text: string): string {
@@ -12,8 +16,16 @@ function escapeHtml(text: string): string {
   return text.replace(/[&<>"']/g, (m) => map[m] || m);
 }
 
-function objectToCSS(styles: SectionStyles): string {
-  return Object.entries(styles)
+function objectToCSS(
+  styles: SectionStyles,
+  colorPalette: string[] = [],
+): string {
+  // Resolve color references before converting to CSS
+  const resolvedStyles = resolveStyleColors(
+    styles as Record<string, string>,
+    colorPalette,
+  );
+  return Object.entries(resolvedStyles)
     .filter(
       ([_, value]) => value !== undefined && value !== null && value !== "",
     )
@@ -27,8 +39,15 @@ function objectToCSS(styles: SectionStyles): string {
 function renderInvoiceSectionToHTML(
   section: TemplateSection,
   currency: string = "USD",
+  globalColorPalette: string[] = [],
 ): string {
-  const inlineStyles = objectToCSS(section.styles);
+  // Determine which palette to use for this section
+  const sectionColorPalette = getSectionColorPalette(
+    section.usingGlobalPalette,
+    section.colorPalette,
+    globalColorPalette,
+  );
+  const inlineStyles = objectToCSS(section.styles, sectionColorPalette);
 
   switch (section.type) {
     case "invoice-header": {
@@ -207,13 +226,16 @@ function generateInvoiceHTML(
   sections: TemplateSection[],
   globalStyles: Record<string, string>,
   isExport: boolean,
+  colorPalette: string[] = [],
 ): string {
   const sortedSections = [...sections].sort((a, b) => a.order - b.order);
-  const globalCSS = objectToCSS(globalStyles as SectionStyles);
+  const globalCSS = objectToCSS(globalStyles as SectionStyles, colorPalette);
   // Get currency from global styles, default to USD
   const currency = (globalStyles.currency as string) || "USD";
   const sectionsHTML = sortedSections
-    .map((section) => renderInvoiceSectionToHTML(section, currency))
+    .map((section) =>
+      renderInvoiceSectionToHTML(section, currency, colorPalette),
+    )
     .join("\n");
 
   // Get text color from global styles (supports both 'color' and 'textColor')
@@ -521,13 +543,15 @@ function generateInvoiceHTML(
 export function generateInvoicePreviewHTML(
   sections: TemplateSection[],
   globalStyles: Record<string, string>,
+  colorPalette: string[] = [],
 ): string {
-  return generateInvoiceHTML(sections, globalStyles, false);
+  return generateInvoiceHTML(sections, globalStyles, false, colorPalette);
 }
 
 export function generateInvoiceExportHTML(
   sections: TemplateSection[],
   globalStyles: Record<string, string>,
+  colorPalette: string[] = [],
 ): string {
-  return generateInvoiceHTML(sections, globalStyles, true);
+  return generateInvoiceHTML(sections, globalStyles, true, colorPalette);
 }

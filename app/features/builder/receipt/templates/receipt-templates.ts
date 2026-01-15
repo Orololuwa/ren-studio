@@ -3,11 +3,12 @@ import type { Template } from "../../shared/types";
 export const receiptTemplates: Template[] = [
   {
     createdAt: new Date(),
+    colorPalette: ["#ffffff", "#000000"],
     globalStyles: {
-      backgroundColor: "#ffffff",
+      backgroundColor: "$colorPalette[0]",
       fontFamily: "Arial, sans-serif",
       fontSize: "14px",
-      textColor: "#000000",
+      textColor: "$colorPalette[1]",
     },
     id: "receipt-simple",
     name: "Simple Receipt",
@@ -92,11 +93,12 @@ export const receiptTemplates: Template[] = [
   },
   {
     createdAt: new Date(),
+    colorPalette: ["#f0fdf4", "#166534", "#16a34a", "#ffffff"],
     globalStyles: {
-      backgroundColor: "#f0fdf4",
+      backgroundColor: "$colorPalette[0]",
       fontFamily: "Inter, system-ui, -apple-system, sans-serif",
       fontSize: "14px",
-      color: "#166534",
+      color: "$colorPalette[1]",
     },
     id: "receipt-professional",
     name: "Professional Receipt",
@@ -119,8 +121,8 @@ export const receiptTemplates: Template[] = [
         id: "receipt-header-2",
         order: 0,
         styles: {
-          backgroundColor: "#16a34a",
-          color: "#ffffff",
+          backgroundColor: "$colorPalette[2]",
+          color: "$colorPalette[3]",
           padding: "2rem",
           paddingBottom: "1.5rem",
         },
@@ -152,9 +154,9 @@ export const receiptTemplates: Template[] = [
         id: "receipt-items-2",
         order: 1,
         styles: {
-          backgroundColor: "#ffffff",
-          color: "#166534",
-          borderBottom: "2px solid #16a34a",
+          backgroundColor: "$colorPalette[3]",
+          color: "$colorPalette[1]",
+          borderBottom: "2px solid $colorPalette[2]",
           padding: "1.5rem 2rem",
         },
         type: "receipt-items",
@@ -179,8 +181,8 @@ export const receiptTemplates: Template[] = [
         id: "receipt-footer-2",
         order: 2,
         styles: {
-          backgroundColor: "#ffffff",
-          color: "#166534",
+          backgroundColor: "$colorPalette[3]",
+          color: "$colorPalette[1]",
           padding: "1.5rem 2rem 2rem",
           borderBottomLeftRadius: "8px",
           borderBottomRightRadius: "8px",

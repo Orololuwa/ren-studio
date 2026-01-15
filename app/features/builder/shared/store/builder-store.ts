@@ -15,6 +15,7 @@ interface BuilderState {
   selectSection: (id: string | null) => void;
   setDirty: (dirty: boolean) => void;
   updateGlobalStyles: (updates: Partial<Record<string, string>>) => void;
+  updateColorPalette: (colorPalette: string[]) => void;
   reset: () => void;
 }
 
@@ -150,6 +151,18 @@ export const useBuilderStore = create<BuilderState>((set) => ({
           sections: state.currentTemplate.sections.map((s) =>
             s.id === id ? { ...s, ...updates } : s,
           ),
+        },
+        isDirty: true,
+      };
+    }),
+
+  updateColorPalette: (colorPalette) =>
+    set((state) => {
+      if (!state.currentTemplate) return state;
+      return {
+        currentTemplate: {
+          ...state.currentTemplate,
+          colorPalette,
         },
         isDirty: true,
       };

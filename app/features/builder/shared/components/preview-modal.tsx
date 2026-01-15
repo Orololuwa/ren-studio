@@ -35,6 +35,12 @@ export function PreviewModal({
       "globalStyles",
       JSON.stringify(currentTemplate.globalStyles),
     );
+    if (currentTemplate.colorPalette) {
+      formData.append(
+        "colorPalette",
+        JSON.stringify(currentTemplate.colorPalette),
+      );
+    }
 
     try {
       const response = await fetch(

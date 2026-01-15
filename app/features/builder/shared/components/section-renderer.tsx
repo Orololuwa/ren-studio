@@ -10,6 +10,10 @@ import type {
   SocialLink,
   TemplateSection,
 } from "../types";
+import {
+  getSectionColorPalette,
+  resolveStyleColors,
+} from "../utils/color-resolver";
 import { InlineEditor } from "./inline-editor";
 
 interface SectionRendererProps {
@@ -241,7 +245,19 @@ export function SectionRenderer({
   };
 
   const renderSection = () => {
-    const sectionStyles = section.styles as React.CSSProperties;
+    // Determine which color palette to use for this section
+    const globalColorPalette = currentTemplate?.colorPalette || [];
+    const sectionColorPalette = getSectionColorPalette(
+      section.usingGlobalPalette,
+      section.colorPalette,
+      globalColorPalette,
+    );
+    // Resolve color references in styles using the appropriate palette
+    const resolvedStyles = resolveStyleColors(
+      section.styles as Record<string, string>,
+      sectionColorPalette,
+    );
+    const sectionStyles = resolvedStyles as React.CSSProperties;
 
     switch (section.type) {
       case "header": {

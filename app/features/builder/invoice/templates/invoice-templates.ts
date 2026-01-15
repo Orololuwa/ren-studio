@@ -3,11 +3,12 @@ import type { Template } from "../../shared/types";
 export const invoiceTemplates: Template[] = [
   {
     createdAt: new Date(),
+    colorPalette: ["#ffffff", "#000000"],
     globalStyles: {
-      backgroundColor: "#ffffff",
+      backgroundColor: "$colorPalette[0]",
       fontFamily: "Arial, sans-serif",
       fontSize: "14px",
-      textColor: "#000000",
+      textColor: "$colorPalette[1]",
     },
     id: "invoice-simple",
     name: "Simple Invoice",
@@ -97,11 +98,12 @@ export const invoiceTemplates: Template[] = [
   },
   {
     createdAt: new Date(),
+    colorPalette: ["#eff6ff", "#0F2854", "#4988C4", "#ffffff"],
     globalStyles: {
-      backgroundColor: "#eff6ff",
+      backgroundColor: "$colorPalette[0]",
       fontFamily: "Inter, system-ui, -apple-system, sans-serif",
       fontSize: "14px",
-      color: "#0F2854",
+      color: "$colorPalette[1]",
     },
     id: "invoice-professional",
     name: "Professional Invoice",
@@ -131,8 +133,8 @@ export const invoiceTemplates: Template[] = [
         id: "invoice-header-2",
         order: 0,
         styles: {
-          backgroundColor: "#4988C4",
-          color: "#ffffff",
+          backgroundColor: "$colorPalette[2]",
+          color: "$colorPalette[3]",
           padding: "2rem",
           paddingBottom: "1.5rem",
         },
@@ -170,9 +172,9 @@ export const invoiceTemplates: Template[] = [
         id: "invoice-items-2",
         order: 1,
         styles: {
-          backgroundColor: "#ffffff",
-          color: "#0F2854",
-          borderBottom: "2px solid #4988C4",
+          backgroundColor: "$colorPalette[3]",
+          color: "$colorPalette[1]",
+          borderBottom: "2px solid $colorPalette[2]",
           padding: "1.5rem 2rem",
         },
         type: "invoice-items",
@@ -197,8 +199,8 @@ export const invoiceTemplates: Template[] = [
         id: "invoice-footer-2",
         order: 2,
         styles: {
-          backgroundColor: "#ffffff",
-          color: "#0F2854",
+          backgroundColor: "$colorPalette[3]",
+          color: "$colorPalette[1]",
           padding: "1.5rem 2rem 2rem",
         },
         type: "invoice-footer",

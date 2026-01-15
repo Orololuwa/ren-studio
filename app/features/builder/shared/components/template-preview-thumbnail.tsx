@@ -28,6 +28,9 @@ export function TemplatePreviewThumbnail({
     formData.append("type", template.type);
     formData.append("sections", JSON.stringify(template.sections));
     formData.append("globalStyles", JSON.stringify(template.globalStyles));
+    if (template.colorPalette) {
+      formData.append("colorPalette", JSON.stringify(template.colorPalette));
+    }
 
     try {
       const response = await fetch(

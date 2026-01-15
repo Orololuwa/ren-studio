@@ -19,14 +19,15 @@ export function generatePreviewHTML(
   sections: TemplateSection[],
   globalStyles: Record<string, string>,
   templateType: TemplateType,
+  colorPalette: string[] = [],
 ): string {
   switch (templateType) {
     case "resume":
-      return generateResumePreviewHTML(sections, globalStyles);
+      return generateResumePreviewHTML(sections, globalStyles, colorPalette);
     case "invoice":
-      return generateInvoicePreviewHTML(sections, globalStyles);
+      return generateInvoicePreviewHTML(sections, globalStyles, colorPalette);
     case "receipt":
-      return generateReceiptPreviewHTML(sections, globalStyles);
+      return generateReceiptPreviewHTML(sections, globalStyles, colorPalette);
     default:
       // Fallback for unsupported types - return basic HTML
       return `
@@ -54,14 +55,15 @@ export function generateExportHTML(
   sections: TemplateSection[],
   globalStyles: Record<string, string>,
   templateType: TemplateType,
+  colorPalette: string[] = [],
 ): string {
   switch (templateType) {
     case "resume":
-      return generateResumeExportHTML(sections, globalStyles);
+      return generateResumeExportHTML(sections, globalStyles, colorPalette);
     case "invoice":
-      return generateInvoiceExportHTML(sections, globalStyles);
+      return generateInvoiceExportHTML(sections, globalStyles, colorPalette);
     case "receipt":
-      return generateReceiptExportHTML(sections, globalStyles);
+      return generateReceiptExportHTML(sections, globalStyles, colorPalette);
     default:
       // Fallback for unsupported types - return basic HTML
       return `

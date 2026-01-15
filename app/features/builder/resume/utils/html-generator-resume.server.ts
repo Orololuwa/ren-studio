@@ -6,6 +6,10 @@ import type {
   SocialLink,
   TemplateSection,
 } from "../../shared/types";
+import {
+  getSectionColorPalette,
+  resolveStyleColors,
+} from "../../shared/utils/color-resolver";
 
 function escapeHtml(text: string): string {
   const map: Record<string, string> = {
@@ -18,8 +22,16 @@ function escapeHtml(text: string): string {
   return text.replace(/[&<>"']/g, (m) => map[m] || m);
 }
 
-function objectToCSS(styles: SectionStyles): string {
-  return Object.entries(styles)
+function objectToCSS(
+  styles: SectionStyles,
+  colorPalette: string[] = [],
+): string {
+  // Resolve color references before converting to CSS
+  const resolvedStyles = resolveStyleColors(
+    styles as Record<string, string>,
+    colorPalette,
+  );
+  return Object.entries(resolvedStyles)
     .filter(
       ([_, value]) => value !== undefined && value !== null && value !== "",
     )
@@ -30,8 +42,17 @@ function objectToCSS(styles: SectionStyles): string {
     .join(" ");
 }
 
-function renderResumeSectionToHTML(section: TemplateSection): string {
-  const inlineStyles = objectToCSS(section.styles);
+function renderResumeSectionToHTML(
+  section: TemplateSection,
+  globalColorPalette: string[] = [],
+): string {
+  // Determine which palette to use for this section
+  const sectionColorPalette = getSectionColorPalette(
+    section.usingGlobalPalette,
+    section.colorPalette,
+    globalColorPalette,
+  );
+  const inlineStyles = objectToCSS(section.styles, sectionColorPalette);
 
   switch (section.type) {
     case "header": {
@@ -250,11 +271,12 @@ function generateResumeHTML(
   sections: TemplateSection[],
   globalStyles: Record<string, string>,
   isExport: boolean,
+  colorPalette: string[] = [],
 ): string {
   const sortedSections = [...sections].sort((a, b) => a.order - b.order);
-  const globalCSS = objectToCSS(globalStyles as SectionStyles);
+  const globalCSS = objectToCSS(globalStyles as SectionStyles, colorPalette);
   const sectionsHTML = sortedSections
-    .map((section) => renderResumeSectionToHTML(section))
+    .map((section) => renderResumeSectionToHTML(section, colorPalette))
     .join("\n");
 
   // Get background color from global styles (supports both 'backgroundColor' and 'background')
@@ -571,13 +593,15 @@ function generateResumeHTML(
 export function generateResumePreviewHTML(
   sections: TemplateSection[],
   globalStyles: Record<string, string>,
+  colorPalette: string[] = [],
 ): string {
-  return generateResumeHTML(sections, globalStyles, false);
+  return generateResumeHTML(sections, globalStyles, false, colorPalette);
 }
 
 export function generateResumeExportHTML(
   sections: TemplateSection[],
   globalStyles: Record<string, string>,
+  colorPalette: string[] = [],
 ): string {
-  return generateResumeHTML(sections, globalStyles, true);
+  return generateResumeHTML(sections, globalStyles, true, colorPalette);
 }

@@ -12,6 +12,7 @@ import type {
   SocialLink,
 } from "../types";
 import { CurrencyInput, NumberInput, QuantityInput } from "./number-input";
+import { SectionColorPaletteEditor } from "./section-color-palette-editor";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
@@ -2456,7 +2457,10 @@ export function PropertiesPanel() {
         </Button>
       </div>
 
-      <div className="p-4 space-y-4">{renderContentEditor()}</div>
+      <div className="p-4 space-y-4">
+        {renderContentEditor()}
+        <SectionColorPaletteEditor section={section} />
+      </div>
     </div>
   );
 }

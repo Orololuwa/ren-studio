@@ -36,6 +36,7 @@ import {
   retrieveTemplateFromDatabaseById,
   saveTemplateToDatabase,
 } from "~/features/builder/shared/builder-model.server";
+import { ColorPaletteEditor } from "~/features/builder/shared/components/color-palette-editor";
 import { ComponentPalette } from "~/features/builder/shared/components/component-palette";
 import { ExportButton } from "~/features/builder/shared/components/export-button";
 import { PreviewModal } from "~/features/builder/shared/components/preview-modal";
@@ -87,6 +88,16 @@ const saveTemplateSchema = z.object({
     "form",
     "label",
   ]),
+  colorPalette: z
+    .union([z.array(z.string()), z.string()])
+    .optional()
+    .transform((val) => {
+      if (!val) return undefined;
+      if (typeof val === "string") {
+        return JSON.parse(val) as string[];
+      }
+      return val;
+    }),
 });
 
 const actionSchema = saveTemplateSchema;
@@ -237,6 +248,7 @@ export async function action({ request, context }: Route.ActionArgs) {
   switch (body.intent) {
     case "save": {
       const template: Omit<Template, "createdAt" | "updatedAt"> = {
+        colorPalette: body.colorPalette || [],
         globalStyles: body.globalStyles as Record<string, string>,
         id: body.templateId || "",
         name: body.name,
@@ -523,6 +535,7 @@ export default function BuilderEditorRoute({
                   </PopoverContent>
                 </Popover>
               )}
+              <ColorPaletteEditor />
               <Button
                 data-testid="preview-button"
                 onClick={() => setPreviewOpen(true)}

@@ -318,6 +318,7 @@ model Template {
   organizationId String
   sections      Json         // Array of TemplateSection
   globalStyles  Json         // Record<string, string>
+  colorPalette  Json?        // Array of string (color values)
 
   @@index([organizationId, type])
   @@map("templates")

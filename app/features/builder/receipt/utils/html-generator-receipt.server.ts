@@ -1,5 +1,9 @@
 import { formatCurrency } from "../../invoice/utils/currency-formatter";
 import type { SectionStyles, TemplateSection } from "../../shared/types";
+import {
+  getSectionColorPalette,
+  resolveStyleColors,
+} from "../../shared/utils/color-resolver";
 
 function escapeHtml(text: string): string {
   const map: Record<string, string> = {
@@ -12,8 +16,16 @@ function escapeHtml(text: string): string {
   return text.replace(/[&<>"']/g, (m) => map[m] || m);
 }
 
-function objectToCSS(styles: SectionStyles): string {
-  return Object.entries(styles)
+function objectToCSS(
+  styles: SectionStyles,
+  colorPalette: string[] = [],
+): string {
+  // Resolve color references before converting to CSS
+  const resolvedStyles = resolveStyleColors(
+    styles as Record<string, string>,
+    colorPalette,
+  );
+  return Object.entries(resolvedStyles)
     .filter(
       ([_, value]) => value !== undefined && value !== null && value !== "",
     )
@@ -27,8 +39,15 @@ function objectToCSS(styles: SectionStyles): string {
 function renderReceiptSectionToHTML(
   section: TemplateSection,
   currency: string = "USD",
+  globalColorPalette: string[] = [],
 ): string {
-  const inlineStyles = objectToCSS(section.styles);
+  // Determine which palette to use for this section
+  const sectionColorPalette = getSectionColorPalette(
+    section.usingGlobalPalette,
+    section.colorPalette,
+    globalColorPalette,
+  );
+  const inlineStyles = objectToCSS(section.styles, sectionColorPalette);
 
   switch (section.type) {
     case "receipt-header": {
@@ -194,13 +213,16 @@ function generateReceiptHTML(
   sections: TemplateSection[],
   globalStyles: Record<string, string>,
   isExport: boolean,
+  colorPalette: string[] = [],
 ): string {
   const sortedSections = [...sections].sort((a, b) => a.order - b.order);
-  const globalCSS = objectToCSS(globalStyles as SectionStyles);
+  const globalCSS = objectToCSS(globalStyles as SectionStyles, colorPalette);
   // Get currency from global styles, default to USD
   const currency = (globalStyles.currency as string) || "USD";
   const sectionsHTML = sortedSections
-    .map((section) => renderReceiptSectionToHTML(section, currency))
+    .map((section) =>
+      renderReceiptSectionToHTML(section, currency, colorPalette),
+    )
     .join("\n");
 
   // Get text color from global styles (supports both 'color' and 'textColor')
@@ -485,13 +507,15 @@ function generateReceiptHTML(
 export function generateReceiptPreviewHTML(
   sections: TemplateSection[],
   globalStyles: Record<string, string>,
+  colorPalette: string[] = [],
 ): string {
-  return generateReceiptHTML(sections, globalStyles, false);
+  return generateReceiptHTML(sections, globalStyles, false, colorPalette);
 }
 
 export function generateReceiptExportHTML(
   sections: TemplateSection[],
   globalStyles: Record<string, string>,
+  colorPalette: string[] = [],
 ): string {
-  return generateReceiptHTML(sections, globalStyles, true);
+  return generateReceiptHTML(sections, globalStyles, true, colorPalette);
 }

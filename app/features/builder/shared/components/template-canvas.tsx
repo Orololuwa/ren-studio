@@ -74,6 +74,8 @@ function createDefaultSectionConfig(
     data: defaultData,
     styles: defaultStyles,
     type: component.type as TemplateSection["type"],
+    // New sections default to using the global palette
+    usingGlobalPalette: true,
   };
 }
 

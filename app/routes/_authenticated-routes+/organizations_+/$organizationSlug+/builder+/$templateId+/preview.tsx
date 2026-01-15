@@ -7,6 +7,16 @@ import { organizationMembershipContext } from "~/features/organizations/organiza
 import { validateFormData } from "~/utils/validate-form-data.server";
 
 const previewSchema = z.object({
+  colorPalette: z
+    .union([z.array(z.string()), z.string()])
+    .optional()
+    .transform((val) => {
+      if (!val) return [];
+      if (typeof val === "string") {
+        return JSON.parse(val) as string[];
+      }
+      return val;
+    }),
   globalStyles: z
     .union([z.record(z.string(), z.string()), z.string()])
     .transform((val) => {
@@ -56,6 +66,7 @@ export async function action({ request, context }: Route.ActionArgs) {
       body.sections as TemplateSection[],
       body.globalStyles,
       body.type,
+      body.colorPalette || [],
     );
 
     return new Response(html, {
