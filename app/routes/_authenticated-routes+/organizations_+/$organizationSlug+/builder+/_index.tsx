@@ -79,26 +79,24 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
     "report-cards": 0,
     resume: 0,
   };
-  if (activeView === "saved") {
-    savedCounts = {
-      invoice: await countTemplatesByOrganizationIdAndType({
-        organizationId: organization.id,
-        type: "invoice",
-      }),
-      receipt: await countTemplatesByOrganizationIdAndType({
-        organizationId: organization.id,
-        type: "receipt",
-      }),
-      "report-cards": await countTemplatesByOrganizationIdAndType({
-        organizationId: organization.id,
-        type: "report-cards",
-      }),
-      resume: await countTemplatesByOrganizationIdAndType({
-        organizationId: organization.id,
-        type: "resume",
-      }),
-    };
-  }
+  savedCounts = {
+    invoice: await countTemplatesByOrganizationIdAndType({
+      organizationId: organization.id,
+      type: "invoice",
+    }),
+    receipt: await countTemplatesByOrganizationIdAndType({
+      organizationId: organization.id,
+      type: "receipt",
+    }),
+    "report-cards": await countTemplatesByOrganizationIdAndType({
+      organizationId: organization.id,
+      type: "report-cards",
+    }),
+    resume: await countTemplatesByOrganizationIdAndType({
+      organizationId: organization.id,
+      type: "resume",
+    }),
+  };
 
   // 2. Fetch full records ONLY for active type IF view is 'saved'
   let activeSavedTemplates: Template[] = [];
