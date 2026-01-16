@@ -41,6 +41,7 @@ import {
 import { ColorPaletteEditor } from "~/features/builder/shared/components/color-palette-editor";
 import { ComponentPalette } from "~/features/builder/shared/components/component-palette";
 import { ExportButton } from "~/features/builder/shared/components/export-button";
+import { InlineEditor } from "~/features/builder/shared/components/inline-editor";
 import { PreviewModal } from "~/features/builder/shared/components/preview-modal";
 import { PropertiesPanel } from "~/features/builder/shared/components/properties-panel";
 import { TemplateCanvas } from "~/features/builder/shared/components/template-canvas";
@@ -342,6 +343,7 @@ export default function BuilderEditorRoute({
   const [currencyOpen, setCurrencyOpen] = useState(false);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
+  const [isEditingTemplateName, setIsEditingTemplateName] = useState(false);
 
   const {
     currentTemplate,
@@ -354,6 +356,7 @@ export default function BuilderEditorRoute({
     setTemplateSessionId,
     templateSessionId,
     updateTemplateId,
+    updateTemplateName,
   } = useBuilderStore();
 
   const sensors = useSensors(
@@ -637,12 +640,20 @@ export default function BuilderEditorRoute({
                 <ArrowLeft className="h-4 w-4" />
                 <span className="sr-only">Go back</span>
               </Button>
-              <h2
-                className="text-lg font-semibold"
+              <button
+                className="text-lg font-semibold hover:bg-accent rounded px-2 py-1 -mx-2 -my-1 transition-colors cursor-pointer text-left"
                 data-testid="template-editor-title"
+                onClick={() => setIsEditingTemplateName(true)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    setIsEditingTemplateName(true);
+                  }
+                }}
+                type="button"
               >
                 {currentTemplate?.name || "Untitled Template"}
-              </h2>
+              </button>
               {renderSaveStatus()}
             </div>
             <div className="flex items-center gap-2">
@@ -759,6 +770,17 @@ export default function BuilderEditorRoute({
           </div>
         ) : null}
       </DragOverlay>
+      <InlineEditor
+        isRichText={false}
+        label="Template Name"
+        onOpenChange={setIsEditingTemplateName}
+        onSave={(newName) => {
+          updateTemplateName(newName);
+          setIsEditingTemplateName(false);
+        }}
+        open={isEditingTemplateName}
+        value={currentTemplate?.name || "Untitled Template"}
+      />
     </DndContext>
   );
 }
