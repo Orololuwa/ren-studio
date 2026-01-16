@@ -6,6 +6,7 @@ interface BuilderState {
   currentTemplate: Template | null;
   selectedSectionId: string | null;
   isDirty: boolean;
+  templateSessionId: string | null; // ID for auto-save session (the DB template ID)
   setCurrentTemplate: (template: Template) => void;
   addSection: (section: TemplateSection) => void;
   updateSection: (id: string, updates: Partial<TemplateSection>) => void;
@@ -16,6 +17,9 @@ interface BuilderState {
   setDirty: (dirty: boolean) => void;
   updateGlobalStyles: (updates: Partial<Record<string, string>>) => void;
   updateColorPalette: (colorPalette: string[]) => void;
+  updateTemplateName: (name: string) => void;
+  updateTemplateId: (id: string) => void;
+  setTemplateSessionId: (id: string | null) => void;
   reset: () => void;
 }
 
@@ -90,6 +94,7 @@ export const useBuilderStore = create<BuilderState>((set) => ({
     }),
 
   isDirty: false,
+  templateSessionId: null,
 
   reorderSections: (sections) =>
     set((state) => {
@@ -111,6 +116,7 @@ export const useBuilderStore = create<BuilderState>((set) => ({
       currentTemplate: null,
       isDirty: false,
       selectedSectionId: null,
+      templateSessionId: null,
     }),
   selectedSectionId: null,
 
@@ -167,4 +173,30 @@ export const useBuilderStore = create<BuilderState>((set) => ({
         isDirty: true,
       };
     }),
+
+  updateTemplateName: (name) =>
+    set((state) => {
+      if (!state.currentTemplate) return state;
+      return {
+        currentTemplate: {
+          ...state.currentTemplate,
+          name,
+        },
+        isDirty: true,
+      };
+    }),
+
+  updateTemplateId: (id) =>
+    set((state) => {
+      if (!state.currentTemplate) return state;
+      return {
+        currentTemplate: {
+          ...state.currentTemplate,
+          id,
+        },
+        templateSessionId: id,
+      };
+    }),
+
+  setTemplateSessionId: (id) => set({ templateSessionId: id }),
 }));

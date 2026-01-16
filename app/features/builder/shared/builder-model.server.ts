@@ -138,6 +138,33 @@ export async function retrieveTemplatesByOrganizationIdAndType({
   }));
 }
 
+/**
+ * Counts templates for an organization, optionally filtered by type.
+ *
+ * @param organizationId - The ID of the organization.
+ * @param type - Optional template type filter.
+ * @returns Number of templates.
+ */
+export async function countTemplatesByOrganizationIdAndType({
+  organizationId,
+  type,
+}: {
+  organizationId: string;
+  type?: Template["type"];
+}): Promise<number> {
+  const where: Prisma.TemplateWhereInput = {
+    organizationId,
+  };
+
+  if (type) {
+    where.type = convertTSTemplateTypeToPrisma(type);
+  }
+
+  return await prisma.template.count({
+    where,
+  });
+}
+
 /* CREATE */
 
 /**

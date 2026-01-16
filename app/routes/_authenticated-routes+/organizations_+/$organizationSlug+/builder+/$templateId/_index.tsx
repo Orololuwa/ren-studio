@@ -6,8 +6,8 @@ import {
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
-import { ArrowLeft } from "lucide-react";
-import { useEffect, useState } from "react";
+import { ArrowLeft, Check, Cloud, CloudOff, Loader2 } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   data,
   href,
@@ -18,6 +18,7 @@ import {
 import { z } from "zod";
 
 import type { Route } from "../$templateId/+types/_index";
+import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import {
   Command,
@@ -33,6 +34,7 @@ import {
   PopoverTrigger,
 } from "~/components/ui/popover";
 import {
+  createTemplateInDatabase,
   retrieveTemplateFromDatabaseById,
   saveTemplateToDatabase,
 } from "~/features/builder/shared/builder-model.server";
@@ -50,8 +52,8 @@ import type {
 } from "~/features/builder/shared/types";
 import { getInstance } from "~/features/localization/i18next-middleware.server";
 import { organizationMembershipContext } from "~/features/organizations/organizations-middleware.server";
+import { cn } from "~/lib/utils";
 import { getPageTitle } from "~/utils/get-page-title.server";
-import { createToastHeaders } from "~/utils/toast.server";
 import { validateFormData } from "~/utils/validate-form-data.server";
 
 const saveTemplateSchema = z.object({
@@ -100,7 +102,16 @@ const saveTemplateSchema = z.object({
     }),
 });
 
-const actionSchema = saveTemplateSchema;
+const initTemplateSchema = z.object({
+  intent: z.literal("init"),
+  sourceTemplateId: z.string(),
+  mode: z.enum(["edit", "customize"]),
+});
+
+const actionSchema = z.discriminatedUnion("intent", [
+  saveTemplateSchema,
+  initTemplateSchema,
+]);
 
 // Helper function to get currency symbol from currency code
 function getCurrencySymbol(currencyCode: string): string {
@@ -193,7 +204,7 @@ const COMMON_CURRENCIES = [
   { code: "XAF", name: "Central African CFA Franc (FCFA)" },
 ] as const;
 
-export async function loader({ params, context }: Route.LoaderArgs) {
+export async function loader({ params, context, request }: Route.LoaderArgs) {
   const { organization } = context.get(organizationMembershipContext);
   const i18n = getInstance(context);
   const t = i18n.t.bind(i18n);
@@ -202,8 +213,14 @@ export async function loader({ params, context }: Route.LoaderArgs) {
     templateId: string;
   };
 
+  const url = new URL(request.url);
+  const mode = url.searchParams.get("mode") || "edit";
+  const source = url.searchParams.get("source");
+
   // Try to fetch from database first
   let template: Template | null = null;
+  let isNewFromDefault = false;
+
   try {
     template = await retrieveTemplateFromDatabaseById({
       organizationId: organization.id,
@@ -213,8 +230,40 @@ export async function loader({ params, context }: Route.LoaderArgs) {
     // If not found in database, fall back to predefined templates
   }
 
-  // Fallback to predefined templates if not found in database
-  if (!template) {
+  // If mode=customize with source, we need to create a new template from source
+  if (mode === "customize" && source && !template) {
+    // Get source template (could be from DB or predefined)
+    let sourceTemplate: Template | null = null;
+
+    try {
+      sourceTemplate = await retrieveTemplateFromDatabaseById({
+        organizationId: organization.id,
+        templateId: source,
+      });
+    } catch {
+      // Try predefined
+    }
+
+    if (!sourceTemplate) {
+      sourceTemplate = getTemplateById(source) || null;
+    }
+
+    if (sourceTemplate) {
+      // Create a new template from the source
+      template = await createTemplateInDatabase({
+        colorPalette: sourceTemplate.colorPalette,
+        globalStyles: sourceTemplate.globalStyles,
+        name: `${sourceTemplate.name} (Copy)`,
+        organizationId: organization.id,
+        sections: sourceTemplate.sections,
+        type: sourceTemplate.type,
+      });
+      isNewFromDefault = true;
+    }
+  }
+
+  // Fallback to predefined templates if not found in database (for viewing only)
+  if (!template && mode === "edit") {
     template = getTemplateById(typedParams.templateId) || null;
   }
 
@@ -226,10 +275,12 @@ export async function loader({ params, context }: Route.LoaderArgs) {
         templateId: typedParams.templateId,
       }),
     },
+    isNewFromDefault,
+    mode,
     organizationSlug: typedParams.organizationSlug,
     pageTitle: getPageTitle(t, "organizations:builder.pageTitle"),
     template,
-    templateId: typedParams.templateId,
+    templateId: template?.id || typedParams.templateId,
   };
 }
 
@@ -262,20 +313,13 @@ export async function action({ request, context }: Route.ActionArgs) {
         template,
       });
 
-      const toastHeaders = await createToastHeaders({
-        description: "Your template has been saved successfully.",
-        title: "Template saved",
-      });
+      return data({ success: true, template: savedTemplate }, { headers });
+    }
 
-      return data(
-        { success: true, template: savedTemplate },
-        {
-          headers: {
-            ...Object.fromEntries(headers),
-            ...Object.fromEntries(toastHeaders),
-          },
-        },
-      );
+    case "init": {
+      // Handle initial template creation for customize mode
+      // This is handled in the loader now, so just return success
+      return data({ success: true }, { headers });
     }
   }
 }
@@ -284,22 +328,32 @@ export const meta: Route.MetaFunction = ({ loaderData }) => [
   { title: loaderData?.pageTitle },
 ];
 
+type SaveStatus = "idle" | "saving" | "saved" | "error";
+
 export default function BuilderEditorRoute({
   loaderData,
 }: Route.ComponentProps) {
   const params = useParams();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [_searchParams] = useSearchParams();
   const [previewOpen, setPreviewOpen] = useState(false);
   const [templateNotFound, setTemplateNotFound] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [currencyOpen, setCurrencyOpen] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
+  const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
+
   const {
     currentTemplate,
     setCurrentTemplate,
     selectSection,
     selectedSectionId,
     updateGlobalStyles,
+    isDirty,
+    setDirty,
+    setTemplateSessionId,
+    templateSessionId,
+    updateTemplateId,
   } = useBuilderStore();
 
   const sensors = useSensors(
@@ -308,27 +362,128 @@ export default function BuilderEditorRoute({
     }),
   );
 
+  // Auto-save refs
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
+
   // Use params directly to ensure we get the latest templateId from the URL
   const templateId = params.templateId;
   const organizationSlug =
     params.organizationSlug || loaderData.organizationSlug;
 
-  // Load template on mount from loader data (database or predefined)
+  // Auto-save function
+  const performSave = useCallback(async () => {
+    if (!currentTemplate || !templateSessionId) return;
+
+    // Cancel any in-flight request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
+    abortControllerRef.current = new AbortController();
+    setSaveStatus("saving");
+
+    try {
+      const formData = new FormData();
+      formData.set("intent", "save");
+      formData.set("templateId", templateSessionId);
+      formData.set("name", currentTemplate.name || "Untitled Template");
+      formData.set("type", currentTemplate.type || "resume");
+      formData.set("sections", JSON.stringify(currentTemplate.sections || []));
+      formData.set(
+        "globalStyles",
+        JSON.stringify(currentTemplate.globalStyles || {}),
+      );
+      if (currentTemplate.colorPalette) {
+        formData.set(
+          "colorPalette",
+          JSON.stringify(currentTemplate.colorPalette),
+        );
+      }
+
+      // Use pathname only to avoid duplicate requests from query params
+      const response = await fetch(window.location.pathname, {
+        method: "POST",
+        body: formData,
+        signal: abortControllerRef.current.signal,
+      });
+
+      if (response.ok) {
+        // Try to parse JSON, but don't fail if response is not JSON
+        let result: { template?: { id?: string } } = {};
+        try {
+          const text = await response.text();
+          if (text) {
+            result = JSON.parse(text);
+          }
+        } catch {
+          // Response may not be JSON (e.g., redirect response)
+        }
+
+        // Update template ID if it changed (new template created)
+        if (result.template?.id && result.template.id !== templateSessionId) {
+          updateTemplateId(result.template.id);
+          setTemplateSessionId(result.template.id);
+        }
+        setSaveStatus("saved");
+        setLastSavedAt(new Date());
+        setDirty(false);
+        // Reset to idle after 2 seconds
+        setTimeout(() => {
+          setSaveStatus((current) => (current === "saved" ? "idle" : current));
+        }, 2000);
+      } else {
+        console.error(
+          "Auto-save failed:",
+          response.status,
+          response.statusText,
+        );
+        setSaveStatus("error");
+      }
+    } catch (error) {
+      if (error instanceof Error && error.name === "AbortError") {
+        return;
+      }
+      console.error("Auto-save error:", error);
+      setSaveStatus("error");
+    }
+  }, [
+    currentTemplate,
+    templateSessionId,
+    setDirty,
+    updateTemplateId,
+    setTemplateSessionId,
+  ]);
+
+  // Trigger auto-save when template changes
+  useEffect(() => {
+    if (!isDirty || !templateSessionId) return;
+
+    // Clear existing timeout
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+
+    // Debounce for 1 second
+    saveTimeoutRef.current = setTimeout(() => {
+      performSave();
+    }, 1000);
+
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, [isDirty, templateSessionId, performSave]);
+
+  // Load template on mount from loader data
   useEffect(() => {
     if (!templateId) return;
 
-    // Use template from loader data
     const template = loaderData.template;
 
     if (template) {
-      // Check sessionStorage for saved currency preference for this template
-      const storageKey = `template-currency-${templateId}`;
-      const savedCurrency =
-        typeof window !== "undefined"
-          ? sessionStorage.getItem(storageKey)
-          : null;
-
-      // Determine currency: prioritize template's saved currency, then sessionStorage, then default
+      // Determine currency for invoice/receipt types
       let currencyToUse: string | undefined = template.globalStyles.currency as
         | string
         | undefined;
@@ -337,31 +492,30 @@ export default function BuilderEditorRoute({
         (template.type === "invoice" || template.type === "receipt") &&
         !currencyToUse
       ) {
-        currencyToUse = savedCurrency || "USD";
+        currencyToUse = "USD";
       }
 
-      // Sync template currency to sessionStorage if it exists
-      if (
-        currencyToUse &&
-        currencyToUse !== savedCurrency &&
-        typeof window !== "undefined"
-      ) {
-        sessionStorage.setItem(storageKey, currencyToUse);
-      }
-
-      // Ensure organizationId is set correctly
       const editableTemplate = {
         ...template,
         organizationId: organizationSlug || "",
-        // Set currency if determined
         globalStyles: {
           ...template.globalStyles,
           ...(currencyToUse ? { currency: currencyToUse } : {}),
         },
       };
+
       setCurrentTemplate(editableTemplate);
-      selectSection(null); // Reset selected section when loading new template
+      setTemplateSessionId(template.id);
+      selectSection(null);
       setTemplateNotFound(false);
+
+      // If it's a new template from customize, redirect to the new URL
+      if (loaderData.isNewFromDefault && template.id !== templateId) {
+        navigate(
+          `/organizations/${organizationSlug}/builder/${template.id}?mode=edit`,
+          { replace: true },
+        );
+      }
     } else {
       setTemplateNotFound(true);
     }
@@ -369,9 +523,24 @@ export default function BuilderEditorRoute({
     templateId,
     organizationSlug,
     loaderData.template,
+    loaderData.isNewFromDefault,
     setCurrentTemplate,
     selectSection,
+    setTemplateSessionId,
+    navigate,
   ]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, []);
 
   if (templateNotFound) {
     return (
@@ -383,12 +552,7 @@ export default function BuilderEditorRoute({
           </p>
           <Button
             onClick={() => {
-              // Preserve search params when navigating back
-              const searchString = searchParams.toString();
-              const backUrl = `/organizations/${organizationSlug}/builder${
-                searchString ? `?${searchString}` : ""
-              }`;
-              navigate(backUrl);
+              navigate(`/organizations/${organizationSlug}/builder`);
             }}
             variant="outline"
           >
@@ -413,6 +577,48 @@ export default function BuilderEditorRoute({
     setActiveId(event.active.id as string);
   };
 
+  // Save status indicator
+  const renderSaveStatus = () => {
+    switch (saveStatus) {
+      case "saving":
+        return (
+          <Badge className="gap-1" variant="secondary">
+            <Loader2 className="h-3 w-3 animate-spin" />
+            Saving...
+          </Badge>
+        );
+      case "saved":
+        return (
+          <Badge
+            className="gap-1 bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
+            variant="secondary"
+          >
+            <Check className="h-3 w-3" />
+            Saved
+          </Badge>
+        );
+      case "error":
+        return (
+          <Badge className="gap-1" variant="destructive">
+            <CloudOff className="h-3 w-3" />
+            Error
+          </Badge>
+        );
+      default:
+        if (templateSessionId) {
+          return (
+            <Badge className="gap-1 text-muted-foreground" variant="outline">
+              <Cloud className="h-3 w-3" />
+              {lastSavedAt
+                ? `Last saved ${lastSavedAt.toLocaleTimeString()}`
+                : "Auto-save enabled"}
+            </Badge>
+          );
+        }
+        return null;
+    }
+  };
+
   return (
     <DndContext onDragStart={handleDragStart} sensors={sensors}>
       <div className="flex flex-1 max-h-[calc(100vh-4rem)] overflow-hidden select-none">
@@ -423,12 +629,7 @@ export default function BuilderEditorRoute({
               <Button
                 className="h-8 w-8"
                 onClick={() => {
-                  // Preserve search params when navigating back
-                  const searchString = searchParams.toString();
-                  const backUrl = `/organizations/${organizationSlug}/builder${
-                    searchString ? `?${searchString}` : ""
-                  }`;
-                  navigate(backUrl);
+                  navigate(`/organizations/${organizationSlug}/builder`);
                 }}
                 size="icon"
                 variant="ghost"
@@ -442,6 +643,7 @@ export default function BuilderEditorRoute({
               >
                 {currentTemplate?.name || "Untitled Template"}
               </h2>
+              {renderSaveStatus()}
             </div>
             <div className="flex items-center gap-2">
               {(currentTemplate?.type === "invoice" ||
@@ -459,7 +661,6 @@ export default function BuilderEditorRoute({
                             const currencyCode = currentTemplate?.globalStyles
                               .currency as string;
                             const symbol = getCurrencySymbol(currencyCode);
-                            // Only show code if symbol is different from code
                             return symbol !== currencyCode
                               ? `${symbol} ${currencyCode}`
                               : currencyCode;
@@ -492,30 +693,19 @@ export default function BuilderEditorRoute({
                               onSelect={() => {
                                 const currencyCode = currency.code;
                                 updateGlobalStyles({ currency: currencyCode });
-                                // Save to sessionStorage for persistence
-                                if (
-                                  templateId &&
-                                  typeof window !== "undefined"
-                                ) {
-                                  sessionStorage.setItem(
-                                    `template-currency-${templateId}`,
-                                    currencyCode,
-                                  );
-                                }
                                 setCurrencyOpen(false);
                               }}
                               value={`${currency.code} ${currency.name}`}
                             >
                               <svg
                                 aria-hidden="true"
-                                className={`mr-2 h-4 w-4 ${
-                                  (
-                                    currentTemplate?.globalStyles
-                                      .currency as string
-                                  ) === currency.code
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  (currentTemplate?.globalStyles
+                                    .currency as string) === currency.code
                                     ? "opacity-100"
-                                    : "opacity-0"
-                                }`}
+                                    : "opacity-0",
+                                )}
                                 fill="none"
                                 stroke="currentColor"
                                 strokeLinecap="round"

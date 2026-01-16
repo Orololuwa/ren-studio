@@ -1,14 +1,33 @@
 import {
   ChevronLeft,
   ChevronRight,
+  Copy,
+  Edit,
   FileText,
   Receipt,
   ShoppingBag,
+  Trash2,
 } from "lucide-react";
-import { useEffect, useState } from "react";
-import { href, useNavigate, useSearchParams } from "react-router";
+import { useState } from "react";
+import {
+  data,
+  href,
+  useNavigate,
+  useRevalidator,
+  useSearchParams,
+} from "react-router";
 
 import type { Route } from "./+types/_index";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "~/components/ui/alert-dialog";
 import { Button } from "~/components/ui/button";
 import {
   Card,
@@ -18,75 +37,145 @@ import {
   CardHeader,
   CardTitle,
 } from "~/components/ui/card";
+import { Tabs, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "~/components/ui/tooltip";
-import { retrieveTemplatesByOrganizationIdAndType } from "~/features/builder/shared/builder-model.server";
+import {
+  countTemplatesByOrganizationIdAndType,
+  deleteTemplateFromDatabase,
+  retrieveTemplatesByOrganizationIdAndType,
+} from "~/features/builder/shared/builder-model.server";
 import { TemplatePreviewThumbnail } from "~/features/builder/shared/components/template-preview-thumbnail";
 import { getTemplatesByType } from "~/features/builder/shared/templates";
+import type { Template } from "~/features/builder/shared/types";
 import { getInstance } from "~/features/localization/i18next-middleware.server";
 import { organizationMembershipContext } from "~/features/organizations/organizations-middleware.server";
 import { cn } from "~/lib/utils";
 import { getPageTitle } from "~/utils/get-page-title.server";
+import { createToastHeaders } from "~/utils/toast.server";
 
-export async function loader({ params, context }: Route.LoaderArgs) {
-  const { organization } = context.get(organizationMembershipContext);
+export async function loader({ request, params, context }: Route.LoaderArgs) {
+  const { organization, headers } = context.get(organizationMembershipContext);
   const i18n = getInstance(context);
   const t = i18n.t.bind(i18n);
 
-  // Load templates from database
-  const dbResume = await retrieveTemplatesByOrganizationIdAndType({
-    organizationId: organization.id,
-    type: "resume",
-  });
-  const dbInvoice = await retrieveTemplatesByOrganizationIdAndType({
-    organizationId: organization.id,
-    type: "invoice",
-  });
-  const dbCertificate = await retrieveTemplatesByOrganizationIdAndType({
-    organizationId: organization.id,
-    type: "certificate",
-  });
-  const dbReportCards = await retrieveTemplatesByOrganizationIdAndType({
-    organizationId: organization.id,
-    type: "report-cards",
-  });
-  const dbReceipt = await retrieveTemplatesByOrganizationIdAndType({
-    organizationId: organization.id,
-    type: "receipt",
-  });
+  const url = new URL(request.url);
+  const typeParam = url.searchParams.get("type");
+  const viewParam = url.searchParams.get("view");
 
-  // Load predefined templates
-  const predefinedResume = getTemplatesByType("resume");
-  const predefinedInvoice = getTemplatesByType("invoice");
-  const predefinedCertificate = getTemplatesByType("certificate");
-  const predefinedReportCards = getTemplatesByType("report-cards");
-  const predefinedReceipt = getTemplatesByType("receipt");
+  // Use defaults if parameters are missing
+  const activeType = (typeParam || "resume") as BuilderType;
+  const activeView = (viewParam || "defaults") as ViewTab;
 
-  // Merge database templates with predefined templates
-  // Database templates come first, then predefined templates
-  const templatesByType = {
-    certificate: [...dbCertificate, ...predefinedCertificate],
-    invoice: [...dbInvoice, ...predefinedInvoice],
-    receipt: [...dbReceipt, ...predefinedReceipt],
-    "report-cards": [...dbReportCards, ...predefinedReportCards],
-    resume: [...dbResume, ...predefinedResume],
+  // Optimized fetching:
+  // 1. Fetch counts for all types (efficient)
+  let savedCounts: Partial<Record<BuilderType, number>> = {
+    invoice: 0,
+    receipt: 0,
+    "report-cards": 0,
+    resume: 0,
   };
-
-  return {
-    breadcrumb: {
-      title: t("organizations:builder.breadcrumb"),
-      to: href("/organizations/:organizationSlug/builder", {
-        organizationSlug: params.organizationSlug,
+  if (activeView === "saved") {
+    savedCounts = {
+      invoice: await countTemplatesByOrganizationIdAndType({
+        organizationId: organization.id,
+        type: "invoice",
       }),
+      receipt: await countTemplatesByOrganizationIdAndType({
+        organizationId: organization.id,
+        type: "receipt",
+      }),
+      "report-cards": await countTemplatesByOrganizationIdAndType({
+        organizationId: organization.id,
+        type: "report-cards",
+      }),
+      resume: await countTemplatesByOrganizationIdAndType({
+        organizationId: organization.id,
+        type: "resume",
+      }),
+    };
+  }
+
+  // 2. Fetch full records ONLY for active type IF view is 'saved'
+  let activeSavedTemplates: Template[] = [];
+  if (activeView === "saved") {
+    activeSavedTemplates = await retrieveTemplatesByOrganizationIdAndType({
+      organizationId: organization.id,
+      type: activeType,
+    });
+  }
+
+  // 3. Get predefined templates (static)
+  const defaultTemplates = getTemplatesByType(activeType);
+
+  return data(
+    {
+      breadcrumb: {
+        title: t("organizations:builder.breadcrumb"),
+        to: href("/organizations/:organizationSlug/builder", {
+          organizationSlug: params.organizationSlug,
+        }),
+      },
+      activeType,
+      activeView,
+      defaultTemplates,
+      organizationSlug: params.organizationSlug,
+      pageTitle: getPageTitle(t, "organizations:builder.pageTitle"),
+      savedCounts,
+      savedTemplates: activeSavedTemplates,
     },
-    organizationSlug: params.organizationSlug,
-    pageTitle: getPageTitle(t, "organizations:builder.pageTitle"),
-    templatesByType,
-  };
+    { headers },
+  );
+}
+
+export async function action({ request, context }: Route.ActionArgs) {
+  const { organization, headers } = context.get(organizationMembershipContext);
+  const formData = await request.formData();
+  const intent = formData.get("intent");
+
+  if (intent === "delete") {
+    const templateId = formData.get("templateId") as string;
+
+    if (!templateId) {
+      return data(
+        { success: false, error: "Template ID is required" },
+        { status: 400, headers },
+      );
+    }
+
+    const deleted = await deleteTemplateFromDatabase({
+      organizationId: organization.id,
+      templateId,
+    });
+
+    if (!deleted) {
+      return data(
+        { success: false, error: "Template not found" },
+        { status: 404, headers },
+      );
+    }
+
+    const toastHeaders = await createToastHeaders({
+      description: "Your template has been deleted.",
+      title: "Template deleted",
+    });
+
+    return data(
+      { success: true },
+      {
+        headers: {
+          ...Object.fromEntries(headers),
+          ...Object.fromEntries(toastHeaders),
+        },
+      },
+    );
+  }
+
+  return data({ success: false, error: "Unknown action" }, { status: 400 });
 }
 
 export const meta: Route.MetaFunction = ({ loaderData }) => [
@@ -129,29 +218,44 @@ const VALID_BUILDER_TYPES = [
 ] as const;
 type BuilderType = (typeof VALID_BUILDER_TYPES)[number];
 
-function isValidBuilderType(type: string | null): type is BuilderType {
-  return type !== null && VALID_BUILDER_TYPES.includes(type as BuilderType);
-}
+type ViewTab = "defaults" | "saved";
 
 export default function BuilderRoute({ loaderData }: Route.ComponentProps) {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [, setSearchParams] = useSearchParams();
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [templateToDelete, setTemplateToDelete] = useState<Template | null>(
+    null,
+  );
   const navigate = useNavigate();
-  const { templatesByType, organizationSlug } = loaderData;
+  const revalidator = useRevalidator();
+  const {
+    activeType,
+    activeView,
+    defaultTemplates,
+    organizationSlug,
+    savedCounts,
+    savedTemplates,
+  } = loaderData;
 
-  // Get active tab from URL param, default to "resume"
-  const typeParam = searchParams.get("type");
-  const activeTab = isValidBuilderType(typeParam) ? typeParam : "resume";
+  const handleTypeTabChange = (type: BuilderType) => {
+    setSearchParams(
+      (prev) => {
+        prev.set("type", type);
+        return prev;
+      },
+      { replace: true },
+    );
+  };
 
-  // Set default type in URL if not present
-  useEffect(() => {
-    if (!typeParam || !isValidBuilderType(typeParam)) {
-      setSearchParams({ type: "resume" }, { replace: true });
-    }
-  }, [typeParam, setSearchParams]);
-
-  const handleTabChange = (type: BuilderType) => {
-    setSearchParams({ type }, { replace: true });
+  const handleViewTabChange = (view: ViewTab) => {
+    setSearchParams(
+      (prev) => {
+        prev.set("view", view);
+        return prev;
+      },
+      { replace: true },
+    );
   };
 
   const handleCreateNew = () => {
@@ -159,17 +263,47 @@ export default function BuilderRoute({ loaderData }: Route.ComponentProps) {
     navigate(`/organizations/${organizationSlug}/builder/new`);
   };
 
-  const handleCustomize = (templateId: string) => {
-    // Navigate to editor with template loaded, preserving search params
-    const searchString = searchParams.toString();
-    const url = `/organizations/${organizationSlug}/builder/${templateId}${
-      searchString ? `?${searchString}` : ""
-    }`;
+  const handleCustomize = (templateId: string, _isDefault: boolean) => {
+    // Navigate to editor with template loaded
+    // For defaults, use mode=customize to create a new copy
+    // For saved, use mode=customize to create a new copy from saved template
+    const url = `/organizations/${organizationSlug}/builder/${templateId}?mode=customize&source=${templateId}`;
     navigate(url);
   };
 
+  const handleEdit = (templateId: string) => {
+    // Navigate to editor with existing template for editing
+    const url = `/organizations/${organizationSlug}/builder/${templateId}?mode=edit`;
+    navigate(url);
+  };
+
+  const handleDeleteClick = (template: Template) => {
+    setTemplateToDelete(template);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!templateToDelete) return;
+
+    const formData = new FormData();
+    formData.set("intent", "delete");
+    formData.set("templateId", templateToDelete.id);
+
+    // Use pathname to avoid query param issues
+    await fetch(window.location.pathname, {
+      method: "POST",
+      body: formData,
+    });
+
+    setDeleteDialogOpen(false);
+    setTemplateToDelete(null);
+    revalidator.revalidate();
+  };
+
   const templates =
-    templatesByType[activeTab as keyof typeof templatesByType] || [];
+    activeView === "defaults" ? defaultTemplates : savedTemplates;
+
+  const savedCount = savedCounts[activeType as keyof typeof savedCounts] || 0;
 
   return (
     <TooltipProvider delayDuration={0}>
@@ -215,14 +349,16 @@ export default function BuilderRoute({ loaderData }: Route.ComponentProps) {
                     className={cn(
                       "w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors",
                       "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-                      activeTab === type.value
+                      activeType === type.value
                         ? "bg-sidebar-accent text-sidebar-accent-foreground"
                         : "text-sidebar-foreground",
                       isCollapsed && "justify-center px-2",
                     )}
                     data-testid={`tab-${type.value}`}
                     key={type.value}
-                    onClick={() => handleTabChange(type.value as BuilderType)}
+                    onClick={() =>
+                      handleTypeTabChange(type.value as BuilderType)
+                    }
                     type="button"
                   >
                     <Icon className="w-5 h-5 shrink-0" />
@@ -272,13 +408,30 @@ export default function BuilderRoute({ loaderData }: Route.ComponentProps) {
               </Button>
             </div>
 
+            {/* Defaults / Saved Tabs */}
+            <Tabs
+              onValueChange={(v) => handleViewTabChange(v as ViewTab)}
+              value={activeView}
+            >
+              <TabsList>
+                <TabsTrigger data-testid="tab-defaults" value="defaults">
+                  Defaults
+                </TabsTrigger>
+                <TabsTrigger data-testid="tab-saved" value="saved">
+                  Saved{savedCount > 0 && ` (${savedCount})`}
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+
             {templates.length === 0 ? (
               <div
                 className="text-center py-12 text-muted-foreground"
                 data-testid="no-templates-message"
               >
                 <p>
-                  No templates available. Click "Create New" to get started.
+                  {activeView === "defaults"
+                    ? 'No default templates available. Click "Create New" to get started.'
+                    : "No saved templates yet. Customize a default template to save it here."}
                 </p>
               </div>
             ) : (
@@ -312,18 +465,61 @@ export default function BuilderRoute({ loaderData }: Route.ComponentProps) {
                               template.type.slice(1)
                             : "Template"}{" "}
                           Template
+                          {activeView === "saved" && template.updatedAt && (
+                            <span className="block text-xs mt-1">
+                              Last modified:{" "}
+                              {new Date(
+                                template.updatedAt,
+                              ).toLocaleDateString()}
+                            </span>
+                          )}
                         </CardDescription>
                       </CardHeader>
                       <CardContent className="flex-1" />
-                      <CardFooter>
-                        <Button
-                          className="w-full"
-                          data-testid={`template-customize-button-${template.id}`}
-                          onClick={() => handleCustomize(template.id)}
-                          variant="outline"
-                        >
-                          Customize
-                        </Button>
+                      <CardFooter className="gap-2">
+                        {activeView === "saved" ? (
+                          <>
+                            <Button
+                              className="flex-1"
+                              data-testid={`template-edit-button-${template.id}`}
+                              onClick={() => handleEdit(template.id)}
+                              variant="default"
+                            >
+                              <Edit className="h-4 w-4 mr-2" />
+                              Edit
+                            </Button>
+                            <Button
+                              className="flex-1"
+                              data-testid={`template-customize-button-${template.id}`}
+                              onClick={() =>
+                                handleCustomize(template.id, false)
+                              }
+                              variant="outline"
+                            >
+                              <Copy className="h-4 w-4 mr-2" />
+                              Duplicate
+                            </Button>
+                            <Button
+                              className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                              data-testid={`template-delete-button-${template.id}`}
+                              onClick={() => handleDeleteClick(template)}
+                              size="icon"
+                              variant="ghost"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                              <span className="sr-only">Delete</span>
+                            </Button>
+                          </>
+                        ) : (
+                          <Button
+                            className="w-full"
+                            data-testid={`template-customize-button-${template.id}`}
+                            onClick={() => handleCustomize(template.id, true)}
+                            variant="outline"
+                          >
+                            Customize
+                          </Button>
+                        )}
                       </CardFooter>
                     </Card>
                   ))}
@@ -332,6 +528,28 @@ export default function BuilderRoute({ loaderData }: Route.ComponentProps) {
           </div>
         </div>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog onOpenChange={setDeleteDialogOpen} open={deleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Template</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{templateToDelete?.name}"? This
+              action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={handleDeleteConfirm}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </TooltipProvider>
   );
 }
