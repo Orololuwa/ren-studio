@@ -23,15 +23,18 @@ interface ColorInputProps {
 
 function ColorInput({ index, initialColor, onColorChange }: ColorInputProps) {
   const [localColor, setLocalColor] = useState(initialColor);
+  const [hexInput, setHexInput] = useState(initialColor);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Sync with external changes
   useEffect(() => {
     setLocalColor(initialColor);
+    setHexInput(initialColor);
   }, [initialColor]);
 
-  const handleChange = (newColor: string) => {
+  const handleColorPickerChange = (newColor: string) => {
     setLocalColor(newColor);
+    setHexInput(newColor);
 
     // Clear existing debounce
     if (debounceRef.current) {
@@ -42,6 +45,29 @@ function ColorInput({ index, initialColor, onColorChange }: ColorInputProps) {
     debounceRef.current = setTimeout(() => {
       onColorChange(index, newColor);
     }, 1000);
+  };
+
+  const handleHexInputChange = (hexValue: string) => {
+    // Allow partial input - update the display immediately
+    setHexInput(hexValue);
+
+    // Only update the color picker and store if it's a valid hex code
+    if (/^#[0-9A-Fa-f]{0,6}$/i.test(hexValue)) {
+      // If it's a complete valid hex code, update the color
+      if (/^#[0-9A-Fa-f]{6}$/i.test(hexValue)) {
+        setLocalColor(hexValue);
+
+        // Clear existing debounce
+        if (debounceRef.current) {
+          clearTimeout(debounceRef.current);
+        }
+
+        // Debounce the store update
+        debounceRef.current = setTimeout(() => {
+          onColorChange(index, hexValue);
+        }, 300);
+      }
+    }
   };
 
   // Cleanup on unmount
@@ -58,22 +84,24 @@ function ColorInput({ index, initialColor, onColorChange }: ColorInputProps) {
       <Input
         className="h-10 w-20"
         id={`palette-${index}`}
-        onChange={(e) => handleChange(e.target.value)}
+        onChange={(e) => handleColorPickerChange(e.target.value)}
         type="color"
         value={localColor}
       />
       <Input
         className="flex-1"
         id={`palette-${index}-hex`}
-        onChange={(e) => {
-          const hexValue = e.target.value;
-          if (/^#[0-9A-Fa-f]{6}$/.test(hexValue)) {
-            handleChange(hexValue);
+        onBlur={(e) => {
+          // On blur, if the value is invalid or incomplete, reset to the last valid color
+          const value = e.target.value;
+          if (!/^#[0-9A-Fa-f]{6}$/i.test(value)) {
+            setHexInput(localColor);
           }
         }}
+        onChange={(e) => handleHexInputChange(e.target.value)}
         placeholder="#000000"
         type="text"
-        value={localColor}
+        value={hexInput}
       />
     </div>
   );
