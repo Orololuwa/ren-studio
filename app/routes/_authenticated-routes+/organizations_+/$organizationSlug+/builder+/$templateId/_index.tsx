@@ -585,7 +585,11 @@ export default function BuilderEditorRoute({
     switch (saveStatus) {
       case "saving":
         return (
-          <Badge className="gap-1" variant="secondary">
+          <Badge
+            className="gap-1"
+            data-testid="save-status-badge"
+            variant="secondary"
+          >
             <Loader2 className="h-3 w-3 animate-spin" />
             Saving...
           </Badge>
@@ -594,6 +598,7 @@ export default function BuilderEditorRoute({
         return (
           <Badge
             className="gap-1 bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
+            data-testid="save-status-badge"
             variant="secondary"
           >
             <Check className="h-3 w-3" />
@@ -602,7 +607,11 @@ export default function BuilderEditorRoute({
         );
       case "error":
         return (
-          <Badge className="gap-1" variant="destructive">
+          <Badge
+            className="gap-1"
+            data-testid="save-status-badge"
+            variant="destructive"
+          >
             <CloudOff className="h-3 w-3" />
             Error
           </Badge>
@@ -610,7 +619,11 @@ export default function BuilderEditorRoute({
       default:
         if (templateSessionId) {
           return (
-            <Badge className="gap-1 text-muted-foreground" variant="outline">
+            <Badge
+              className="gap-1 text-muted-foreground"
+              data-testid="save-status-badge"
+              variant="outline"
+            >
               <Cloud className="h-3 w-3" />
               {lastSavedAt
                 ? `Last saved ${lastSavedAt.toLocaleTimeString()}`
@@ -640,20 +653,16 @@ export default function BuilderEditorRoute({
                 <ArrowLeft className="h-4 w-4" />
                 <span className="sr-only">Go back</span>
               </Button>
-              <button
-                className="text-lg font-semibold hover:bg-accent rounded px-2 py-1 -mx-2 -my-1 transition-colors cursor-pointer text-left"
-                data-testid="template-editor-title"
-                onClick={() => setIsEditingTemplateName(true)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    setIsEditingTemplateName(true);
-                  }
-                }}
-                type="button"
-              >
-                {currentTemplate?.name || "Untitled Template"}
-              </button>
+              <h1 className="text-lg font-semibold -mx-2 -my-1">
+                <button
+                  className="w-full text-left hover:bg-accent rounded px-2 py-1 transition-colors cursor-pointer"
+                  data-testid="template-editor-title"
+                  onClick={() => setIsEditingTemplateName(true)}
+                  type="button"
+                >
+                  {currentTemplate?.name || "Untitled Template"}
+                </button>
+              </h1>
               {renderSaveStatus()}
             </div>
             <div className="flex items-center gap-2">
@@ -664,6 +673,7 @@ export default function BuilderEditorRoute({
                     <Button
                       aria-expanded={currencyOpen}
                       className="w-[180px] justify-between"
+                      data-testid="currency-selector"
                       role="combobox"
                       variant="outline"
                     >

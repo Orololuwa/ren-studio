@@ -37,7 +37,7 @@ import {
   CardHeader,
   CardTitle,
 } from "~/components/ui/card";
-import { Tabs, TabsList, TabsTrigger } from "~/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import {
   Tooltip,
   TooltipContent,
@@ -256,21 +256,16 @@ export default function BuilderRoute({ loaderData }: Route.ComponentProps) {
     );
   };
 
-  const handleCreateNew = () => {
-    // Navigate to create new template (empty template)
+  const _handleCreateNew = () => {
     navigate(`/organizations/${organizationSlug}/builder/new`);
   };
 
   const handleCustomize = (templateId: string, _isDefault: boolean) => {
-    // Navigate to editor with template loaded
-    // For defaults, use mode=customize to create a new copy
-    // For saved, use mode=customize to create a new copy from saved template
     const url = `/organizations/${organizationSlug}/builder/${templateId}?mode=customize&source=${templateId}`;
     navigate(url);
   };
 
   const handleEdit = (templateId: string) => {
-    // Navigate to editor with existing template for editing
     const url = `/organizations/${organizationSlug}/builder/${templateId}?mode=edit`;
     navigate(url);
   };
@@ -287,7 +282,6 @@ export default function BuilderRoute({ loaderData }: Route.ComponentProps) {
     formData.set("intent", "delete");
     formData.set("templateId", templateToDelete.id);
 
-    // Use pathname to avoid query param issues
     await fetch(window.location.pathname, {
       method: "POST",
       body: formData,
@@ -324,6 +318,7 @@ export default function BuilderRoute({ loaderData }: Route.ComponentProps) {
             )}
             <Button
               className={cn("h-7 w-7", isCollapsed && "mx-auto")}
+              data-testid="template-builder-collapse-sidebar-button"
               onClick={() => setIsCollapsed(!isCollapsed)}
               size="icon"
               variant="ghost"
@@ -342,17 +337,19 @@ export default function BuilderRoute({ loaderData }: Route.ComponentProps) {
             <div className="space-y-1">
               {builderTypes.map((type) => {
                 const Icon = type.icon;
+                const isActive = activeType === type.value;
                 const button = (
                   <button
+                    aria-current={isActive ? "page" : undefined}
                     className={cn(
                       "w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors",
                       "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-                      activeType === type.value
+                      isActive
                         ? "bg-sidebar-accent text-sidebar-accent-foreground"
                         : "text-sidebar-foreground",
                       isCollapsed && "justify-center px-2",
                     )}
-                    data-testid={`tab-${type.value}`}
+                    data-testid={`template-type-button-${type.value}`}
                     key={type.value}
                     onClick={() =>
                       handleTypeTabChange(type.value as BuilderType)
@@ -380,7 +377,10 @@ export default function BuilderRoute({ loaderData }: Route.ComponentProps) {
         </aside>
 
         {/* Main Content Area */}
-        <div className="flex-1 flex flex-col overflow-y-auto">
+        <section
+          aria-label={`${activeType} templates`}
+          className="flex-1 flex flex-col overflow-y-auto"
+        >
           <div className="flex flex-1 flex-col gap-6 px-4 py-4 md:py-6 lg:px-6">
             <div className="flex items-center justify-between">
               <div>
@@ -397,13 +397,6 @@ export default function BuilderRoute({ loaderData }: Route.ComponentProps) {
                   Choose a template and customize it to your needs
                 </p>
               </div>
-              <Button
-                data-testid="create-new-button"
-                onClick={handleCreateNew}
-                size="lg"
-              >
-                Create New
-              </Button>
             </div>
 
             {/* Defaults / Saved Tabs */}
@@ -419,112 +412,29 @@ export default function BuilderRoute({ loaderData }: Route.ComponentProps) {
                   Saved{savedCount > 0 && ` (${savedCount})`}
                 </TabsTrigger>
               </TabsList>
+              <TabsContent value="defaults">
+                <TemplateGrid
+                  activeView="defaults"
+                  handleCustomize={handleCustomize}
+                  handleDeleteClick={handleDeleteClick}
+                  handleEdit={handleEdit}
+                  organizationSlug={organizationSlug}
+                  templates={templates}
+                />
+              </TabsContent>
+              <TabsContent value="saved">
+                <TemplateGrid
+                  activeView="saved"
+                  handleCustomize={handleCustomize}
+                  handleDeleteClick={handleDeleteClick}
+                  handleEdit={handleEdit}
+                  organizationSlug={organizationSlug}
+                  templates={templates}
+                />
+              </TabsContent>
             </Tabs>
-
-            {templates.length === 0 ? (
-              <div
-                className="text-center py-12 text-muted-foreground"
-                data-testid="no-templates-message"
-              >
-                <p>
-                  {activeView === "defaults"
-                    ? 'No default templates available. Click "Create New" to get started.'
-                    : "No saved templates yet. Customize a default template to save it here."}
-                </p>
-              </div>
-            ) : (
-              <div
-                className="grid gap-4 md:grid-cols-2 lg:grid-cols-3"
-                data-testid="template-grid"
-              >
-                {templates
-                  .filter((template) => template?.id && template.name)
-                  .map((template) => (
-                    <Card
-                      className="flex flex-col"
-                      data-testid={`template-card-${template.id}`}
-                      key={template.id}
-                    >
-                      <CardHeader>
-                        <TemplatePreviewThumbnail
-                          organizationSlug={organizationSlug}
-                          template={template}
-                        />
-                        <CardTitle
-                          data-testid={`template-card-title-${template.id}`}
-                        >
-                          {template.name}
-                        </CardTitle>
-                        <CardDescription
-                          data-testid={`template-card-description-${template.id}`}
-                        >
-                          {template.type
-                            ? template.type.charAt(0).toUpperCase() +
-                              template.type.slice(1)
-                            : "Template"}{" "}
-                          Template
-                          {activeView === "saved" && template.updatedAt && (
-                            <span className="block text-xs mt-1">
-                              Last modified:{" "}
-                              {new Date(
-                                template.updatedAt,
-                              ).toLocaleDateString()}
-                            </span>
-                          )}
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent className="flex-1" />
-                      <CardFooter className="gap-2">
-                        {activeView === "saved" ? (
-                          <>
-                            <Button
-                              className="flex-1"
-                              data-testid={`template-edit-button-${template.id}`}
-                              onClick={() => handleEdit(template.id)}
-                              variant="default"
-                            >
-                              <Edit className="h-4 w-4 mr-2" />
-                              Edit
-                            </Button>
-                            <Button
-                              className="flex-1"
-                              data-testid={`template-customize-button-${template.id}`}
-                              onClick={() =>
-                                handleCustomize(template.id, false)
-                              }
-                              variant="outline"
-                            >
-                              <Copy className="h-4 w-4 mr-2" />
-                              Duplicate
-                            </Button>
-                            <Button
-                              className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                              data-testid={`template-delete-button-${template.id}`}
-                              onClick={() => handleDeleteClick(template)}
-                              size="icon"
-                              variant="ghost"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                              <span className="sr-only">Delete</span>
-                            </Button>
-                          </>
-                        ) : (
-                          <Button
-                            className="w-full"
-                            data-testid={`template-customize-button-${template.id}`}
-                            onClick={() => handleCustomize(template.id, true)}
-                            variant="outline"
-                          >
-                            Customize
-                          </Button>
-                        )}
-                      </CardFooter>
-                    </Card>
-                  ))}
-              </div>
-            )}
           </div>
-        </div>
+        </section>
       </div>
 
       {/* Delete Confirmation Dialog */}
@@ -549,5 +459,122 @@ export default function BuilderRoute({ loaderData }: Route.ComponentProps) {
         </AlertDialogContent>
       </AlertDialog>
     </TooltipProvider>
+  );
+}
+
+function TemplateGrid({
+  templates,
+  activeView,
+  organizationSlug,
+  handleEdit,
+  handleCustomize,
+  handleDeleteClick,
+}: {
+  templates: Template[];
+  activeView: ViewTab;
+  organizationSlug: string;
+  handleEdit: (id: string) => void;
+  handleCustomize: (id: string, isDefault: boolean) => void;
+  handleDeleteClick: (template: Template) => void;
+}) {
+  if (templates.length === 0) {
+    return (
+      <div
+        className="text-center py-12 text-muted-foreground"
+        data-testid="no-templates-message"
+      >
+        <p>
+          {activeView === "defaults"
+            ? 'No default templates available. Click "Create New" to get started.'
+            : "No saved templates yet. Customize a default template to save it here."}
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 pt-6"
+      data-testid="template-grid"
+    >
+      {templates
+        .filter((template) => template?.id && template.name)
+        .map((template) => (
+          <Card
+            className="flex flex-col"
+            data-testid={`template-card-${template.id}`}
+            key={template.id}
+          >
+            <CardHeader>
+              <TemplatePreviewThumbnail
+                organizationSlug={organizationSlug}
+                template={template}
+              />
+              <CardTitle data-testid={`template-card-title-${template.id}`}>
+                {template.name}
+              </CardTitle>
+              <CardDescription
+                data-testid={`template-card-description-${template.id}`}
+              >
+                {template.type
+                  ? template.type.charAt(0).toUpperCase() +
+                    template.type.slice(1)
+                  : "Template"}{" "}
+                Template
+                {activeView === "saved" && template.updatedAt && (
+                  <span className="block text-xs mt-1">
+                    Last modified:{" "}
+                    {new Date(template.updatedAt).toLocaleDateString()}
+                  </span>
+                )}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex-1" />
+            <CardFooter className="gap-2">
+              {activeView === "saved" ? (
+                <>
+                  <Button
+                    className="flex-1"
+                    data-testid={`template-edit-button-${template.id}`}
+                    onClick={() => handleEdit(template.id)}
+                    variant="default"
+                  >
+                    <Edit className="h-4 w-4 mr-2" />
+                    Edit
+                  </Button>
+                  <Button
+                    className="flex-1"
+                    data-testid={`template-customize-button-${template.id}`}
+                    onClick={() => handleCustomize(template.id, false)}
+                    variant="outline"
+                  >
+                    <Copy className="h-4 w-4 mr-2" />
+                    Duplicate
+                  </Button>
+                  <Button
+                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                    data-testid={`template-delete-button-${template.id}`}
+                    onClick={() => handleDeleteClick(template)}
+                    size="icon"
+                    variant="ghost"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    <span className="sr-only">Delete</span>
+                  </Button>
+                </>
+              ) : (
+                <Button
+                  className="w-full"
+                  data-testid={`template-customize-button-${template.id}`}
+                  onClick={() => handleCustomize(template.id, true)}
+                  variant="outline"
+                >
+                  Customize
+                </Button>
+              )}
+            </CardFooter>
+          </Card>
+        ))}
+    </div>
   );
 }

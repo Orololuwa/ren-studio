@@ -65,7 +65,7 @@ function ColorInput({ index, initialColor, onColorChange }: ColorInputProps) {
         // Debounce the store update
         debounceRef.current = setTimeout(() => {
           onColorChange(index, hexValue);
-        }, 300);
+        }, 1000);
       }
     }
   };
@@ -90,6 +90,7 @@ function ColorInput({ index, initialColor, onColorChange }: ColorInputProps) {
       />
       <Input
         className="flex-1"
+        data-testid={`palette-input-${index}`}
         id={`palette-${index}-hex`}
         onBlur={(e) => {
           // On blur, if the value is invalid or incomplete, reset to the last valid color
@@ -126,7 +127,7 @@ export function ColorPaletteEditor() {
   return (
     <Dialog onOpenChange={setOpen} open={open}>
       <DialogTrigger asChild>
-        <Button size="sm" variant="outline">
+        <Button data-testid="color-palette-button" size="sm" variant="outline">
           <Palette className="h-4 w-4 mr-2" />
           Colors
         </Button>
@@ -134,7 +135,7 @@ export function ColorPaletteEditor() {
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>Color Palette</DialogTitle>
-          <DialogDescription>
+          <DialogDescription data-testid="color-palette-description">
             Edit the template color palette. Changes will update all sections
             using these colors.
           </DialogDescription>

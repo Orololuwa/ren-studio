@@ -84,6 +84,7 @@ export function SectionWrapper({
       <div className="absolute top-2 right-2 flex items-center gap-2 z-10">
         <Button
           className="h-8 w-8 text-gray-700 hover:text-gray-900 hover:bg-gray-100"
+          data-testid={`section-visibility-toggle-${section.id}`}
           onClick={handleToggleVisibility}
           size="icon"
           title={isVisible ? "Hide section" : "Show section"}
@@ -98,6 +99,7 @@ export function SectionWrapper({
         </Button>
         <Button
           className="h-8 w-8 text-gray-700 hover:text-gray-900 hover:bg-gray-100"
+          data-testid={`section-duplicate-${section.id}`}
           onClick={handleDuplicate}
           size="icon"
           title="Duplicate section"
@@ -108,6 +110,7 @@ export function SectionWrapper({
         </Button>
         <Button
           className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+          data-testid={`section-delete-${section.id}`}
           onClick={handleDelete}
           size="icon"
           title="Delete section"
@@ -132,9 +135,9 @@ export function SectionWrapper({
 
       {/* Section Label */}
       <div className="px-4 py-2 bg-gray-100 border-b border-gray-300 rounded-t-lg">
-        <h3 className="text-sm font-semibold text-gray-900">
+        <h2 className="text-sm font-semibold text-gray-900">
           {section.type.charAt(0).toUpperCase() + section.type.slice(1)}
-        </h3>
+        </h2>
       </div>
 
       {/* Section Content */}

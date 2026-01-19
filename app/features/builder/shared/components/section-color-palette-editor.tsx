@@ -71,7 +71,7 @@ function SectionColorInput({
         // Debounce the store update
         debounceRef.current = setTimeout(() => {
           onColorChange(index, hexValue);
-        }, 300);
+        }, 1000);
       }
     }
   };
