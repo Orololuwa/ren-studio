@@ -26,9 +26,9 @@ test.describe("builder drag and drop interactions", () => {
     );
 
     // Wait for template to load
-    await expect(
-      page.getByRole("heading", { level: 2, name: /modern professional/i }),
-    ).toBeVisible({ timeout: 5000 });
+    await expect(page.getByTestId("template-editor-title")).toContainText(
+      /modern professional/i,
+    );
 
     // Find a component in the palette (e.g., Skills component)
     // Use the palette-specific test ID to avoid matching canvas sections
@@ -38,7 +38,7 @@ test.describe("builder drag and drop interactions", () => {
     await expect(skillsComponent).toBeVisible();
 
     // Count initial sections before drag using test IDs
-    const sectionsBefore = page.locator('[data-testid^="section-"]');
+    const sectionsBefore = page.locator('section[data-testid^="section-"]');
     const initialSectionCount = await sectionsBefore.count();
 
     // Get the canvas area (the droppable area)
@@ -78,8 +78,8 @@ test.describe("builder drag and drop interactions", () => {
     });
 
     // Wait for the section count to increase (React state update + re-render)
-    const sectionsAfter = page.locator('[data-testid^="section-"]');
-    await expect(sectionsAfter).toHaveCount(initialSectionCount + 2, {
+    const sectionsAfter = page.locator('section[data-testid^="section-"]');
+    await expect(sectionsAfter).toHaveCount(initialSectionCount + 1, {
       timeout: 2000,
     });
 
@@ -122,7 +122,7 @@ test.describe("builder drag and drop interactions", () => {
     await expect(skillsComponent).toBeVisible();
 
     // Count initial sections before drag using test IDs
-    const sectionsBefore = page.locator('[data-testid^="section-"]');
+    const sectionsBefore = page.locator('section[data-testid^="section-"]');
     const initialSectionCount = await sectionsBefore.count();
 
     // Get bounding boxes for precise positioning
@@ -160,8 +160,8 @@ test.describe("builder drag and drop interactions", () => {
     });
 
     // Wait for the section count to increase (React state update + re-render)
-    const sectionsAfter = page.locator('[data-testid^="section-"]');
-    await expect(sectionsAfter).toHaveCount(initialSectionCount + 2, {
+    const sectionsAfter = page.locator('section[data-testid^="section-"]');
+    await expect(sectionsAfter).toHaveCount(initialSectionCount + 1, {
       timeout: 5000,
     });
 
@@ -344,7 +344,7 @@ test.describe("builder drag and drop interactions", () => {
     // Get all sections to verify position at end
     const allSections = page
       .getByTestId("canvas-droppable")
-      .locator('[data-testid^="section-"]');
+      .locator('section[data-testid^="section-"]');
     const initialSectionCount = await allSections.count();
 
     // Get initial position of header section
@@ -510,9 +510,9 @@ test.describe("builder drag and drop interactions", () => {
     );
 
     // Wait for template to load
-    await expect(
-      page.getByRole("heading", { level: 2, name: /modern professional/i }),
-    ).toBeVisible({ timeout: 5000 });
+    await expect(page.getByTestId("template-editor-title")).toContainText(
+      /modern professional/i,
+    );
 
     // Find a component in the palette using test ID
     const skillsComponent = page.getByTestId("palette-skills");
@@ -557,12 +557,12 @@ test.describe("builder drag and drop interactions", () => {
     );
 
     // Wait for template to load
-    await expect(
-      page.getByRole("heading", { level: 2, name: /modern professional/i }),
-    ).toBeVisible({ timeout: 5000 });
+    await expect(page.getByTestId("template-editor-title")).toContainText(
+      /modern professional/i,
+    );
 
     // Count initial sections using test IDs
-    const sectionsBefore = page.locator('[data-testid^="section-"]');
+    const sectionsBefore = page.locator('section[data-testid^="section-"]');
     const initialSectionCount = await sectionsBefore.count();
 
     // Find a component in the palette
@@ -572,10 +572,7 @@ test.describe("builder drag and drop interactions", () => {
 
     // Get bounding boxes for precise positioning
     const componentBox = await skillsComponent.boundingBox();
-    const headerArea = page.getByRole("heading", {
-      level: 2,
-      name: /modern professional/i,
-    });
+    const headerArea = page.getByTestId("template-editor-title");
     const headerBox = await headerArea.boundingBox();
 
     if (!componentBox || !headerBox) {
@@ -602,7 +599,7 @@ test.describe("builder drag and drop interactions", () => {
     await page.waitForTimeout(500);
 
     // Verify section count hasn't increased (component wasn't added)
-    const sectionsAfter = page.locator('[data-testid^="section-"]');
+    const sectionsAfter = page.locator('section[data-testid^="section-"]');
     await expect(sectionsAfter).toHaveCount(initialSectionCount);
 
     // Verify the component palette still shows the component
@@ -624,14 +621,14 @@ test.describe("builder drag and drop interactions", () => {
     );
 
     // Wait for template to load
-    await expect(
-      page.getByRole("heading", { level: 2, name: /modern professional/i }),
-    ).toBeVisible({ timeout: 5000 });
+    await expect(page.getByTestId("template-editor-title")).toContainText(
+      /modern professional/i,
+    );
 
     const canvas = page.getByTestId("canvas-droppable");
 
     // Count initial sections before drag
-    const sectionsBefore = page.locator('[data-testid^="section-"]');
+    const sectionsBefore = page.locator('section[data-testid^="section-"]');
     const initialSectionCount = await sectionsBefore.count();
 
     // Drag Skills component
@@ -669,8 +666,8 @@ test.describe("builder drag and drop interactions", () => {
     });
 
     // Wait for the section count to increase (React state update + re-render)
-    const sectionsAfter = page.locator('[data-testid^="section-"]');
-    await expect(sectionsAfter).toHaveCount(initialSectionCount + 2, {
+    const sectionsAfter = page.locator('section[data-testid^="section-"]');
+    await expect(sectionsAfter).toHaveCount(initialSectionCount + 1, {
       timeout: 5000,
     });
 
@@ -682,7 +679,7 @@ test.describe("builder drag and drop interactions", () => {
     await expect(skillsSections.first()).toBeVisible({ timeout: 2000 });
 
     // Get updated section count after first drag
-    const sectionsAfterFirst = page.locator('[data-testid^="section-"]');
+    const sectionsAfterFirst = page.locator('section[data-testid^="section-"]');
     const sectionCountAfterFirst = await sectionsAfterFirst.count();
 
     // Drag Summary component (if not already present)
@@ -721,10 +718,12 @@ test.describe("builder drag and drop interactions", () => {
         ).toBeVisible({ timeout: 2000 });
 
         // Wait for the section count to increase
-        const sectionsAfterSecond = page.locator('[data-testid^="section-"]');
+        const sectionsAfterSecond = page.locator(
+          'section[data-testid^="section-"]',
+        );
         console.log({ sectionsAfterSecond: await sectionsAfterSecond.all() });
         await expect(sectionsAfterSecond).toHaveCount(
-          sectionCountAfterFirst + 2,
+          sectionCountAfterFirst + 1,
           { timeout: 5000 },
         );
       }

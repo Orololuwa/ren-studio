@@ -39,7 +39,9 @@ test.describe("builder template editor page", () => {
 
     // Verify sections are rendered (should see header section with name)
     // Find first section and check for editable name field
-    const firstSection = page.locator('[data-testid^="section-"]').first();
+    const firstSection = page
+      .locator('section[data-testid^="section-"]')
+      .first();
     await expect(firstSection).toBeVisible();
     const nameField = firstSection.locator(
       '[data-testid^="editable-field-"][data-testid*="-name"]',
@@ -105,12 +107,14 @@ test.describe("builder template editor page", () => {
     await expect(page.getByTestId("component-palette")).toBeVisible({
       timeout: 5000,
     });
-    const firstSection = page.locator('[data-testid^="section-"]').first();
+    const firstSection = page
+      .locator('section[data-testid^="section-"]')
+      .first();
     await expect(firstSection).toBeVisible({ timeout: 5000 });
 
     // Click on the section label (non-interactive area) to select it
     // This avoids clicking on nested interactive elements like buttons
-    const sectionLabel = firstSection.locator("h3").first();
+    const sectionLabel = firstSection.locator("h2").first();
     await sectionLabel.click();
 
     // Wait for component palette to disappear (indicating selection happened)
@@ -139,7 +143,9 @@ test.describe("builder template editor page", () => {
     );
 
     // Wait for template to load
-    const firstSection = page.locator('[data-testid^="section-"]').first();
+    const firstSection = page
+      .locator('section[data-testid^="section-"]')
+      .first();
     await expect(firstSection).toBeVisible({ timeout: 5000 });
 
     // Click on the name field (it's a button that opens the editor)
@@ -171,7 +177,9 @@ test.describe("builder template editor page", () => {
     );
 
     // Wait for template to load
-    const firstSection = page.locator('[data-testid^="section-"]').first();
+    const firstSection = page
+      .locator('section[data-testid^="section-"]')
+      .first();
     await expect(firstSection).toBeVisible({ timeout: 5000 });
 
     // Click on the name field
@@ -218,7 +226,9 @@ test.describe("builder template editor page", () => {
     );
 
     // Wait for template to load
-    const firstSection = page.locator('[data-testid^="section-"]').first();
+    const firstSection = page
+      .locator('section[data-testid^="section-"]')
+      .first();
     await expect(firstSection).toBeVisible({ timeout: 5000 });
 
     // Click on the name field
@@ -274,7 +284,7 @@ test.describe("builder template editor page", () => {
     await expect(
       page
         .getByTestId("canvas-droppable")
-        .locator('[data-testid^="section-"]')
+        .locator('section[data-testid^="section-"]')
         .first(),
     ).toBeVisible({ timeout: 5000 });
 
@@ -338,7 +348,9 @@ test.describe("builder template editor page", () => {
     );
 
     // Wait for template to load
-    const firstSection = page.locator('[data-testid^="section-"]').first();
+    const firstSection = page
+      .locator('section[data-testid^="section-"]')
+      .first();
     await expect(firstSection).toBeVisible({ timeout: 5000 });
 
     // Initially, component palette should be visible
@@ -347,7 +359,7 @@ test.describe("builder template editor page", () => {
 
     // Click on the section header (h3) to select it
     // This avoids clicking on nested interactive elements like buttons or inputs
-    const sectionHeader = firstSection.locator("h3").first();
+    const sectionHeader = firstSection.locator("h2").first();
     await sectionHeader.click();
 
     // Properties panel should appear

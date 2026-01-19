@@ -2,276 +2,356 @@ import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
 import { setupOrganizationAndLoginAsMember } from "../../utils";
-import { teardownOrganizationAndMember } from "~/test/test-utils";
+import {
+  createTemplateInDatabase,
+  deleteTemplateFromDatabase,
+} from "~/features/builder/shared/builder-model.server";
 
 test.describe("builder template selection page", () => {
-  // Reset store state before each test to prevent state leakage
+  let organizationSlug: string;
+
   test.beforeEach(async ({ page }) => {
-    // Reset the Zustand store by navigating to a clean page
-    await page.goto("/");
-    // Wait a bit for any cleanup
-    await page.waitForTimeout(100);
+    const data = await setupOrganizationAndLoginAsMember({ page });
+    organizationSlug = data.organization.slug;
+
+    // Navigate to the builder page
+    await page.goto(`/organizations/${organizationSlug}/builder`);
+    await page.waitForSelector('[data-testid="template-builder-heading"]');
   });
-  test("given: a logged in user, should: show template builder page with tabs", async ({
-    page,
-  }) => {
-    const { organization, user } = await setupOrganizationAndLoginAsMember({
-      page,
-    });
 
-    await page.goto(`/organizations/${organization.slug}/builder`);
-
-    // Verify page title and heading
-    await expect(page).toHaveTitle(/template builder/i);
+  test("should display the default state correctly", async ({ page }) => {
+    // Check heading and description
     await expect(page.getByTestId("template-builder-heading")).toBeVisible();
-
-    // Verify description
     await expect(
       page.getByTestId("template-builder-description"),
+    ).toContainText("Choose a template");
+
+    // Check default view tab
+    await expect(page.getByTestId("tab-defaults")).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+
+    // Check that resume template type button is active
+    await expect(
+      page.getByTestId("template-type-button-resume"),
+    ).toHaveAttribute("aria-current", "page");
+
+    // Check that the expected resume templates are present
+    const visibleGrid = page.locator('[data-testid="template-grid"]:visible');
+
+    await expect(
+      visibleGrid.getByTestId("template-card-resume-modern-professional"),
     ).toBeVisible();
 
-    // Verify Create New button exists
-    await expect(page.getByTestId("create-new-button")).toBeVisible();
-
-    // Verify tabs are visible
-    await expect(page.getByTestId("tab-resume")).toBeVisible();
-    await expect(page.getByTestId("tab-invoice")).toBeVisible();
-    await expect(page.getByTestId("tab-certificate")).toBeVisible();
-    await expect(page.getByTestId("tab-report-cards")).toBeVisible();
-
-    await teardownOrganizationAndMember({ organization, user });
+    await expect(
+      visibleGrid.getByTestId("template-card-resume-classic-elegant"),
+    ).toBeVisible();
   });
 
-  test("given: a logged in user on resume tab, should: show resume templates", async ({
-    page,
-  }) => {
-    const { organization, user } = await setupOrganizationAndLoginAsMember({
-      page,
+  test("should switch between template types", async ({ page }) => {
+    // Ensure we're starting from the resume view (default)
+    await expect(
+      page.getByTestId("template-type-button-resume"),
+    ).toHaveAttribute("aria-current", "page");
+
+    // Switch to Invoice via sidebar
+    const invoiceButton = page.getByTestId("template-type-button-invoice");
+    await expect(invoiceButton).toBeVisible();
+    await invoiceButton.scrollIntoViewIfNeeded();
+    await invoiceButton.click();
+
+    // Wait for button to become active (indicates navigation happened)
+    await expect(invoiceButton).toHaveAttribute("aria-current", "page", {
+      timeout: 10_000,
     });
 
-    await page.goto(`/organizations/${organization.slug}/builder`);
+    // Verify URL updated
+    await expect(page).toHaveURL(/type=invoice/);
 
-    // Resume tab should be active by default
-    const resumeTab = page.getByTestId("tab-resume");
-    await expect(resumeTab).toHaveAttribute("aria-selected", "true");
+    // Verify invoice templates are shown using template IDs
+    const invoiceGrid = page.locator('[data-testid="template-grid"]:visible');
+    await expect(
+      invoiceGrid.getByTestId("template-card-invoice-simple"),
+    ).toBeVisible();
+    await expect(
+      invoiceGrid.getByTestId("template-card-invoice-professional"),
+    ).toBeVisible();
 
-    // Wait for tabpanel to be visible and templates to load
-    const resumeTabpanel = page.getByRole("tabpanel", { name: /resume/i });
-    await expect(resumeTabpanel).toBeVisible();
+    // Switch to Receipt
+    const receiptButton = page.getByTestId("template-type-button-receipt");
+    await expect(receiptButton).toBeVisible();
+    await receiptButton.scrollIntoViewIfNeeded();
+    await receiptButton.click();
 
-    // Wait for template cards to be visible
-    const templateGrid = resumeTabpanel.getByTestId("template-grid");
-    await expect(templateGrid).toBeVisible({ timeout: 10_000 });
+    // Wait for button to become active
+    await expect(receiptButton).toHaveAttribute("aria-current", "page", {
+      timeout: 10_000,
+    });
 
-    // Verify template cards are displayed - find first card by test ID
-    const firstCard = templateGrid
-      .locator('[data-testid^="template-card-"]')
-      .first();
-    await expect(firstCard).toBeVisible();
+    // Verify URL updated
+    await expect(page).toHaveURL(/type=receipt/);
 
-    // Verify card has title
-    const cardTitle = firstCard.locator(
-      '[data-testid^="template-card-title-"]',
-    );
-    await expect(cardTitle).toBeVisible();
-
-    await teardownOrganizationAndMember({ organization, user });
+    // Verify receipt templates are shown using template IDs
+    const receiptGrid = page.locator('[data-testid="template-grid"]:visible');
+    await expect(
+      receiptGrid.getByTestId("template-card-receipt-simple"),
+    ).toBeVisible();
+    await expect(
+      receiptGrid.getByTestId("template-card-receipt-professional"),
+    ).toBeVisible();
   });
 
-  test("given: a logged in user, should: switch between template type tabs", async ({
-    page,
-  }) => {
-    const { organization, user } = await setupOrganizationAndLoginAsMember({
-      page,
+  test("should collapse and expand the sidebar", async ({ page }) => {
+    // Use a specific selector for the builder sidebar to avoid matching the app's main sidebar
+    const collapseButton = page.getByTestId(
+      "template-builder-collapse-sidebar-button",
+    );
+
+    // Find the sidebar by locating the aside that contains the button
+    const sidebar = page.locator("aside").filter({
+      has: collapseButton,
     });
 
-    await page.goto(`/organizations/${organization.slug}/builder`);
+    // Initial state: expanded
+    await expect(sidebar).toHaveClass(/w-64/);
+    await expect(collapseButton).toHaveAccessibleName(/collapse sidebar/i);
 
-    // Start on resume tab
-    await expect(page.getByTestId("tab-resume")).toHaveAttribute(
-      "aria-selected",
-      "true",
-    );
+    // Collapse - ensure button is ready and clickable
+    await expect(collapseButton).toBeVisible();
+    await collapseButton.scrollIntoViewIfNeeded();
 
-    // Switch to invoice tab
-    await page.getByTestId("tab-invoice").click();
-    await expect(page.getByTestId("tab-invoice")).toHaveAttribute(
-      "aria-selected",
-      "true",
-    );
-    await expect(page.getByTestId("tab-resume")).toHaveAttribute(
-      "aria-selected",
-      "false",
-    );
-
-    // Switch to certificate tab
-    await page.getByTestId("tab-certificate").click();
-    await expect(page.getByTestId("tab-certificate")).toHaveAttribute(
-      "aria-selected",
-      "true",
-    );
-
-    // Switch to report cards tab
-    await page.getByTestId("tab-report-cards").click();
-    await expect(page.getByTestId("tab-report-cards")).toHaveAttribute(
-      "aria-selected",
-      "true",
-    );
-
-    await teardownOrganizationAndMember({ organization, user });
-  });
-
-  test("given: a logged in user, should: show template details in cards", async ({
-    page,
-  }) => {
-    const { organization, user } = await setupOrganizationAndLoginAsMember({
-      page,
-    });
-
-    await page.goto(`/organizations/${organization.slug}/builder`);
-
-    // Wait for templates to load
-    const templateGrid = page.getByTestId("template-grid");
-    await expect(templateGrid).toBeVisible({ timeout: 10_000 });
-
-    // Get first template card
-    const firstCard = templateGrid
-      .locator('[data-testid^="template-card-"]')
-      .first();
-    await expect(firstCard).toBeVisible();
-
-    // Verify card has template name
-    const cardTitle = firstCard.locator(
-      '[data-testid^="template-card-title-"]',
-    );
-    await expect(cardTitle).toBeVisible();
-    await expect(cardTitle).not.toHaveText("");
-
-    // Verify card has description
-    const cardDescription = firstCard.locator(
-      '[data-testid^="template-card-description-"]',
-    );
-    await expect(cardDescription).toBeVisible();
-
-    // Verify card has Customize button
-    const customizeButton = firstCard.locator(
-      '[data-testid^="template-customize-button-"]',
-    );
-    await expect(customizeButton).toBeVisible();
-
-    await teardownOrganizationAndMember({ organization, user });
-  });
-
-  test("given: a logged in user, should: navigate to editor when clicking Customize button", async ({
-    page,
-  }) => {
-    const { organization, user } = await setupOrganizationAndLoginAsMember({
-      page,
-    });
-
-    await page.goto(`/organizations/${organization.slug}/builder`);
-
-    // Wait for templates to load
-    const templateGrid = page.getByTestId("template-grid");
-    await expect(templateGrid).toBeVisible({ timeout: 10_000 });
-
-    // Get first template card
-    const firstCard = templateGrid
-      .locator('[data-testid^="template-card-"]')
-      .first();
-    await expect(firstCard).toBeVisible();
-
-    // Get the template name to verify we're on the right page
-    const templateName = await firstCard
-      .locator('[data-testid^="template-card-title-"]')
-      .textContent();
-    // Normalize template name (trim whitespace)
-    const normalizedTemplateName = templateName?.trim() || "";
-
-    // Get the template ID from the button's test ID to construct expected URL
-    const customizeButton = firstCard.locator(
-      '[data-testid^="template-customize-button-"]',
-    );
-    const buttonTestId = await customizeButton.getAttribute("data-testid");
-    const templateId = buttonTestId?.replace("template-customize-button-", "");
-
-    // Click Customize button and wait for navigation
-    // React Router uses client-side navigation, so we wait for URL change
+    // Click and wait for the icon to change (ChevronLeft -> ChevronRight)
+    // This is more reliable than waiting for class changes
     await Promise.all([
-      page.waitForURL(
-        new RegExp(
-          `/organizations/${organization.slug}/builder/${templateId}$`,
-        ),
-        { timeout: 10_000 },
+      collapseButton.click(),
+      // Wait for the icon to change by checking for ChevronRight (collapsed state)
+      page.waitForFunction(
+        () => {
+          const button = document.querySelector(
+            '[data-testid="template-builder-collapse-sidebar-button"]',
+          );
+          if (!button) return false;
+          // Check if ChevronRight icon is present (collapsed state)
+          return (
+            button.querySelector('svg[class*="lucide-chevron-right"]') !== null
+          );
+        },
+        { timeout: 5000 },
       ),
-      customizeButton.click(),
     ]);
 
-    // Wait for navigation to complete and page to be interactive
-    await page.waitForLoadState("networkidle", { timeout: 5000 }).catch(() => {
-      // Ignore if networkidle times out, page might still be loading
-    });
+    // Verify sidebar collapsed
+    await expect(sidebar).toHaveClass(/w-12/, { timeout: 5000 });
+    await expect(collapseButton).toHaveAccessibleName(/expand sidebar/i);
 
-    // Wait for the editor page to load and template name to appear
-    const editorTitle = page.getByTestId("template-editor-title");
-    await expect(editorTitle).toBeVisible({ timeout: 10_000 });
-
-    // Wait for the template name to be set (it loads asynchronously via useEffect)
-    // First ensure the title has actual content (not "Untitled Template")
-    await expect(editorTitle).not.toHaveText("Untitled Template", {
-      timeout: 5000,
-    });
-
-    // Then verify template name matches (case-insensitive to handle any casing differences)
-    if (normalizedTemplateName) {
-      await expect(editorTitle).toContainText(
-        new RegExp(normalizedTemplateName, "i"),
+    // Expand - click again
+    await Promise.all([
+      collapseButton.click(),
+      // Wait for the icon to change back (ChevronRight -> ChevronLeft)
+      page.waitForFunction(
+        () => {
+          const button = document.querySelector(
+            '[data-testid="template-builder-collapse-sidebar-button"]',
+          );
+          if (!button) return false;
+          // Check if ChevronLeft icon is present (expanded state)
+          return (
+            button.querySelector('svg[class*="lucide-chevron-left"]') !== null
+          );
+        },
         { timeout: 5000 },
-      );
-    }
+      ),
+    ]);
 
-    await teardownOrganizationAndMember({ organization, user });
+    // Verify sidebar expanded
+    await expect(sidebar).toHaveClass(/w-64/, { timeout: 5000 });
+    await expect(collapseButton).toHaveAccessibleName(/collapse sidebar/i);
   });
 
-  test("given: a logged in user, should: show Create New button that is clickable", async ({
-    page,
-  }) => {
-    const { organization, user } = await setupOrganizationAndLoginAsMember({
-      page,
-    });
+  test("should switch between Defaults and Saved views", async ({ page }) => {
+    // Switch to Saved
+    await page.getByTestId("tab-saved").click();
+    await expect(page).toHaveURL(/view=saved/);
 
-    await page.goto(`/organizations/${organization.slug}/builder`);
-
-    const createNewButton = page.getByTestId("create-new-button");
-    await expect(createNewButton).toBeVisible();
-    await expect(createNewButton).toBeEnabled();
-
-    // Click the button (it currently redirects, but we test it's clickable)
-    await createNewButton.click();
-
-    // Verify navigation occurred (currently redirects to builder page)
-    await expect(page).toHaveURL(
-      new RegExp(`/organizations/${organization.slug}/builder`),
+    // Check for empty state message in Saved view
+    await expect(page.getByTestId("no-templates-message")).toBeVisible();
+    await expect(page.getByTestId("no-templates-message")).toContainText(
+      "No saved templates yet",
     );
 
-    await teardownOrganizationAndMember({ organization, user });
+    // Switch back to Defaults
+    await page.getByTestId("tab-defaults").click();
+    await expect(page).toHaveURL(/view=defaults/);
+
+    const activeGrid = page.locator(
+      '[role="tabpanel"][data-state="active"] [data-testid="template-grid"]',
+    );
+    await expect(activeGrid).toBeVisible();
   });
 
-  test("given: a logged in user, should: lack any automatically detectable accessibility issues", async ({
+  test("should navigate to builder when clicking customize", async ({
     page,
   }) => {
-    const { organization, user } = await setupOrganizationAndLoginAsMember({
-      page,
+    // Ensure we're on the defaults tab (not saved)
+    await expect(page.getByTestId("tab-defaults")).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+
+    const customizeButton = page
+      .locator('[data-testid^="template-customize-button-"]')
+      .filter({ visible: true })
+      .first();
+    await expect(customizeButton).toBeVisible();
+
+    const testId = await customizeButton.getAttribute("data-testid");
+    const templateId = testId?.replace("template-customize-button-", "");
+
+    expect(templateId).toBeDefined();
+
+    // Click the button and wait for navigation to start
+    await customizeButton.click();
+
+    // Wait for the URL to change (initial navigation)
+    await page.waitForURL(
+      new RegExp(`/builder/${templateId}.*mode=customize`),
+      {
+        waitUntil: "commit",
+        timeout: 10_000,
+      },
+    );
+
+    // Wait for the redirect to complete (customize mode creates a new template and redirects)
+    // The redirect goes to a different template ID with mode=edit
+    await page.waitForURL(/\/builder\/.*\?mode=edit/, {
+      waitUntil: "commit",
+      timeout: 10_000,
     });
 
-    await page.goto(`/organizations/${organization.slug}/builder`);
+    // Now wait for the editor page to fully load
+    await expect(page.getByTestId("template-editor-title")).toBeVisible({
+      timeout: 10_000,
+    });
 
-    const accessibilityScanResults = await new AxeBuilder({ page })
-      .disableRules("color-contrast")
-      .analyze();
+    // Verify we're in the builder editor by checking for the canvas
+    await expect(page.getByTestId("template-canvas")).toBeVisible({
+      timeout: 10_000,
+    });
 
+    // Optionally verify the component palette is visible (confirms editor is fully loaded)
+    await expect(page.getByTestId("component-palette")).toBeVisible({
+      timeout: 10_000,
+    });
+  });
+
+  test("should display saved templates in the Saved tab", async ({ page }) => {
+    const data = await setupOrganizationAndLoginAsMember({ page });
+    const organizationSlug = data.organization.slug;
+    const organizationId = data.organization.id;
+
+    // Create saved templates in the database
+    // Note: React Router v7 uses turbo-stream format for .data routes, making it
+    // difficult to mock. Creating DB records is the most reliable approach.
+    const createdTemplates = await Promise.all([
+      createTemplateInDatabase({
+        name: "My Custom Resume",
+        type: "resume",
+        organizationId,
+        sections: [
+          {
+            id: "header-1",
+            type: "header",
+            order: 0,
+            data: {
+              name: "John Doe",
+              email: "john@example.com",
+            },
+            styles: {},
+          },
+        ],
+        globalStyles: {
+          backgroundColor: "#ffffff",
+          fontFamily: "Arial, sans-serif",
+        },
+        colorPalette: ["#ffffff", "#000000"],
+      }),
+      createTemplateInDatabase({
+        name: "My Custom Invoice",
+        type: "invoice",
+        organizationId,
+        sections: [],
+        globalStyles: {},
+        colorPalette: [],
+      }),
+    ]);
+
+    try {
+      // Navigate directly to saved view (full page load, server-side render)
+      await page.goto(
+        `/organizations/${organizationSlug}/builder?type=resume&view=saved`,
+      );
+
+      // Wait for page to load
+      await page.waitForSelector('[data-testid="template-builder-heading"]');
+
+      // Wait for the Saved tab to be active
+      const savedTab = page.getByTestId("tab-saved");
+      await expect(savedTab).toHaveAttribute("aria-selected", "true");
+
+      // Wait for the template grid to appear
+      await page.waitForSelector('[data-testid="template-grid"]:visible', {
+        timeout: 10_000,
+      });
+
+      // Verify saved templates are displayed
+      const visibleGrid = page.locator('[data-testid="template-grid"]:visible');
+      await expect(
+        visibleGrid.getByTestId(`template-card-${createdTemplates[0].id}`),
+      ).toBeVisible({ timeout: 10_000 });
+      await expect(
+        visibleGrid.getByTestId(
+          `template-card-title-${createdTemplates[0].id}`,
+        ),
+      ).toContainText("My Custom Resume");
+
+      // Verify the saved count badge
+      await expect(page.getByTestId("tab-saved")).toContainText("Saved (1)");
+
+      // Switch to invoice type
+      await page.getByTestId("template-type-button-invoice").click();
+      await page.waitForURL(/type=invoice/);
+
+      // Wait for the template grid to update
+      await page.waitForSelector('[data-testid="template-grid"]:visible', {
+        timeout: 10_000,
+      });
+
+      // Verify invoice template is displayed
+      const invoiceGrid = page.locator('[data-testid="template-grid"]:visible');
+      await expect(
+        invoiceGrid.getByTestId(`template-card-${createdTemplates[1].id}`),
+      ).toBeVisible({ timeout: 10_000 });
+      await expect(
+        invoiceGrid.getByTestId(
+          `template-card-title-${createdTemplates[1].id}`,
+        ),
+      ).toContainText("My Custom Invoice");
+    } finally {
+      // Clean up: delete created templates
+      await Promise.all(
+        createdTemplates.map((template) =>
+          deleteTemplateFromDatabase({
+            templateId: template.id,
+            organizationId,
+          }),
+        ),
+      );
+    }
+  });
+
+  test("should pass accessibility checks", async ({ page }) => {
+    const accessibilityScanResults = await new AxeBuilder({ page }).analyze();
     expect(accessibilityScanResults.violations).toEqual([]);
-
-    await teardownOrganizationAndMember({ organization, user });
   });
 });
