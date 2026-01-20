@@ -165,7 +165,7 @@ export function PropertiesPanel() {
   if (!section) {
     return (
       <div
-        className="h-[calc(100vh-4rem) w-80 bg-muted/30 border-l border-border p-6"
+        className="h-[calc(100vh-4rem)] w-80 bg-muted/30 border-l border-border p-4 md:p-6 hidden md:block"
         data-testid="properties-panel"
       >
         <div className="text-center text-muted-foreground">
@@ -2435,7 +2435,7 @@ export function PropertiesPanel() {
 
   return (
     <div
-      className="h-[calc(100vh-4rem)] w-80 bg-muted/30 border-l border-border overflow-y-auto"
+      className="h-[calc(100vh-4rem)] md:h-[calc(100vh-4rem)] w-full md:w-80 bg-muted/30 md:border-l border-border overflow-y-auto"
       data-testid="properties-panel"
     >
       <div className="p-4 border-b border-border flex items-center justify-between">
@@ -2446,7 +2446,7 @@ export function PropertiesPanel() {
           Content Editor
         </h3>
         <Button
-          className="h-8 w-8"
+          className="h-8 w-8 md:block hidden"
           onClick={() => selectSection(null)}
           size="icon"
           title="Close"

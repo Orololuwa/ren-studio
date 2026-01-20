@@ -1,4 +1,5 @@
 import { Palette } from "lucide-react";
+import type * as React from "react";
 import { useEffect, useRef, useState } from "react";
 
 import { useBuilderStore } from "../store/builder-store";
@@ -108,9 +109,23 @@ function ColorInput({ index, initialColor, onColorChange }: ColorInputProps) {
   );
 }
 
-export function ColorPaletteEditor() {
+export function ColorPaletteEditor({
+  open: controlledOpen,
+  onOpenChange: controlledOnOpenChange,
+  trigger,
+}: {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  trigger?: React.ReactNode;
+} = {}) {
   const { currentTemplate, updateColorPalette } = useBuilderStore();
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+
+  const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
+  const setOpen =
+    controlledOnOpenChange !== undefined
+      ? controlledOnOpenChange
+      : setInternalOpen;
 
   if (!currentTemplate || !currentTemplate.colorPalette) {
     return null;
@@ -126,12 +141,20 @@ export function ColorPaletteEditor() {
 
   return (
     <Dialog onOpenChange={setOpen} open={open}>
-      <DialogTrigger asChild>
-        <Button data-testid="color-palette-button" size="sm" variant="outline">
-          <Palette className="h-4 w-4 mr-2" />
-          Colors
-        </Button>
-      </DialogTrigger>
+      {trigger ? (
+        <DialogTrigger asChild>{trigger}</DialogTrigger>
+      ) : (
+        <DialogTrigger asChild>
+          <Button
+            data-testid="color-palette-button"
+            size="sm"
+            variant="outline"
+          >
+            <Palette className="h-4 w-4 mr-2" />
+            Colors
+          </Button>
+        </DialogTrigger>
+      )}
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>Color Palette</DialogTitle>

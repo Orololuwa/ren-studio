@@ -165,8 +165,10 @@ test.describe("builder advanced editor features", () => {
     // Wait for template to load
     await expect(page.getByTestId("template-editor-title")).toBeVisible();
 
-    // Open color palette
-    await page.getByTestId("color-palette-button").click();
+    // Open Settings dropdown
+    await page.getByTestId("settings-button").click();
+    // Click Color Palette menu item (opens the dialog)
+    await page.getByRole("menuitem", { name: /color palette/i }).click();
     await expect(page.getByTestId("color-palette-description")).toBeVisible();
 
     // Change first color
@@ -195,19 +197,71 @@ test.describe("builder advanced editor features", () => {
     // Wait for template to load
     await expect(page.getByTestId("template-editor-title")).toBeVisible();
 
-    // Currency selector should be visible for invoice
-    const currencySelector = page.getByTestId("currency-selector");
-    await expect(currencySelector).toBeVisible();
+    // Open Settings dropdown
+    await page.getByTestId("settings-button").click();
 
-    // Click selector
-    await currencySelector.click();
+    // Click on Currency submenu trigger to open the submenu
+    // The trigger has "Currency" text and shows current currency
+    const currencySubmenuTrigger = page
+      .locator('[role="menuitem"]')
+      .filter({ hasText: /currency/i })
+      .first();
+    await currencySubmenuTrigger.click();
 
-    // Select Euro
-    const euroItem = page.getByText("Euro (€)");
+    // Wait for the currency submenu (Command component) to appear
+    // CommandItem uses data-slot="command-item" and contains the currency name
+    // Also wait for the Command input to be visible as a sign the submenu is open
+    await page.waitForSelector('[data-slot="command-item"]', { timeout: 3000 });
+    await page.waitForSelector('input[placeholder*="Search currency"]', {
+      timeout: 2000,
+    });
+
+    // Select Euro from the Command list using getByText which is more reliable
+    // The currency name is "Euro (€)" - we can match just "Euro" or the full text
+    const euroItem = page.getByText("Euro", { exact: false }).first();
+    await expect(euroItem).toBeVisible({ timeout: 3000 });
     await euroItem.click();
 
-    // Verify selector shows updated currency
-    await expect(currencySelector).toContainText("€ EUR");
+    // Close any open dropdowns by pressing Escape
+    await page.keyboard.press("Escape");
+    await page.waitForTimeout(200);
+
+    // Wait for the dropdown menu to be hidden (with a catch in case it's already closed)
+    try {
+      await page.waitForSelector('[role="menu"]', {
+        state: "hidden",
+        timeout: 2000,
+      });
+    } catch {
+      // Menu might already be closed or selector might not exist, that's fine
+    }
+
+    // Wait a bit more to ensure any animations/transitions complete
+    await page.waitForTimeout(300);
+
+    // Reopen Settings dropdown to verify currency is updated
+    const settingsButton = page.getByTestId("settings-button");
+    await expect(settingsButton).toBeVisible();
+
+    // Ensure button is not blocked by checking if it's in viewport and clickable
+    await settingsButton.scrollIntoViewIfNeeded();
+    await page.waitForTimeout(100);
+
+    // Click the button
+    await settingsButton.click();
+
+    // Wait for dropdown to open
+    await page.waitForSelector('[role="menu"]', {
+      state: "visible",
+      timeout: 2000,
+    });
+
+    // The currency submenu trigger should now show "€ EUR"
+    const updatedCurrencyTrigger = page
+      .locator('[role="menuitem"]')
+      .filter({ hasText: /currency/i })
+      .first();
+    await expect(updatedCurrencyTrigger).toContainText("€ EUR");
 
     await teardownOrganizationAndMember({ organization, user });
   });

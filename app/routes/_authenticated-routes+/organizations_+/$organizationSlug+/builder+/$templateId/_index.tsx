@@ -6,7 +6,19 @@ import {
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
-import { ArrowLeft, Check, Cloud, CloudOff, Loader2 } from "lucide-react";
+import {
+  ArrowLeft,
+  Check,
+  Cloud,
+  CloudOff,
+  DownloadIcon,
+  Eye,
+  Layers,
+  Loader2,
+  MoreVertical,
+  Palette,
+  Settings,
+} from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   data,
@@ -29,10 +41,17 @@ import {
   CommandList,
 } from "~/components/ui/command";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "~/components/ui/popover";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from "~/components/ui/dropdown-menu";
+import { Sheet, SheetContent } from "~/components/ui/sheet";
 import {
   createTemplateInDatabase,
   retrieveTemplateFromDatabaseById,
@@ -40,7 +59,6 @@ import {
 } from "~/features/builder/shared/builder-model.server";
 import { ColorPaletteEditor } from "~/features/builder/shared/components/color-palette-editor";
 import { ComponentPalette } from "~/features/builder/shared/components/component-palette";
-import { ExportButton } from "~/features/builder/shared/components/export-button";
 import { InlineEditor } from "~/features/builder/shared/components/inline-editor";
 import { PreviewModal } from "~/features/builder/shared/components/preview-modal";
 import { PropertiesPanel } from "~/features/builder/shared/components/properties-panel";
@@ -331,6 +349,76 @@ export const meta: Route.MetaFunction = ({ loaderData }) => [
 
 type SaveStatus = "idle" | "saving" | "saved" | "error";
 
+function ExportButtonMenuItem({
+  currentTemplate,
+  organizationSlug,
+  templateId,
+}: {
+  currentTemplate: Template | null;
+  organizationSlug: string;
+  templateId: string | undefined;
+}) {
+  const [isExporting, setIsExporting] = useState(false);
+
+  const handleExport = async () => {
+    if (!currentTemplate || !templateId) return;
+
+    setIsExporting(true);
+
+    // Extract section data and create sections object keyed by section ID
+    const sectionsData: Record<string, Record<string, unknown>> = {};
+    currentTemplate.sections.forEach((section) => {
+      sectionsData[section.id] = section.data;
+    });
+
+    try {
+      const response = await fetch(
+        `/organizations/${organizationSlug}/builder/${templateId}/export`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ sections: sectionsData }),
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to export PDF");
+      }
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${currentTemplate.name || "template"}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Error exporting PDF:", error);
+      alert("Failed to export PDF. Please try again.");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  return (
+    <DropdownMenuItem
+      data-testid="export-button"
+      disabled={!currentTemplate || isExporting}
+      onSelect={(e) => {
+        e.preventDefault();
+        handleExport();
+      }}
+    >
+      <DownloadIcon className="h-4 w-4 mr-2" />
+      {isExporting ? "Exporting..." : "Export PDF"}
+    </DropdownMenuItem>
+  );
+}
+
 export default function BuilderEditorRoute({
   loaderData,
 }: Route.ComponentProps) {
@@ -340,10 +428,12 @@ export default function BuilderEditorRoute({
   const [previewOpen, setPreviewOpen] = useState(false);
   const [templateNotFound, setTemplateNotFound] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [currencyOpen, setCurrencyOpen] = useState(false);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
   const [isEditingTemplateName, setIsEditingTemplateName] = useState(false);
+  const [colorPaletteOpen, setColorPaletteOpen] = useState(false);
+  const [componentPaletteOpen, setComponentPaletteOpen] = useState(false);
+  const [propertiesPanelOpen, setPropertiesPanelOpen] = useState(false);
 
   const {
     currentTemplate,
@@ -511,6 +601,8 @@ export default function BuilderEditorRoute({
       setTemplateSessionId(template.id);
       selectSection(null);
       setTemplateNotFound(false);
+      setPropertiesPanelOpen(false);
+      setComponentPaletteOpen(false);
 
       // If it's a new template from customize, redirect to the new URL
       if (loaderData.isNewFromDefault && template.id !== templateId) {
@@ -533,6 +625,20 @@ export default function BuilderEditorRoute({
     navigate,
   ]);
 
+  // Open properties panel sheet on mobile when section is selected
+  useEffect(() => {
+    if (selectedSectionId) {
+      // Only open on mobile (check window width or use a media query)
+      const isMobile = window.innerWidth < 768; // md breakpoint
+      if (isMobile) {
+        setPropertiesPanelOpen(true);
+        setComponentPaletteOpen(false); // Close component palette if open
+      }
+    } else {
+      setPropertiesPanelOpen(false);
+    }
+  }, [selectedSectionId]);
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -544,6 +650,20 @@ export default function BuilderEditorRoute({
       }
     };
   }, []);
+
+  // Open properties panel sheet on mobile when section is selected
+  useEffect(() => {
+    if (selectedSectionId) {
+      // Only open on mobile (check window width or use a media query)
+      const isMobile = window.innerWidth < 768; // md breakpoint
+      if (isMobile) {
+        setPropertiesPanelOpen(true);
+        setComponentPaletteOpen(false); // Close component palette if open
+      }
+    } else {
+      setPropertiesPanelOpen(false);
+    }
+  }, [selectedSectionId]);
 
   if (templateNotFound) {
     return (
@@ -639,136 +759,231 @@ export default function BuilderEditorRoute({
     <DndContext onDragStart={handleDragStart} sensors={sensors}>
       <div className="flex flex-1 max-h-[calc(100vh-4rem)] overflow-hidden select-none">
         {/* Canvas on the left */}
-        <div className="flex-1 flex flex-col overflow-hidden">
-          <div className="border-b p-4 flex items-center justify-between bg-background">
-            <div className="flex items-center gap-3">
-              <Button
-                className="h-8 w-8"
-                onClick={() => {
-                  navigate(`/organizations/${organizationSlug}/builder`);
-                }}
-                size="icon"
-                variant="ghost"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                <span className="sr-only">Go back</span>
-              </Button>
-              <h1 className="text-lg font-semibold -mx-2 -my-1">
-                <button
-                  className="w-full text-left hover:bg-accent rounded px-2 py-1 transition-colors cursor-pointer"
-                  data-testid="template-editor-title"
-                  onClick={() => setIsEditingTemplateName(true)}
-                  type="button"
-                >
-                  {currentTemplate?.name || "Untitled Template"}
-                </button>
-              </h1>
-              {renderSaveStatus()}
-            </div>
-            <div className="flex items-center gap-2">
-              {(currentTemplate?.type === "invoice" ||
-                currentTemplate?.type === "receipt") && (
-                <Popover onOpenChange={setCurrencyOpen} open={currencyOpen}>
-                  <PopoverTrigger asChild>
+        <div className="flex-1 flex flex-col overflow-hidden min-w-0">
+          <div className="border-b p-3 md:p-4 bg-background">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+              {/* Left side: Title and save status */}
+              <div className="flex flex-col gap-2 flex-1 min-w-0">
+                {/* Row 1: Back button + Title */}
+                <div className="flex items-center gap-3">
+                  <Button
+                    className="h-8 w-8 shrink-0"
+                    onClick={() => {
+                      navigate(`/organizations/${organizationSlug}/builder`);
+                    }}
+                    size="icon"
+                    variant="ghost"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                    <span className="sr-only">Go back</span>
+                  </Button>
+                  <h1 className="text-lg font-semibold -mx-2 -my-1 min-w-0">
+                    <button
+                      className="w-full text-left hover:bg-accent rounded px-2 py-1 transition-colors cursor-pointer truncate"
+                      data-testid="template-editor-title"
+                      onClick={() => setIsEditingTemplateName(true)}
+                      type="button"
+                    >
+                      {currentTemplate?.name || "Untitled Template"}
+                    </button>
+                  </h1>
+                </div>
+                {/* Row 2: Auto-save status */}
+                <div className="flex items-center gap-3 pl-11">
+                  {renderSaveStatus()}
+                </div>
+              </div>
+
+              {/* Right side: Settings and Actions dropdowns */}
+              <div className="flex items-center gap-2 shrink-0">
+                {/* Settings Dropdown */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
                     <Button
-                      aria-expanded={currencyOpen}
-                      className="w-[180px] justify-between"
-                      data-testid="currency-selector"
-                      role="combobox"
+                      data-testid="settings-button"
+                      size="sm"
                       variant="outline"
                     >
-                      {currentTemplate?.globalStyles.currency
-                        ? (() => {
-                            const currencyCode = currentTemplate?.globalStyles
-                              .currency as string;
-                            const symbol = getCurrencySymbol(currencyCode);
-                            return symbol !== currencyCode
-                              ? `${symbol} ${currencyCode}`
-                              : currencyCode;
-                          })()
-                        : "Select currency"}
-                      <svg
-                        aria-hidden="true"
-                        className="ml-2 h-4 w-4 shrink-0 opacity-50"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        viewBox="0 0 24 24"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path d="m6 9 6 6 6-6" />
-                      </svg>
+                      <Settings className="h-4 w-4 mr-2" />
+                      <span className="hidden sm:inline">Settings</span>
                     </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-[180px] p-0">
-                    <Command>
-                      <CommandInput placeholder="Search currency..." />
-                      <CommandList>
-                        <CommandEmpty>No currency found.</CommandEmpty>
-                        <CommandGroup>
-                          {COMMON_CURRENCIES.map((currency) => (
-                            <CommandItem
-                              key={currency.code}
-                              onSelect={() => {
-                                const currencyCode = currency.code;
-                                updateGlobalStyles({ currency: currencyCode });
-                                setCurrencyOpen(false);
-                              }}
-                              value={`${currency.code} ${currency.name}`}
-                            >
-                              <svg
-                                aria-hidden="true"
-                                className={cn(
-                                  "mr-2 h-4 w-4",
-                                  (currentTemplate?.globalStyles
-                                    .currency as string) === currency.code
-                                    ? "opacity-100"
-                                    : "opacity-0",
-                                )}
-                                fill="none"
-                                stroke="currentColor"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth="2"
-                                viewBox="0 0 24 24"
-                                xmlns="http://www.w3.org/2000/svg"
-                              >
-                                <path d="M20 6 9 17l-5-5" />
-                              </svg>
-                              {currency.name}
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      </CommandList>
-                    </Command>
-                  </PopoverContent>
-                </Popover>
-              )}
-              <ColorPaletteEditor />
-              <Button
-                data-testid="preview-button"
-                onClick={() => setPreviewOpen(true)}
-                variant="outline"
-              >
-                Preview
-              </Button>
-              <ExportButton />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    <DropdownMenuLabel>Settings</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    {(currentTemplate?.type === "invoice" ||
+                      currentTemplate?.type === "receipt") && (
+                      <>
+                        <DropdownMenuSub>
+                          <DropdownMenuSubTrigger>
+                            <span>Currency</span>
+                            <span className="ml-auto text-muted-foreground">
+                              {currentTemplate?.globalStyles.currency
+                                ? (() => {
+                                    const currencyCode = currentTemplate
+                                      ?.globalStyles.currency as string;
+                                    const symbol =
+                                      getCurrencySymbol(currencyCode);
+                                    return symbol !== currencyCode
+                                      ? `${symbol} ${currencyCode}`
+                                      : currencyCode;
+                                  })()
+                                : "Select"}
+                            </span>
+                          </DropdownMenuSubTrigger>
+                          <DropdownMenuSubContent className="w-[200px]">
+                            <Command>
+                              <CommandInput placeholder="Search currency..." />
+                              <CommandList>
+                                <CommandEmpty>No currency found.</CommandEmpty>
+                                <CommandGroup>
+                                  {COMMON_CURRENCIES.map((currency) => (
+                                    <CommandItem
+                                      key={currency.code}
+                                      onSelect={() => {
+                                        const currencyCode = currency.code;
+                                        updateGlobalStyles({
+                                          currency: currencyCode,
+                                        });
+                                      }}
+                                      value={`${currency.code} ${currency.name}`}
+                                    >
+                                      <svg
+                                        aria-hidden="true"
+                                        className={cn(
+                                          "mr-2 h-4 w-4",
+                                          (currentTemplate?.globalStyles
+                                            .currency as string) ===
+                                            currency.code
+                                            ? "opacity-100"
+                                            : "opacity-0",
+                                        )}
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth="2"
+                                        viewBox="0 0 24 24"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                      >
+                                        <path d="M20 6 9 17l-5-5" />
+                                      </svg>
+                                      {currency.name}
+                                    </CommandItem>
+                                  ))}
+                                </CommandGroup>
+                              </CommandList>
+                            </Command>
+                          </DropdownMenuSubContent>
+                        </DropdownMenuSub>
+                        <DropdownMenuSeparator />
+                      </>
+                    )}
+                    <ColorPaletteEditor
+                      onOpenChange={setColorPaletteOpen}
+                      open={colorPaletteOpen}
+                      trigger={
+                        <DropdownMenuItem
+                          onSelect={(e) => {
+                            e.preventDefault();
+                            setColorPaletteOpen(true);
+                          }}
+                        >
+                          <Palette className="h-4 w-4 mr-2" />
+                          Color Palette
+                        </DropdownMenuItem>
+                      }
+                    />
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                {/* Actions Dropdown */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      data-testid="actions-button"
+                      size="sm"
+                      variant="outline"
+                    >
+                      <MoreVertical className="h-4 w-4 mr-2" />
+                      <span className="hidden sm:inline">Actions</span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      data-testid="preview-button"
+                      onSelect={() => setPreviewOpen(true)}
+                    >
+                      <Eye className="h-4 w-4 mr-2" />
+                      Preview
+                    </DropdownMenuItem>
+                    <ExportButtonMenuItem
+                      currentTemplate={currentTemplate}
+                      organizationSlug={organizationSlug}
+                      templateId={templateId}
+                    />
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             </div>
           </div>
           <TemplateCanvas />
         </div>
 
         {/* Side panel on the right - switches between ComponentPalette and PropertiesPanel */}
-        {selectedSectionId ? (
-          <PropertiesPanel />
-        ) : (
+        {/* Desktop: Fixed sidebar */}
+        <div className="hidden md:block">
+          {selectedSectionId ? (
+            <PropertiesPanel />
+          ) : (
+            <ComponentPalette
+              initialTemplateType={
+                currentTemplate?.type || loaderData.template?.type
+              }
+            />
+          )}
+        </div>
+
+        {/* Mobile: Sheet drawer for Component Palette */}
+        {!selectedSectionId && (
           <ComponentPalette
+            asSheet={true}
             initialTemplateType={
               currentTemplate?.type || loaderData.template?.type
             }
+            onOpenChange={setComponentPaletteOpen}
+            open={componentPaletteOpen}
+            trigger={
+              <Button
+                className="fixed bottom-4 right-4 z-50 md:hidden shadow-lg h-12 w-12 rounded-full"
+                data-testid="mobile-component-palette-button"
+                onClick={() => setComponentPaletteOpen(true)}
+                size="icon"
+              >
+                <Layers className="h-5 w-5" />
+                <span className="sr-only">Open components</span>
+              </Button>
+            }
           />
+        )}
+
+        {/* Mobile: Sheet drawer for Properties Panel */}
+        {selectedSectionId && (
+          <Sheet
+            onOpenChange={(open) => {
+              setPropertiesPanelOpen(open);
+              if (!open) {
+                selectSection(null);
+              }
+            }}
+            open={propertiesPanelOpen}
+          >
+            <SheetContent className="w-full sm:w-80 p-0">
+              <PropertiesPanel />
+            </SheetContent>
+          </Sheet>
         )}
 
         <PreviewModal onOpenChange={setPreviewOpen} open={previewOpen} />

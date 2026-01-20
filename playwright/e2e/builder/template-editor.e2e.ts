@@ -390,7 +390,10 @@ test.describe("builder template editor page", () => {
       timeout: 5000,
     });
 
-    // Click Preview button
+    // Open Actions dropdown
+    await page.getByTestId("actions-button").click();
+
+    // Click Preview menu item
     await page.getByTestId("preview-button").click();
 
     // Verify preview modal opens
@@ -417,7 +420,10 @@ test.describe("builder template editor page", () => {
       timeout: 5000,
     });
 
-    // Verify Export button exists and is visible
+    // Open Actions dropdown
+    await page.getByTestId("actions-button").click();
+
+    // Verify Export button exists and is visible in the dropdown
     const exportButton = page.getByTestId("export-button");
     await expect(exportButton).toBeVisible();
     await expect(exportButton).toBeEnabled();
