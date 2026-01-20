@@ -210,6 +210,7 @@ export default {
       },
     },
     layout: {
+      apiKeys: "API-Schlüssel",
       billing: "Abrechnung",
       general: "Allgemein",
       settingsNav: "Einstellungsnavigation",
@@ -318,6 +319,21 @@ export default {
         },
         statusHeader: "Status",
       },
+    },
+    apiKeys: {
+      breadcrumb: "API-Schlüssel",
+      pageTitle: "API-Schlüssel",
+      description:
+        "Verwalte die API-Schlüssel deiner Organisation für programmatischen Zugriff.",
+      apiKeyLabel: "API-Schlüssel",
+      copy: "Kopieren",
+      copied: "Kopiert!",
+      regenerate: "API-Schlüssel neu generieren",
+      keyPrefixNote:
+        "Nur das Präfix wird angezeigt. Der vollständige Schlüssel wird nur direkt nach der Generierung angezeigt.",
+      keyFullNote:
+        "Speichere diesen Schlüssel sicher. Du kannst ihn nach dem Verlassen dieser Seite nicht mehr einsehen.",
+      unauthorized: "Du hast keine Berechtigung, API-Schlüssel anzuzeigen",
     },
   },
 } satisfies typeof import("../en/organizations").default;

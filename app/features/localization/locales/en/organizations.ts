@@ -204,6 +204,7 @@ export default {
       },
     },
     layout: {
+      apiKeys: "API Keys",
       billing: "Billing",
       general: "General",
       settingsNav: "Settings navigation",
@@ -309,6 +310,21 @@ export default {
         },
         statusHeader: "Status",
       },
+    },
+    apiKeys: {
+      breadcrumb: "API Keys",
+      pageTitle: "API Keys",
+      description:
+        "Manage your organization's API keys for programmatic access.",
+      apiKeyLabel: "API Key",
+      copy: "Copy",
+      copied: "Copied!",
+      regenerate: "Regenerate API Key",
+      keyPrefixNote:
+        "Only the prefix is shown. The full key is only displayed immediately after generation.",
+      keyFullNote:
+        "Save this key securely. You won't be able to view it again after leaving this page.",
+      unauthorized: "You don't have permission to view API keys",
     },
   },
 };

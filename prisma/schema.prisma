@@ -22,6 +22,7 @@ model UserAccount {
   stripeSubscriptionsBought StripeSubscription[]
   notificationPanels        NotificationPanel[]
   notificationRecipient     NotificationRecipient[]
+  createdApiKeys            OrganizationApiKey[]
 }
 
 model Organization {
@@ -44,6 +45,7 @@ model Organization {
   notificationPanels          NotificationPanel[]
   notifications               Notification[]
   templates                   Template[]
+  apiKey                      OrganizationApiKey?
 }
 
 enum OrganizationMembershipRole {
@@ -322,6 +324,26 @@ model Template {
 
   @@index([organizationId, type])
   @@map("templates")
+}
+
+// API Key models
+
+model OrganizationApiKey {
+  id             String       @id @default(cuid(2))
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String       @unique
+  /// Encrypted API key - encrypted using AES-256-GCM, never exposed in responses
+  encryptedKey   String
+  /// First 8 characters of the key for display purposes (e.g., "sk_live_")
+  keyPrefix      String
+  /// User who created/regenerated this API key
+  createdBy      UserAccount? @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdById    String?
+
+  @@index([organizationId])
+  @@map("organization_api_keys")
 }
 
 // Test models

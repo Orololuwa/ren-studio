@@ -2,6 +2,7 @@ import { z } from "zod";
 
 const schema = z.object({
   ALLOW_INDEXING: z.enum(["true", "false"]).optional(),
+  API_KEY_ENCRYPTION_KEY: z.string().optional(), // Optional, falls back to COOKIE_SECRET
   APP_URL: z.url(),
   COOKIE_SECRET: z.string(),
   DATABASE_URL: z.string(),

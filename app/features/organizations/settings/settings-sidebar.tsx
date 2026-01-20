@@ -1,4 +1,9 @@
-import { Building2Icon, CreditCardIcon, UsersIcon } from "lucide-react";
+import {
+  Building2Icon,
+  CreditCardIcon,
+  KeyIcon,
+  UsersIcon,
+} from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { href, useMatch } from "react-router";
 
@@ -59,6 +64,16 @@ export function SettingsSidebar({
             },
             ...(role !== "member"
               ? [
+                  {
+                    icon: KeyIcon,
+                    title: t("apiKeys"),
+                    url: href(
+                      "/organizations/:organizationSlug/settings/api-keys",
+                      {
+                        organizationSlug,
+                      },
+                    ),
+                  },
                   {
                     icon: CreditCardIcon,
                     title: t("billing"),
