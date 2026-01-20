@@ -15,27 +15,21 @@ export function ExportButton() {
 
     setIsExporting(true);
 
-    const formData = new FormData();
-    formData.append("name", currentTemplate.name);
-    formData.append("type", currentTemplate.type);
-    formData.append("sections", JSON.stringify(currentTemplate.sections));
-    formData.append(
-      "globalStyles",
-      JSON.stringify(currentTemplate.globalStyles),
-    );
-    if (currentTemplate.colorPalette) {
-      formData.append(
-        "colorPalette",
-        JSON.stringify(currentTemplate.colorPalette),
-      );
-    }
+    // Extract section data and create sections object keyed by section ID
+    const sectionsData: Record<string, Record<string, unknown>> = {};
+    currentTemplate.sections.forEach((section) => {
+      sectionsData[section.id] = section.data;
+    });
 
     try {
       const response = await fetch(
         `/organizations/${params.organizationSlug}/builder/${params.templateId}/export`,
         {
           method: "POST",
-          body: formData,
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ sections: sectionsData }),
         },
       );
 

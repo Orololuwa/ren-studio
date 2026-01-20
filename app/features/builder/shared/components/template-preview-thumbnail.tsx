@@ -23,21 +23,21 @@ export function TemplatePreviewThumbnail({
     setIsGenerating(true);
     setHasError(false);
 
-    const formData = new FormData();
-    formData.append("name", template.name);
-    formData.append("type", template.type);
-    formData.append("sections", JSON.stringify(template.sections));
-    formData.append("globalStyles", JSON.stringify(template.globalStyles));
-    if (template.colorPalette) {
-      formData.append("colorPalette", JSON.stringify(template.colorPalette));
-    }
+    // Extract section data and create sections object keyed by section ID
+    const sectionsData: Record<string, Record<string, unknown>> = {};
+    template.sections.forEach((section) => {
+      sectionsData[section.id] = section.data;
+    });
 
     try {
       const response = await fetch(
-        `/organizations/${organizationSlug}/builder/preview`,
+        `/organizations/${organizationSlug}/builder/${template.id}/preview`,
         {
-          body: formData,
           method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ sections: sectionsData }),
         },
       );
 

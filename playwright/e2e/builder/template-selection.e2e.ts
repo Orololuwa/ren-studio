@@ -260,7 +260,7 @@ test.describe("builder template selection page", () => {
         organizationId,
         sections: [
           {
-            id: "header-1",
+            id: "resume-header-1",
             type: "header",
             order: 0,
             data: {

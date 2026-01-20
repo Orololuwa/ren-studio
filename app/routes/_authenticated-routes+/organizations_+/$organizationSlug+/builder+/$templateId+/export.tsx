@@ -1,60 +1,29 @@
 import { z } from "zod";
 
 import type { Route } from "./+types/export";
-import type { TemplateSection } from "~/features/builder/shared/types";
+import { retrieveTemplateFromDatabaseById } from "~/features/builder/shared/builder-model.server";
+import { getTemplateById } from "~/features/builder/shared/templates";
 import { generateExportHTML } from "~/features/builder/shared/utils/html-generator.server";
+import { mergeDataIntoTemplate } from "~/features/builder/shared/utils/merge-template-data.server";
 import { generatePDF } from "~/features/builder/shared/utils/pdf-generator.server";
 import { organizationMembershipContext } from "~/features/organizations/organizations-middleware.server";
-import { validateFormData } from "~/utils/validate-form-data.server";
+import { validateJson } from "~/utils/validate-json.server";
 
 const exportSchema = z.object({
-  colorPalette: z
-    .union([z.array(z.string()), z.string()])
+  sections: z
+    .record(z.string(), z.record(z.string(), z.unknown()))
     .optional()
-    .transform((val) => {
-      if (!val) return [];
-      if (typeof val === "string") {
-        return JSON.parse(val) as string[];
-      }
-      return val;
-    }),
-  globalStyles: z
-    .union([z.record(z.string(), z.string()), z.string()])
-    .transform((val) => {
-      if (typeof val === "string") {
-        return JSON.parse(val) as Record<string, string>;
-      }
-      return val;
-    }),
-  name: z.string(),
-  sections: z.union([z.array(z.any()), z.string()]).transform((val) => {
-    if (typeof val === "string") {
-      return JSON.parse(val) as unknown[];
-    }
-    return val;
-  }),
-  type: z.enum([
-    "resume",
-    "invoice",
-    "certificate",
-    "report-cards",
-    "quote",
-    "proposal",
-    "contract",
-    "purchase-order",
-    "receipt",
-    "estimate",
-    "statement",
-    "letter",
-    "form",
-    "label",
-  ]),
+    .default({}),
 });
 
-export async function action({ request, context }: Route.ActionArgs) {
-  const { headers } = context.get(organizationMembershipContext);
+export async function action({ request, context, params }: Route.ActionArgs) {
+  const { organization, headers } = context.get(organizationMembershipContext);
+  const typedParams = params as {
+    organizationSlug: string;
+    templateId: string;
+  };
 
-  const result = await validateFormData(request, exportSchema);
+  const result = await validateJson(request, exportSchema);
 
   if (!result.success) {
     return result.response;
@@ -63,18 +32,43 @@ export async function action({ request, context }: Route.ActionArgs) {
   const { data: body } = result;
 
   try {
+    // Load template from database or predefined templates
+    let template = await retrieveTemplateFromDatabaseById({
+      organizationId: organization.id,
+      templateId: typedParams.templateId,
+    });
+
+    // Fallback to predefined templates if not found in database
+    if (!template) {
+      template = getTemplateById(typedParams.templateId) || null;
+    }
+
+    if (!template) {
+      return Response.json(
+        {
+          error: "Template not found",
+          message: `Template with ID ${typedParams.templateId} not found`,
+        },
+        { headers: Object.fromEntries(headers), status: 404 },
+      );
+    }
+
+    // Merge provided data into template sections
+    const mergedSections = mergeDataIntoTemplate(template, body.sections || {});
+
+    // Generate PDF using template config and merged sections
     const html = generateExportHTML(
-      body.sections as TemplateSection[],
-      body.globalStyles,
-      body.type,
-      body.colorPalette || [],
+      mergedSections,
+      template.globalStyles,
+      template.type,
+      template.colorPalette,
     );
 
     const pdfBuffer = await generatePDF(html);
 
     return new Response(pdfBuffer as unknown as BodyInit, {
       headers: {
-        "Content-Disposition": `attachment; filename="${body.name || "template"}.pdf"`,
+        "Content-Disposition": `attachment; filename="${template.name || "template"}.pdf"`,
         "Content-Type": "application/pdf",
         ...Object.fromEntries(headers),
       },
