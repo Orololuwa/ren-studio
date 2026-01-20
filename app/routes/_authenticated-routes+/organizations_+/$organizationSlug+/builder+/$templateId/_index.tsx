@@ -13,6 +13,7 @@ import {
   CloudOff,
   DownloadIcon,
   Eye,
+  FileCode,
   Layers,
   Loader2,
   MoreVertical,
@@ -57,6 +58,7 @@ import {
   retrieveTemplateFromDatabaseById,
   saveTemplateToDatabase,
 } from "~/features/builder/shared/builder-model.server";
+import { ApiPayloadModal } from "~/features/builder/shared/components/api-payload-modal";
 import { ColorPaletteEditor } from "~/features/builder/shared/components/color-palette-editor";
 import { ComponentPalette } from "~/features/builder/shared/components/component-palette";
 import { InlineEditor } from "~/features/builder/shared/components/inline-editor";
@@ -426,6 +428,7 @@ export default function BuilderEditorRoute({
   const navigate = useNavigate();
   const [_searchParams] = useSearchParams();
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [apiPayloadOpen, setApiPayloadOpen] = useState(false);
   const [templateNotFound, setTemplateNotFound] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
@@ -924,6 +927,13 @@ export default function BuilderEditorRoute({
                       organizationSlug={organizationSlug}
                       templateId={templateId}
                     />
+                    <DropdownMenuItem
+                      data-testid="api-payload-button"
+                      onSelect={() => setApiPayloadOpen(true)}
+                    >
+                      <FileCode className="h-4 w-4 mr-2" />
+                      API Payload Details
+                    </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
@@ -987,6 +997,10 @@ export default function BuilderEditorRoute({
         )}
 
         <PreviewModal onOpenChange={setPreviewOpen} open={previewOpen} />
+        <ApiPayloadModal
+          onOpenChange={setApiPayloadOpen}
+          open={apiPayloadOpen}
+        />
       </div>
       <DragOverlay>
         {activeId ? (
