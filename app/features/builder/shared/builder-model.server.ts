@@ -368,3 +368,22 @@ export async function deleteTemplateFromDatabase({
 
   return true;
 }
+
+/**
+ * Deletes all templates for an organization.
+ * Useful for test cleanup.
+ *
+ * @param organizationId - The ID of the organization.
+ * @returns The number of templates deleted.
+ */
+export async function deleteAllTemplatesForOrganization(
+  organizationId: string,
+): Promise<number> {
+  const result = await prisma.template.deleteMany({
+    where: {
+      organizationId,
+    },
+  });
+
+  return result.count;
+}

@@ -4,19 +4,29 @@ import { expect, test } from "@playwright/test";
 import { setupOrganizationAndLoginAsMember } from "../../utils";
 import {
   createTemplateInDatabase,
+  deleteAllTemplatesForOrganization,
   deleteTemplateFromDatabase,
 } from "~/features/builder/shared/builder-model.server";
 
 test.describe("builder template selection page", () => {
   let organizationSlug: string;
+  let organizationId: string;
 
   test.beforeEach(async ({ page }) => {
     const data = await setupOrganizationAndLoginAsMember({ page });
     organizationSlug = data.organization.slug;
+    organizationId = data.organization.id;
 
     // Navigate to the builder page
     await page.goto(`/organizations/${organizationSlug}/builder`);
     await page.waitForSelector('[data-testid="template-builder-heading"]');
+  });
+
+  test.afterEach(async () => {
+    // Clean up: delete all templates created during the test
+    // This includes templates created when opening default templates (customize mode)
+    // and any templates created by auto-save
+    await deleteAllTemplatesForOrganization(organizationId);
   });
 
   test("should display the default state correctly", async ({ page }) => {
@@ -224,7 +234,7 @@ test.describe("builder template selection page", () => {
 
     // Wait for the redirect to complete (customize mode creates a new template and redirects)
     // The redirect goes to a different template ID with mode=edit
-    await page.waitForURL(/\/builder\/.*\?mode=edit/, {
+    await page.waitForURL(/\/builder\/([^/?]+)\?mode=edit/, {
       waitUntil: "commit",
       timeout: 10_000,
     });
@@ -243,6 +253,7 @@ test.describe("builder template selection page", () => {
     await expect(page.getByTestId("component-palette")).toBeVisible({
       timeout: 10_000,
     });
+    // Note: Template cleanup is handled by afterEach hook
   });
 
   test("should display saved templates in the Saved tab", async ({ page }) => {
