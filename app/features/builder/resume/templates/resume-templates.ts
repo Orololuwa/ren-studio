@@ -27,7 +27,7 @@ export const resumeTemplates: Template[] = [
           ],
           title: "Software Engineer",
         },
-        id: "resume-header-1",
+        id: "resume-header",
         order: 0,
         styles: {
           color: "$colorPalette[1]",
@@ -44,7 +44,7 @@ export const resumeTemplates: Template[] = [
           content:
             "<p>Experienced software engineer with 5+ years of expertise in full-stack development, cloud architecture, and team leadership.</p>",
         },
-        id: "resume-summary-1",
+        id: "resume-summary",
         order: 1,
         styles: {
           borderTop: "2px solid $colorPalette[1]",
@@ -75,7 +75,7 @@ export const resumeTemplates: Template[] = [
             },
           ],
         },
-        id: "resume-experience-1",
+        id: "resume-experience",
         order: 2,
         styles: {
           borderTop: "2px solid $colorPalette[1]",
@@ -95,7 +95,7 @@ export const resumeTemplates: Template[] = [
             },
           ],
         },
-        id: "resume-education-1",
+        id: "resume-education",
         order: 3,
         styles: {
           borderTop: "2px solid $colorPalette[1]",
@@ -117,7 +117,7 @@ export const resumeTemplates: Template[] = [
             "PostgreSQL",
           ],
         },
-        id: "resume-skills-1",
+        id: "resume-skills",
         order: 4,
         styles: {
           borderTop: "2px solid $colorPalette[1]",
@@ -148,7 +148,7 @@ export const resumeTemplates: Template[] = [
             },
           ],
         },
-        id: "resume-projects-1",
+        id: "resume-projects",
         order: 5,
         styles: {
           borderTop: "2px solid $colorPalette[1]",
@@ -175,7 +175,7 @@ export const resumeTemplates: Template[] = [
             },
           ],
         },
-        id: "resume-certifications-1",
+        id: "resume-certifications",
         order: 6,
         styles: {
           borderTop: "2px solid $colorPalette[1]",
@@ -193,7 +193,7 @@ export const resumeTemplates: Template[] = [
             { language: "French", proficiency: "Intermediate" },
           ],
         },
-        id: "resume-languages-1",
+        id: "resume-languages",
         order: 7,
         styles: {
           borderTop: "2px solid $colorPalette[1]",
@@ -232,7 +232,7 @@ export const resumeTemplates: Template[] = [
           ],
           title: "Product Manager",
         },
-        id: "resume-header-2",
+        id: "resume-header",
         order: 0,
         styles: {
           backgroundColor: "$colorPalette[2]",
@@ -247,7 +247,7 @@ export const resumeTemplates: Template[] = [
           content:
             "<p>Strategic product manager with expertise in B2B SaaS platforms, product strategy, and cross-functional collaboration.</p>",
         },
-        id: "resume-summary-2",
+        id: "resume-summary",
         order: 1,
         styles: {
           paddingBottom: "0.5rem",
@@ -272,7 +272,7 @@ export const resumeTemplates: Template[] = [
             },
           ],
         },
-        id: "resume-experience-2",
+        id: "resume-experience",
         order: 2,
         styles: {
           paddingBottom: "0.5rem",
@@ -294,7 +294,7 @@ export const resumeTemplates: Template[] = [
             },
           ],
         },
-        id: "resume-education-2",
+        id: "resume-education",
         order: 3,
         styles: {
           paddingBottom: "0.5rem",
@@ -318,7 +318,7 @@ export const resumeTemplates: Template[] = [
             "User Research",
           ],
         },
-        id: "resume-skills-2",
+        id: "resume-skills",
         order: 4,
         styles: {
           paddingBottom: "0.5rem",
@@ -343,7 +343,7 @@ export const resumeTemplates: Template[] = [
             },
           ],
         },
-        id: "resume-projects-2",
+        id: "resume-projects",
         order: 5,
         styles: {
           paddingBottom: "0.5rem",
@@ -366,7 +366,7 @@ export const resumeTemplates: Template[] = [
             },
           ],
         },
-        id: "resume-certifications-2",
+        id: "resume-certifications",
         order: 6,
         styles: {
           paddingBottom: "0.5rem",
@@ -385,7 +385,7 @@ export const resumeTemplates: Template[] = [
             { language: "German", proficiency: "Advanced" },
           ],
         },
-        id: "resume-languages-2",
+        id: "resume-languages",
         order: 7,
         styles: {
           paddingBottom: "0.5rem",

@@ -179,6 +179,7 @@ export interface Template {
   createdAt: Date;
   updatedAt: Date;
   colorPalette: string[];
+  sourceTemplateId?: string; // ID of the default template this was created from
 }
 
 export interface ComponentDefinition {

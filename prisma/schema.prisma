@@ -311,16 +311,17 @@ enum TemplateType {
 }
 
 model Template {
-  id            String       @id @default(cuid(2))
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
-  name          String
-  type          TemplateType
-  organization  Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  id              String       @id @default(cuid(2))
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  name            String
+  type            TemplateType
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   organizationId String
-  sections      Json         // Array of TemplateSection
-  globalStyles  Json         // Record<string, string>
-  colorPalette  Json?        // Array of string (color values)
+  sections        Json         // Array of TemplateSection
+  globalStyles    Json         // Record<string, string>
+  colorPalette    Json?        // Array of string (color values)
+  sourceTemplateId String?     // ID of the default template this was created from
 
   @@index([organizationId, type])
   @@map("templates")

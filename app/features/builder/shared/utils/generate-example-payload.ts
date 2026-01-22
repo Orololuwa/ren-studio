@@ -1,5 +1,6 @@
 import { componentLibrary } from "../components/component-library-registry";
-import type { TemplateType } from "../types";
+import type { SectionType, TemplateType } from "../types";
+import { generateSectionId } from "./generate-section-id";
 
 /**
  * Generates example data for a field based on its name and type
@@ -278,24 +279,17 @@ export function generateExamplePayload(
   const sections: Record<string, Record<string, unknown>> = {};
   const componentTypes = getComponentTypesForTemplateType(templateType);
 
-  componentTypes.forEach((componentType, index) => {
+  componentTypes.forEach((componentType) => {
     const component = componentLibrary[componentType];
     if (!component) {
       return;
     }
 
-    // Generate section ID based on template type and section type
-    let sectionId: string;
-    if (templateType === "resume") {
-      // Resume sections use format like "resume-header-1"
-      sectionId = `resume-${componentType}-${index + 1}`;
-    } else if (templateType === "invoice") {
-      sectionId = `invoice-${componentType.replace("invoice-", "")}-${index + 1}`;
-    } else if (templateType === "receipt") {
-      sectionId = `receipt-${componentType.replace("receipt-", "")}-${index + 1}`;
-    } else {
-      sectionId = `${componentType}-${index + 1}`;
-    }
+    // Generate section ID using the utility function
+    const sectionId = generateSectionId(
+      templateType,
+      componentType as SectionType,
+    );
 
     // Generate example data for this section
     const exampleData = generateSectionExampleData(

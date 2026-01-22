@@ -27,7 +27,7 @@ export const receiptTemplates: Template[] = [
           receiptDate: new Date().toLocaleDateString(),
           transactionId: "TXN-2024-001",
         },
-        id: "receipt-header-1",
+        id: "receipt-header",
         order: 0,
         styles: {
           padding: "2rem",
@@ -57,7 +57,7 @@ export const receiptTemplates: Template[] = [
             },
           ],
         },
-        id: "receipt-items-1",
+        id: "receipt-items",
         order: 1,
         styles: {
           padding: "1rem 2rem",
@@ -81,7 +81,7 @@ export const receiptTemplates: Template[] = [
           thankYouMessage:
             "Thank you for your purchase! We appreciate your business.",
         },
-        id: "receipt-footer-1",
+        id: "receipt-footer",
         order: 2,
         styles: {
           padding: "1rem 2rem 2rem",
@@ -118,7 +118,7 @@ export const receiptTemplates: Template[] = [
           receiptDate: new Date().toLocaleDateString(),
           transactionId: "TXN-2024-001-ABC123",
         },
-        id: "receipt-header-2",
+        id: "receipt-header",
         order: 0,
         styles: {
           backgroundColor: "$colorPalette[2]",
@@ -151,7 +151,7 @@ export const receiptTemplates: Template[] = [
             },
           ],
         },
-        id: "receipt-items-2",
+        id: "receipt-items",
         order: 1,
         styles: {
           backgroundColor: "$colorPalette[3]",
@@ -178,7 +178,7 @@ export const receiptTemplates: Template[] = [
           thankYouMessage:
             "Thank you for your purchase! Your order has been processed successfully.\n\nFor any questions or concerns, please contact our customer service at support@store.com or call +1 (555) 123-4567.",
         },
-        id: "receipt-footer-2",
+        id: "receipt-footer",
         order: 2,
         styles: {
           backgroundColor: "$colorPalette[3]",

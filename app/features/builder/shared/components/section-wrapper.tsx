@@ -1,6 +1,6 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Copy, Eye, EyeOff, GripVertical, Trash2 } from "lucide-react";
+import { Eye, EyeOff, GripVertical, Trash2 } from "lucide-react";
 
 import { useBuilderStore } from "../store/builder-store";
 import type { TemplateSection } from "../types";
@@ -19,7 +19,7 @@ export function SectionWrapper({
   isSelected,
   onSelect,
 }: SectionWrapperProps) {
-  const { deleteSection, duplicateSection, updateSection } = useBuilderStore();
+  const { deleteSection, updateSection } = useBuilderStore();
   const {
     attributes,
     listeners,
@@ -46,12 +46,6 @@ export function SectionWrapper({
         visibility: currentVisible ? "hidden" : "visible",
       },
     });
-  };
-
-  const handleDuplicate = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    // Pass the section to duplicate - the store will handle inserting it right after
-    duplicateSection(section);
   };
 
   const handleDelete = (e: React.MouseEvent) => {
@@ -96,17 +90,6 @@ export function SectionWrapper({
           ) : (
             <EyeOff className="w-4 h-4 text-gray-700" />
           )}
-        </Button>
-        <Button
-          className="h-8 w-8 text-gray-700 hover:text-gray-900 hover:bg-gray-100"
-          data-testid={`section-duplicate-${section.id}`}
-          onClick={handleDuplicate}
-          size="icon"
-          title="Duplicate section"
-          type="button"
-          variant="ghost"
-        >
-          <Copy className="w-4 h-4 text-gray-700" />
         </Button>
         <Button
           className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"

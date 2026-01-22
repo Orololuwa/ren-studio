@@ -2,6 +2,7 @@ import { useDraggable } from "@dnd-kit/core";
 import {
   Award,
   Briefcase,
+  Check,
   FileText,
   FolderKanban,
   GraduationCap,
@@ -80,6 +81,11 @@ export function ComponentPalette({
 
   const componentTypes = getComponentsForType(templateType);
 
+  // Get existing section types in the current template
+  const existingSectionTypes = new Set(
+    currentTemplate?.sections.map((s) => s.type) || [],
+  );
+
   const paletteContent = (
     <div className="p-4">
       <h2
@@ -111,9 +117,16 @@ export function ComponentPalette({
               (component): component is ComponentDefinition =>
                 component !== undefined,
             )
-            .map((component) => (
-              <DraggableComponent component={component} key={component.type} />
-            ))}
+            .map((component) => {
+              const isAlreadyAdded = existingSectionTypes.has(component.type);
+              return (
+                <DraggableComponent
+                  component={component}
+                  isAlreadyAdded={isAlreadyAdded}
+                  key={component.type}
+                />
+              );
+            })}
         </div>
       )}
     </div>
@@ -127,47 +140,71 @@ export function ComponentPalette({
           <SheetHeader>
             <SheetTitle>Components</SheetTitle>
           </SheetHeader>
-          <div className="mt-4 overflow-y-auto h-[calc(100vh-8rem)]">
+          <section
+            aria-label="Component palette"
+            className="mt-4 overflow-y-auto h-[calc(100vh-8rem)]"
+          >
             {paletteContent}
-          </div>
+          </section>
         </SheetContent>
       </Sheet>
     );
   }
 
   return (
-    <div
+    <section
+      aria-label="Component palette"
       className="h-[calc(100vh-4rem)] w-80 bg-muted/30 border-l border-border overflow-y-auto hidden md:block"
       data-testid="component-palette"
+      // biome-ignore lint/a11y/noNoninteractiveTabindex: Scrollable regions must be keyboard accessible per WCAG 2.1.1
+      tabIndex={0}
     >
       {paletteContent}
-    </div>
+    </section>
   );
 }
 
-function DraggableComponent({ component }: { component: ComponentDefinition }) {
+function DraggableComponent({
+  component,
+  isAlreadyAdded,
+}: {
+  component: ComponentDefinition;
+  isAlreadyAdded: boolean;
+}) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     data: { type: component.type },
+    disabled: isAlreadyAdded,
     id: `palette-${component.type}`,
   });
 
   return (
     <div
       ref={setNodeRef}
-      {...listeners}
-      {...attributes}
-      className={`p-3 bg-background border-2 rounded-lg cursor-grab hover:border-primary hover:shadow-md transition-all select-none ${
-        isDragging ? "opacity-50 border-primary" : "border-border"
-      }`}
+      {...(isAlreadyAdded ? {} : { ...listeners, ...attributes })}
+      className={`p-3 bg-background border-2 rounded-lg transition-all select-none ${
+        isAlreadyAdded
+          ? "opacity-60 border-muted cursor-not-allowed"
+          : "cursor-grab hover:border-primary hover:shadow-md border-border"
+      } ${isDragging ? "opacity-50 border-primary" : ""}`}
       data-testid={`palette-${component.type}`}
     >
       <div className="flex items-start gap-3">
         <div className="text-primary mt-0.5">{iconMap[component.type]}</div>
         <div className="flex-1 min-w-0">
-          <h3 className="text-sm font-semibold mb-1">{component.label}</h3>
+          <div className="flex items-center gap-2">
+            <h3 className="text-sm font-semibold">{component.label}</h3>
+            {isAlreadyAdded && (
+              <Check className="h-4 w-4 text-green-600 shrink-0" />
+            )}
+          </div>
           <p className="text-xs text-muted-foreground line-clamp-2">
             {component.configurableProperties.join(", ")}
           </p>
+          {isAlreadyAdded && (
+            <p className="text-xs text-muted-foreground mt-1 italic">
+              Already added
+            </p>
+          )}
         </div>
       </div>
     </div>

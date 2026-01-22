@@ -30,16 +30,38 @@ test.describe("builder drag and drop interactions", () => {
       /modern professional/i,
     );
 
+    // Delete all existing sections to start with an empty canvas
+    const sections = page.locator('section[data-testid^="section-"]');
+    let sectionCount = await sections.count();
+
+    // Delete all sections one by one
+    while (sectionCount > 0) {
+      const firstSection = sections.first();
+      const sectionId = (
+        await firstSection.getAttribute("data-testid")
+      )?.replace("section-", "");
+
+      if (!sectionId) {
+        throw new Error("Could not get section ID");
+      }
+
+      // Click delete button for this section
+      await page.getByTestId(`section-delete-${sectionId}`).click();
+
+      // Wait for section to be removed
+      await expect(sections).toHaveCount(sectionCount - 1, { timeout: 2000 });
+      sectionCount = await sections.count();
+    }
+
+    // Verify canvas is empty
+    await expect(sections).toHaveCount(0);
+
     // Find a component in the palette (e.g., Skills component)
     // Use the palette-specific test ID to avoid matching canvas sections
     const skillsComponent = page.getByTestId("palette-skills");
 
     // Verify component is visible in palette
     await expect(skillsComponent).toBeVisible();
-
-    // Count initial sections before drag using test IDs
-    const sectionsBefore = page.locator('section[data-testid^="section-"]');
-    const initialSectionCount = await sectionsBefore.count();
 
     // Get the canvas area (the droppable area)
     const canvas = page.getByTestId("canvas-droppable");
@@ -67,9 +89,12 @@ test.describe("builder drag and drop interactions", () => {
       componentBox.y + componentBox.height / 2 + 10,
       { steps: 5 },
     );
-    // Move to top-left of canvas (empty area above sections, avoiding hitting section elements)
-    // This ensures we drop on canvas-droppable, not on a section
-    await page.mouse.move(canvasBox.x + 20, canvasBox.y + 20, { steps: 10 });
+    // Move to center of canvas (empty area)
+    await page.mouse.move(
+      canvasBox.x + canvasBox.width / 2,
+      canvasBox.y + canvasBox.height / 2,
+      { steps: 10 },
+    );
     await page.mouse.up();
 
     // Wait for drop status message to appear (confirms drop was detected)
@@ -77,9 +102,9 @@ test.describe("builder drag and drop interactions", () => {
       timeout: 2000,
     });
 
-    // Wait for the section count to increase (React state update + re-render)
+    // Wait for the section count to increase from 0 to 1 (React state update + re-render)
     const sectionsAfter = page.locator('section[data-testid^="section-"]');
-    await expect(sectionsAfter).toHaveCount(initialSectionCount + 1, {
+    await expect(sectionsAfter).toHaveCount(1, {
       timeout: 2000,
     });
 
@@ -90,6 +115,11 @@ test.describe("builder drag and drop interactions", () => {
       .locator('[data-testid^="section-"]')
       .filter({ hasText: /technical skills|skills/i });
     await expect(skillsSections.first()).toBeVisible({ timeout: 2000 });
+
+    // Verify the section has the correct structured ID (resume-skills)
+    const addedSection = sectionsAfter.first();
+    const addedSectionId = await addedSection.getAttribute("data-testid");
+    expect(addedSectionId).toBe("section-resume-skills");
 
     await teardownOrganizationAndMember({ organization, user });
   });
@@ -108,6 +138,20 @@ test.describe("builder drag and drop interactions", () => {
     // Wait for template to load
     await expect(page.getByText(/john doe/i)).toBeVisible({ timeout: 5000 });
 
+    // Delete the existing skills section first (since duplicates are not allowed)
+    // The skills section should have the structured ID: resume-skills
+    const existingSkillsSection = page.getByTestId("section-resume-skills");
+    const skillsSectionExists = await existingSkillsSection
+      .isVisible()
+      .catch(() => false);
+
+    if (skillsSectionExists) {
+      // Click delete button for the skills section
+      await page.getByTestId("section-delete-resume-skills").click();
+      // Wait for section to be removed
+      await expect(existingSkillsSection).not.toBeVisible({ timeout: 2000 });
+    }
+
     // Find the summary section using test ID (more reliable than text matching)
     const summarySections = page
       .getByTestId("canvas-droppable")
@@ -116,6 +160,15 @@ test.describe("builder drag and drop interactions", () => {
     const summarySection = summarySections.first();
     await expect(summarySection).toBeVisible();
 
+    // Scroll the summary section into view to ensure it's fully visible
+    await summarySection.scrollIntoViewIfNeeded();
+    await page.waitForTimeout(200); // Wait for scroll to complete
+
+    // Verify skills section was deleted (should not exist)
+    await expect(page.getByTestId("section-resume-skills")).not.toBeVisible({
+      timeout: 2000,
+    });
+
     // Find a component in the palette (e.g., Skills)
     // Use the palette-specific test ID to avoid matching canvas sections
     const skillsComponent = page.getByTestId("palette-skills");
@@ -123,6 +176,7 @@ test.describe("builder drag and drop interactions", () => {
 
     // Count initial sections before drag using test IDs
     const sectionsBefore = page.locator('section[data-testid^="section-"]');
+    console.log({ sectionsBefore: await sectionsBefore.all() });
     const initialSectionCount = await sectionsBefore.count();
 
     // Get bounding boxes for precise positioning
@@ -135,23 +189,39 @@ test.describe("builder drag and drop interactions", () => {
 
     // Use manual mouse events to properly trigger dnd-kit's pointer sensor
     // This avoids pointer interception issues with dragTo()
+    // Move to the draggable component
     await page.mouse.move(
       componentBox.x + componentBox.width / 2,
       componentBox.y + componentBox.height / 2,
     );
+    // Wait a bit to ensure we're over the element
+    await page.waitForTimeout(100);
+
+    // Press mouse down to start drag
     await page.mouse.down();
-    // Move more than 5px to trigger activation
+    // Wait for drag to initialize
+    await page.waitForTimeout(100);
+
+    // Move more than 5px to trigger activation (dnd-kit requires 5px movement)
     await page.mouse.move(
       componentBox.x + componentBox.width / 2 + 10,
       componentBox.y + componentBox.height / 2 + 10,
       { steps: 5 },
     );
-    // Move to top of summary section (to insert above it)
+    // Wait for drag activation
+    await page.waitForTimeout(100);
+
+    // Move to the summary section - use the section's header area (around 50px from top)
+    // This ensures we're dropping on the section element, not the canvas
     await page.mouse.move(
       summaryBox.x + summaryBox.width / 2,
-      summaryBox.y + 10,
-      { steps: 10 },
+      summaryBox.y + 50,
+      { steps: 20 },
     );
+    // Hover over the section for a moment to ensure it's recognized as the drop target
+    await page.waitForTimeout(200);
+
+    // Release to drop
     await page.mouse.up();
 
     // Wait for drop status message to appear
@@ -514,6 +584,20 @@ test.describe("builder drag and drop interactions", () => {
       /modern professional/i,
     );
 
+    // Delete the existing skills section first (since duplicates are not allowed)
+    // The skills section should have the structured ID: resume-skills
+    const existingSkillsSection = page.getByTestId("section-resume-skills");
+    const skillsSectionExists = await existingSkillsSection
+      .isVisible()
+      .catch(() => false);
+
+    if (skillsSectionExists) {
+      // Click delete button for the skills section
+      await page.getByTestId("section-delete-resume-skills").click();
+      // Wait for section to be removed
+      await expect(existingSkillsSection).not.toBeVisible({ timeout: 2000 });
+    }
+
     // Find a component in the palette using test ID
     const skillsComponent = page.getByTestId("palette-skills");
     await expect(skillsComponent).toBeVisible();
@@ -625,6 +709,28 @@ test.describe("builder drag and drop interactions", () => {
       /modern professional/i,
     );
 
+    // Delete the existing skills section first (since duplicates are not allowed)
+    const existingSkillsSection = page.getByTestId("section-resume-skills");
+    const skillsSectionExists = await existingSkillsSection
+      .isVisible()
+      .catch(() => false);
+
+    if (skillsSectionExists) {
+      await page.getByTestId("section-delete-resume-skills").click();
+      await expect(existingSkillsSection).not.toBeVisible({ timeout: 2000 });
+    }
+
+    // Delete the existing summary section first (since duplicates are not allowed)
+    const existingSummarySection = page.getByTestId("section-resume-summary");
+    const summarySectionExists = await existingSummarySection
+      .isVisible()
+      .catch(() => false);
+
+    if (summarySectionExists) {
+      await page.getByTestId("section-delete-resume-summary").click();
+      await expect(existingSummarySection).not.toBeVisible({ timeout: 2000 });
+    }
+
     const canvas = page.getByTestId("canvas-droppable");
 
     // Count initial sections before drag
@@ -682,52 +788,72 @@ test.describe("builder drag and drop interactions", () => {
     const sectionsAfterFirst = page.locator('section[data-testid^="section-"]');
     const sectionCountAfterFirst = await sectionsAfterFirst.count();
 
-    // Drag Summary component (if not already present)
+    // Wait for canvas to stabilize after first drop
+    await page.waitForTimeout(500);
+
+    // Scroll canvas into view to ensure it's visible
+    await canvas.scrollIntoViewIfNeeded();
+    await page.waitForTimeout(200);
+
+    // Drag Summary component
     // Use the palette-specific test ID to avoid matching canvas sections
     const summaryComponent = page.getByTestId("palette-summary");
+    await expect(summaryComponent).toBeVisible();
 
-    // Only drag if it's in the palette (might already be on canvas)
-    if (await summaryComponent.isVisible()) {
-      const summaryComponentBox = await summaryComponent.boundingBox();
-      const updatedCanvasBox = await canvas.boundingBox();
+    // Recalculate canvas position after first drop (it may have changed)
+    const summaryComponentBox = await summaryComponent.boundingBox();
+    const updatedCanvasBox = await canvas.boundingBox();
 
-      if (summaryComponentBox && updatedCanvasBox) {
-        // Use manual mouse events to drag Summary component to canvas
-        await page.mouse.move(
-          summaryComponentBox.x + summaryComponentBox.width / 2,
-          summaryComponentBox.y + summaryComponentBox.height / 2,
-        );
-        await page.mouse.down();
-        // Move to trigger activation
-        await page.mouse.move(
-          summaryComponentBox.x + summaryComponentBox.width / 2 + 10,
-          summaryComponentBox.y + summaryComponentBox.height / 2 + 10,
-          { steps: 5 },
-        );
-        // Move to canvas (empty area)
-        await page.mouse.move(
-          updatedCanvasBox.x + 20,
-          updatedCanvasBox.y + 20,
-          { steps: 10 },
-        );
-        await page.mouse.up();
-
-        // Wait for drop status message
-        await expect(
-          page.getByText(/draggable item.*was dropped/i),
-        ).toBeVisible({ timeout: 2000 });
-
-        // Wait for the section count to increase
-        const sectionsAfterSecond = page.locator(
-          'section[data-testid^="section-"]',
-        );
-        console.log({ sectionsAfterSecond: await sectionsAfterSecond.all() });
-        await expect(sectionsAfterSecond).toHaveCount(
-          sectionCountAfterFirst + 1,
-          { timeout: 5000 },
-        );
-      }
+    if (!summaryComponentBox || !updatedCanvasBox) {
+      throw new Error("Could not get bounding boxes for Summary drag and drop");
     }
+
+    // Use manual mouse events to drag Summary component to canvas
+    await page.mouse.move(
+      summaryComponentBox.x + summaryComponentBox.width / 2,
+      summaryComponentBox.y + summaryComponentBox.height / 2,
+    );
+    await page.waitForTimeout(100); // Wait to ensure we're over the element
+
+    await page.mouse.down();
+    await page.waitForTimeout(100); // Wait for drag to initialize
+
+    // Move to trigger activation (dnd-kit requires 5px movement)
+    await page.mouse.move(
+      summaryComponentBox.x + summaryComponentBox.width / 2 + 10,
+      summaryComponentBox.y + summaryComponentBox.height / 2 + 10,
+      { steps: 5 },
+    );
+    await page.waitForTimeout(100); // Wait for drag activation
+
+    // Move to canvas - use center of canvas for more reliable drop
+    // Recalculate canvas box in case it changed during drag
+    const finalCanvasBox = await canvas.boundingBox();
+    if (!finalCanvasBox) {
+      throw new Error("Could not get final canvas bounding box");
+    }
+
+    await page.mouse.move(
+      finalCanvasBox.x + finalCanvasBox.width / 2,
+      finalCanvasBox.y + 100, // Drop in upper-middle area of canvas
+      { steps: 20 },
+    );
+    await page.waitForTimeout(200); // Hover over drop target
+
+    await page.mouse.up();
+
+    // Wait for drop status message
+    await expect(page.getByText(/draggable item.*was dropped/i)).toBeVisible({
+      timeout: 2000,
+    });
+
+    // Wait for the section count to increase
+    const sectionsAfterSecond = page.locator(
+      'section[data-testid^="section-"]',
+    );
+    await expect(sectionsAfterSecond).toHaveCount(sectionCountAfterFirst + 1, {
+      timeout: 5000,
+    });
 
     // Verify multiple sections are visible on canvas (scoped to canvas)
     await expect(

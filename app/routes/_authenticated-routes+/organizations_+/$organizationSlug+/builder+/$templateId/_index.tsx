@@ -277,6 +277,7 @@ export async function loader({ params, context, request }: Route.LoaderArgs) {
         name: `${sourceTemplate.name} (Copy)`,
         organizationId: organization.id,
         sections: sourceTemplate.sections,
+        sourceTemplateId: sourceTemplate.id, // Store reference to source template
         type: sourceTemplate.type,
       });
       isNewFromDefault = true;
@@ -286,6 +287,23 @@ export async function loader({ params, context, request }: Route.LoaderArgs) {
   // Fallback to predefined templates if not found in database (for viewing only)
   if (!template && mode === "edit") {
     template = getTemplateById(typedParams.templateId) || null;
+  }
+
+  // Load source template if available
+  let sourceTemplate: Template | null = null;
+  if (template?.sourceTemplateId) {
+    sourceTemplate = getTemplateById(template.sourceTemplateId) || null;
+    if (!sourceTemplate) {
+      // Try to get from database
+      try {
+        sourceTemplate = await retrieveTemplateFromDatabaseById({
+          organizationId: organization.id,
+          templateId: template.sourceTemplateId,
+        });
+      } catch {
+        // Source template not found, continue without it
+      }
+    }
   }
 
   return {
@@ -300,6 +318,7 @@ export async function loader({ params, context, request }: Route.LoaderArgs) {
     mode,
     organizationSlug: typedParams.organizationSlug,
     pageTitle: getPageTitle(t, "organizations:builder.pageTitle"),
+    sourceTemplate,
     template,
     templateId: template?.id || typedParams.templateId,
   };
@@ -443,6 +462,7 @@ export default function BuilderEditorRoute({
     setCurrentTemplate,
     selectSection,
     selectedSectionId,
+    setSourceTemplate,
     updateGlobalStyles,
     isDirty,
     setDirty,
@@ -601,6 +621,7 @@ export default function BuilderEditorRoute({
       };
 
       setCurrentTemplate(editableTemplate);
+      setSourceTemplate(loaderData.sourceTemplate || null);
       setTemplateSessionId(template.id);
       selectSection(null);
       setTemplateNotFound(false);
@@ -622,7 +643,9 @@ export default function BuilderEditorRoute({
     organizationSlug,
     loaderData.template,
     loaderData.isNewFromDefault,
+    loaderData.sourceTemplate,
     setCurrentTemplate,
+    setSourceTemplate,
     selectSection,
     setTemplateSessionId,
     navigate,

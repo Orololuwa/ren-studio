@@ -33,7 +33,7 @@ export const invoiceTemplates: Template[] = [
           shipToName: "",
           shipToAddress: "",
         },
-        id: "invoice-header-1",
+        id: "invoice-header",
         order: 0,
         styles: {
           padding: "2rem",
@@ -63,7 +63,7 @@ export const invoiceTemplates: Template[] = [
             },
           ],
         },
-        id: "invoice-items-1",
+        id: "invoice-items",
         order: 1,
         styles: {
           padding: "1rem 2rem",
@@ -86,7 +86,7 @@ export const invoiceTemplates: Template[] = [
           notes:
             "Thank you for your business! Payment is due within 30 days of invoice date.",
         },
-        id: "invoice-footer-1",
+        id: "invoice-footer",
         order: 2,
         styles: {
           padding: "1rem 2rem 2rem",
@@ -130,7 +130,7 @@ export const invoiceTemplates: Template[] = [
           shipToName: "",
           shipToAddress: "",
         },
-        id: "invoice-header-2",
+        id: "invoice-header",
         order: 0,
         styles: {
           backgroundColor: "$colorPalette[2]",
@@ -169,7 +169,7 @@ export const invoiceTemplates: Template[] = [
             },
           ],
         },
-        id: "invoice-items-2",
+        id: "invoice-items",
         order: 1,
         styles: {
           backgroundColor: "$colorPalette[3]",
@@ -196,7 +196,7 @@ export const invoiceTemplates: Template[] = [
           notes:
             "Thank you for choosing our services. We appreciate your business and look forward to continuing our partnership.\n\nFor questions regarding this invoice, please contact our billing department at billing@company.com or call +1 (555) 123-4567.",
         },
-        id: "invoice-footer-2",
+        id: "invoice-footer",
         order: 2,
         styles: {
           backgroundColor: "$colorPalette[3]",

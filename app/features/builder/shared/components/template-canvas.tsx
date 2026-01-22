@@ -6,7 +6,8 @@ import {
 } from "@dnd-kit/sortable";
 
 import { useBuilderStore } from "../store/builder-store";
-import type { TemplateSection } from "../types";
+import type { Template, TemplateSection } from "../types";
+import { generateSectionId } from "../utils/generate-section-id";
 import { componentLibrary } from "./component-library-registry";
 import { SectionRenderer } from "./section-renderer";
 import { SectionWrapper } from "./section-wrapper";
@@ -15,6 +16,7 @@ import { SectionWrapper } from "./section-wrapper";
 function createDefaultSectionConfig(
   type: string,
   existingSections: TemplateSection[] = [],
+  sourceTemplate: Template | null = null,
 ): Omit<TemplateSection, "id" | "order"> {
   const component = componentLibrary[type];
   if (!component) {
@@ -26,36 +28,25 @@ function createDefaultSectionConfig(
     (section) => section.type === type,
   );
 
-  // If no section of same type, use any existing section's style pattern (excluding header)
-  const styleReference =
-    existingSectionOfType ||
-    existingSections.find((section) => section.type !== "header");
-
   // Build default styles from template or component defaults
   let defaultStyles: Record<string, string>;
 
-  // If we have an existing section of the same type, use its styles directly
+  // Priority 1: If we have an existing section of the same type, use its styles directly
   if (existingSectionOfType) {
     defaultStyles = { ...existingSectionOfType.styles };
-  } else if (styleReference && type !== "header") {
-    // If no section of same type, use another section's style pattern (excluding header)
-    // Start with template styles as base (not component defaults) to avoid adding marginTop
-    defaultStyles = { ...styleReference.styles };
-    // Remove header-specific properties that shouldn't be copied to other sections
-    delete defaultStyles.backgroundColor;
-    delete defaultStyles.color;
-    delete defaultStyles.textAlign;
-  } else if (type === "header") {
-    // For header, use header section styles if available
-    const headerSection = existingSections.find((s) => s.type === "header");
-    if (headerSection) {
-      defaultStyles = { ...headerSection.styles };
+  } else if (sourceTemplate) {
+    // Priority 2: Check source template for the section type (original default template)
+    const sourceSectionOfType = sourceTemplate.sections.find(
+      (s: TemplateSection) => s.type === type,
+    );
+    if (sourceSectionOfType) {
+      defaultStyles = { ...sourceSectionOfType.styles };
     } else {
-      // Fall back to component defaults only if no template exists
+      // Priority 3: Fall back to component defaults if not in source template
       defaultStyles = { ...component.defaultStyles };
     }
   } else {
-    // No template sections exist, use component defaults
+    // No source template available, use component defaults
     defaultStyles = { ...component.defaultStyles };
   }
 
@@ -65,6 +56,17 @@ function createDefaultSectionConfig(
   // If we have an existing section of the same type, use its data
   if (existingSectionOfType) {
     defaultData = { ...existingSectionOfType.data };
+  } else if (sourceTemplate) {
+    // Check source template for section data
+    const sourceSectionOfType = sourceTemplate.sections.find(
+      (s: TemplateSection) => s.type === type,
+    );
+    if (sourceSectionOfType) {
+      defaultData = { ...sourceSectionOfType.data };
+    } else {
+      // No existing section of this type, use component defaults
+      defaultData = { ...component.defaultData };
+    }
   } else {
     // No existing section of this type, use component defaults
     defaultData = { ...component.defaultData };
@@ -86,6 +88,7 @@ export function TemplateCanvas() {
     selectSection,
     addSection,
     reorderSections,
+    sourceTemplate,
   } = useBuilderStore();
 
   // Monitor drag and drop events from parent DndContext
@@ -100,15 +103,32 @@ export function TemplateCanvas() {
 
       // Check if dragging from palette to canvas
       if (activeId.startsWith("palette-")) {
-        const sectionType = activeId.replace("palette-", "");
+        const sectionType = activeId.replace(
+          "palette-",
+          "",
+        ) as TemplateSection["type"];
+
+        // Check if section type already exists (prevent duplicates)
+        const existingSectionOfType = currentTemplate.sections.find(
+          (s) => s.type === sectionType,
+        );
+        if (existingSectionOfType) {
+          // Section type already exists, don't allow duplicate
+          return;
+        }
+
         const baseSection = createDefaultSectionConfig(
           sectionType,
           currentTemplate.sections,
+          sourceTemplate,
         );
         const maxOrder = Math.max(
           ...currentTemplate.sections.map((s) => s.order),
           -1,
         );
+
+        // Generate predictable section ID
+        const sectionId = generateSectionId(currentTemplate.type, sectionType);
 
         // If dropping on a specific section, insert at that position
         if (overId !== "canvas-droppable") {
@@ -119,7 +139,7 @@ export function TemplateCanvas() {
             // Insert at the target position
             const newSectionWithId: TemplateSection = {
               ...baseSection,
-              id: crypto.randomUUID(),
+              id: sectionId,
               order: targetIndex,
             };
 
@@ -135,7 +155,7 @@ export function TemplateCanvas() {
             // Fallback: add to the end
             const newSection: TemplateSection = {
               ...baseSection,
-              id: crypto.randomUUID(),
+              id: sectionId,
               order: maxOrder + 1,
             };
             addSection(newSection);
@@ -144,7 +164,7 @@ export function TemplateCanvas() {
           // Dropped on empty canvas, just add to the end
           const newSection: TemplateSection = {
             ...baseSection,
-            id: crypto.randomUUID(),
+            id: sectionId,
             order: maxOrder + 1,
           };
           addSection(newSection);

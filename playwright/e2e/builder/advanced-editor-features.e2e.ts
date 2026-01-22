@@ -13,41 +13,6 @@ test.describe("builder advanced editor features", () => {
     await page.waitForTimeout(100);
   });
 
-  test("given: a logged in user, should: duplicate a section on the canvas", async ({
-    page,
-  }) => {
-    const { organization, user } = await setupOrganizationAndLoginAsMember({
-      page,
-    });
-
-    await page.goto(
-      `/organizations/${organization.slug}/builder/${resumeTemplateId}`,
-    );
-
-    // Wait for template to load
-    await expect(page.getByTestId("template-editor-title")).toBeVisible({
-      timeout: 5000,
-    });
-
-    const sections = page.locator('section[data-testid^="section-"]');
-    const initialCount = await sections.count();
-    expect(initialCount).toBeGreaterThan(0);
-
-    const firstSection = sections.first();
-    const sectionId = (await firstSection.getAttribute("data-testid"))?.replace(
-      "section-",
-      "",
-    );
-
-    // Click duplicate button
-    await page.getByTestId(`section-duplicate-${sectionId}`).click();
-
-    // Verify count increased
-    await expect(sections).toHaveCount(initialCount + 1);
-
-    await teardownOrganizationAndMember({ organization, user });
-  });
-
   test("given: a logged in user, should: delete a section from the canvas", async ({
     page,
   }) => {

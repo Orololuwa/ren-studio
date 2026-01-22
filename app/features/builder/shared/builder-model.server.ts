@@ -91,6 +91,7 @@ export async function retrieveTemplateFromDatabaseById({
     name: template.name,
     organizationId: template.organizationId,
     sections: template.sections as unknown as TemplateSection[],
+    sourceTemplateId: template.sourceTemplateId || undefined,
     type: convertPrismaTemplateTypeToTS(template.type),
     updatedAt: template.updatedAt,
   };
@@ -186,6 +187,7 @@ export async function createTemplateInDatabase(
       organizationId: template.organizationId,
       sections: template.sections as unknown as Prisma.JsonArray,
       type: convertTSTemplateTypeToPrisma(template.type),
+      sourceTemplateId: template.sourceTemplateId || null,
     },
   });
 
@@ -197,6 +199,7 @@ export async function createTemplateInDatabase(
     name: created.name,
     organizationId: created.organizationId,
     sections: created.sections as unknown as TemplateSection[],
+    sourceTemplateId: created.sourceTemplateId || undefined,
     type: convertPrismaTemplateTypeToTS(created.type),
     updatedAt: created.updatedAt,
   };
