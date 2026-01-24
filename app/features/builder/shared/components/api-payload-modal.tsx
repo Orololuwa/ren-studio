@@ -1,6 +1,6 @@
-import { Check, Copy } from "lucide-react";
+import { Check, Copy, ExternalLink } from "lucide-react";
 import { useMemo, useState } from "react";
-import { useParams } from "react-router";
+import { Link, useParams } from "react-router";
 
 import { useBuilderStore } from "../store/builder-store";
 import { generateExamplePayload } from "../utils/generate-example-payload";
@@ -130,7 +130,18 @@ export function ApiPayloadModal({
     <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle>API Payload Details</DialogTitle>
+          <div className="flex items-center justify-between">
+            <DialogTitle>API Payload Details</DialogTitle>
+            <Link
+              className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1"
+              rel="noopener noreferrer"
+              target="_blank"
+              to="/docs"
+            >
+              View API Docs
+              <ExternalLink className="h-3 w-3" />
+            </Link>
+          </div>
         </DialogHeader>
 
         <div className="flex-1 overflow-hidden flex flex-col min-h-0">

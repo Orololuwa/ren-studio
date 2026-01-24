@@ -2,6 +2,7 @@ import type { ResourceLanguage } from "i18next";
 
 import billing from "./billing";
 import colorScheme from "./color-scheme";
+import docs from "./docs";
 import dragAndDrop from "./drag-and-drop";
 import landing from "./landing";
 import notifications from "./notifications";
@@ -14,6 +15,7 @@ import userAuthentication from "./user-authentication";
 export default {
   billing,
   colorScheme,
+  docs,
   dragAndDrop,
   landing,
   notifications,

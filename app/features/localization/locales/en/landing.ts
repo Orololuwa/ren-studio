@@ -165,6 +165,7 @@ export default {
     login: "Login",
     navLinks: {
       pricing: "Pricing",
+      documentation: "Documentation",
     },
     register: "Register",
   },

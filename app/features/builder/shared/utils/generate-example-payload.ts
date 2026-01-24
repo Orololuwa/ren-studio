@@ -244,7 +244,7 @@ function generateSectionExampleData(
 /**
  * Gets all component types for a given template type
  */
-function getComponentTypesForTemplateType(
+export function getComponentTypesForTemplateType(
   templateType: TemplateType,
 ): string[] {
   switch (templateType) {

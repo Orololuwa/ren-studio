@@ -63,6 +63,9 @@ export const anonymousContext = createContext<{
   headers: Headers;
 }>();
 
+// Public routes that authenticated users can still access
+const PUBLIC_ROUTES_ACCESSIBLE_TO_AUTHENTICATED = ["/docs", "/pricing"];
+
 export const anonymousMiddleware: MiddlewareFunction = async (
   { request, context },
   next,
@@ -73,7 +76,14 @@ export const anonymousMiddleware: MiddlewareFunction = async (
     error,
   } = await supabase.auth.getUser();
 
-  if (!error && user) {
+  const url = new URL(request.url);
+  const isPublicRouteAccessibleToAuthenticated =
+    PUBLIC_ROUTES_ACCESSIBLE_TO_AUTHENTICATED.some(
+      (route) => url.pathname === route || url.pathname.startsWith(`${route}/`),
+    );
+
+  // Only redirect authenticated users if they're not trying to access a public route
+  if (!error && user && !isPublicRouteAccessibleToAuthenticated) {
     throw redirect(href("/organizations"), { headers });
   }
 

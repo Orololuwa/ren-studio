@@ -27,6 +27,7 @@ type NavGroupItem = {
 
 export type NavGroupItemWithoutChildren = NavGroupItem & {
   url: string;
+  external?: boolean;
 };
 
 type NavGroupItemWithChildren = NavGroupItem & {
@@ -100,6 +101,21 @@ export function NavGroup({ className, items, size, title }: NavGroupProps) {
                   </CollapsibleContent>
                 </SidebarMenuItem>
               </Collapsible>
+            );
+          }
+
+          if (item.external) {
+            return (
+              <SidebarMenuItem key={item.title}>
+                <a href={item.url} rel="noopener noreferrer" target="_blank">
+                  <SidebarMenuButton asChild size={size} tooltip={item.title}>
+                    <div>
+                      {item.icon && <item.icon />}
+                      <span>{item.title}</span>
+                    </div>
+                  </SidebarMenuButton>
+                </a>
+              </SidebarMenuItem>
             );
           }
 

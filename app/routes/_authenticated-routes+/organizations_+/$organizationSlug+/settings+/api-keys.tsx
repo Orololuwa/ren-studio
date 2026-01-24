@@ -1,6 +1,7 @@
+import { ExternalLink } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { data, Form, href } from "react-router";
+import { data, Form, href, Link } from "react-router";
 
 import type { Route } from "./+types/api-keys";
 import { GeneralErrorBoundary } from "~/components/general-error-boundary";
@@ -136,12 +137,23 @@ export default function ApiKeysSettingsRoute({
   return (
     <div className="px-4 py-4 md:py-6 lg:px-6">
       <div className="mx-auto w-full max-w-4xl space-y-6">
-        <div className="flex flex-col gap-2">
-          <h2 className="leading-none font-semibold">{t("pageTitle")}</h2>
-          <p className="text-muted-foreground text-sm">
-            {t("description") ||
-              "Manage your organization's API keys for programmatic access."}
-          </p>
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex flex-col gap-2">
+            <h2 className="leading-none font-semibold">{t("pageTitle")}</h2>
+            <p className="text-muted-foreground text-sm">
+              {t("description") ||
+                "Manage your organization's API keys for programmatic access."}
+            </p>
+          </div>
+          <Link
+            className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1"
+            rel="noopener noreferrer"
+            target="_blank"
+            to="/docs"
+          >
+            View API Docs
+            <ExternalLink className="h-3 w-3" />
+          </Link>
         </div>
 
         {actionData && "error" in actionData && (
