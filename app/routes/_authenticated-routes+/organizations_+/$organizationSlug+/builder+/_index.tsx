@@ -3,12 +3,14 @@ import {
   ChevronRight,
   Copy,
   Edit,
+  Eye,
   FileText,
+  Plus,
   Receipt,
   ShoppingBag,
   Trash2,
 } from "lucide-react";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   data,
   href,
@@ -37,7 +39,13 @@ import {
   CardHeader,
   CardTitle,
 } from "~/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "~/components/ui/dialog";
 import {
   Tooltip,
   TooltipContent,
@@ -45,7 +53,6 @@ import {
   TooltipTrigger,
 } from "~/components/ui/tooltip";
 import {
-  countTemplatesByOrganizationIdAndType,
   deleteTemplateFromDatabase,
   retrieveTemplatesByOrganizationIdAndType,
 } from "~/features/builder/shared/builder-model.server";
@@ -65,50 +72,22 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
 
   const url = new URL(request.url);
   const typeParam = url.searchParams.get("type");
-  const viewParam = url.searchParams.get("view");
 
-  // Use defaults if parameters are missing
+  // Use resume as default if parameter is missing
   const activeType = (typeParam || "resume") as BuilderType;
-  const activeView = (viewParam || "defaults") as ViewTab;
 
-  // Optimized fetching:
-  // 1. Fetch counts for all types (efficient)
-  let savedCounts: Partial<Record<BuilderType, number>> = {
-    invoice: 0,
-    receipt: 0,
-    "report-cards": 0,
-    resume: 0,
+  // Fetch saved templates for the active type
+  const savedTemplates = await retrieveTemplatesByOrganizationIdAndType({
+    organizationId: organization.id,
+    type: activeType,
+  });
+
+  // Get all default templates for all types (for the modal)
+  const allDefaultTemplates = {
+    resume: getTemplatesByType("resume"),
+    invoice: getTemplatesByType("invoice"),
+    receipt: getTemplatesByType("receipt"),
   };
-  savedCounts = {
-    invoice: await countTemplatesByOrganizationIdAndType({
-      organizationId: organization.id,
-      type: "invoice",
-    }),
-    receipt: await countTemplatesByOrganizationIdAndType({
-      organizationId: organization.id,
-      type: "receipt",
-    }),
-    "report-cards": await countTemplatesByOrganizationIdAndType({
-      organizationId: organization.id,
-      type: "report-cards",
-    }),
-    resume: await countTemplatesByOrganizationIdAndType({
-      organizationId: organization.id,
-      type: "resume",
-    }),
-  };
-
-  // 2. Fetch full records ONLY for active type IF view is 'saved'
-  let activeSavedTemplates: Template[] = [];
-  if (activeView === "saved") {
-    activeSavedTemplates = await retrieveTemplatesByOrganizationIdAndType({
-      organizationId: organization.id,
-      type: activeType,
-    });
-  }
-
-  // 3. Get predefined templates (static)
-  const defaultTemplates = getTemplatesByType(activeType);
 
   return data(
     {
@@ -119,12 +98,10 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
         }),
       },
       activeType,
-      activeView,
-      defaultTemplates,
+      allDefaultTemplates,
       organizationSlug: params.organizationSlug,
       pageTitle: getPageTitle(t, "organizations:builder.pageTitle"),
-      savedCounts,
-      savedTemplates: activeSavedTemplates,
+      savedTemplates,
     },
     { headers },
   );
@@ -216,25 +193,23 @@ const VALID_BUILDER_TYPES = [
 ] as const;
 type BuilderType = (typeof VALID_BUILDER_TYPES)[number];
 
-type ViewTab = "defaults" | "saved";
-
 export default function BuilderRoute({ loaderData }: Route.ComponentProps) {
   const [, setSearchParams] = useSearchParams();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [templateSelectionModalOpen, setTemplateSelectionModalOpen] =
+    useState(false);
+  const [previewModalOpen, setPreviewModalOpen] = useState(false);
+  const [previewTemplateId, setPreviewTemplateId] = useState<string | null>(
+    null,
+  );
   const [templateToDelete, setTemplateToDelete] = useState<Template | null>(
     null,
   );
   const navigate = useNavigate();
   const revalidator = useRevalidator();
-  const {
-    activeType,
-    activeView,
-    defaultTemplates,
-    organizationSlug,
-    savedCounts,
-    savedTemplates,
-  } = loaderData;
+  const { activeType, allDefaultTemplates, organizationSlug, savedTemplates } =
+    loaderData;
 
   const handleTypeTabChange = (type: BuilderType) => {
     setSearchParams(
@@ -246,23 +221,22 @@ export default function BuilderRoute({ loaderData }: Route.ComponentProps) {
     );
   };
 
-  const handleViewTabChange = (view: ViewTab) => {
-    setSearchParams(
-      (prev) => {
-        prev.set("view", view);
-        return prev;
-      },
-      { replace: true },
-    );
+  const handleCreateNew = () => {
+    setTemplateSelectionModalOpen(true);
   };
 
-  const _handleCreateNew = () => {
-    navigate(`/organizations/${organizationSlug}/builder/new`);
-  };
-
-  const handleCustomize = (templateId: string, _isDefault: boolean) => {
+  const handleCustomize = (templateId: string, isDefault: boolean) => {
     const url = `/organizations/${organizationSlug}/builder/${templateId}?mode=customize&source=${templateId}`;
     navigate(url);
+    if (isDefault) {
+      setTemplateSelectionModalOpen(false);
+    }
+  };
+
+  const handlePreview = (templateId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setPreviewTemplateId(templateId);
+    setPreviewModalOpen(true);
   };
 
   const handleEdit = (templateId: string) => {
@@ -291,11 +265,6 @@ export default function BuilderRoute({ loaderData }: Route.ComponentProps) {
     setTemplateToDelete(null);
     revalidator.revalidate();
   };
-
-  const templates =
-    activeView === "defaults" ? defaultTemplates : savedTemplates;
-
-  const savedCount = savedCounts[activeType as keyof typeof savedCounts] || 0;
 
   return (
     <TooltipProvider delayDuration={0}>
@@ -394,48 +363,61 @@ export default function BuilderRoute({ loaderData }: Route.ComponentProps) {
                   className="text-muted-foreground text-sm mt-1"
                   data-testid="template-builder-description"
                 >
-                  Choose a template and customize it to your needs
+                  Manage your saved templates
                 </p>
               </div>
+              <Button
+                data-testid="create-new-template-button"
+                onClick={handleCreateNew}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Create New
+              </Button>
             </div>
 
-            {/* Defaults / Saved Tabs */}
-            <Tabs
-              onValueChange={(v) => handleViewTabChange(v as ViewTab)}
-              value={activeView}
-            >
-              <TabsList>
-                <TabsTrigger data-testid="tab-defaults" value="defaults">
-                  Defaults
-                </TabsTrigger>
-                <TabsTrigger data-testid="tab-saved" value="saved">
-                  Saved{savedCount > 0 && ` (${savedCount})`}
-                </TabsTrigger>
-              </TabsList>
-              <TabsContent value="defaults">
-                <TemplateGrid
-                  activeView="defaults"
-                  handleCustomize={handleCustomize}
-                  handleDeleteClick={handleDeleteClick}
-                  handleEdit={handleEdit}
-                  organizationSlug={organizationSlug}
-                  templates={templates}
-                />
-              </TabsContent>
-              <TabsContent value="saved">
-                <TemplateGrid
-                  activeView="saved"
-                  handleCustomize={handleCustomize}
-                  handleDeleteClick={handleDeleteClick}
-                  handleEdit={handleEdit}
-                  organizationSlug={organizationSlug}
-                  templates={templates}
-                />
-              </TabsContent>
-            </Tabs>
+            {/* Saved Templates Grid */}
+            <TemplateGrid
+              handleCustomize={handleCustomize}
+              handleDeleteClick={handleDeleteClick}
+              handleEdit={handleEdit}
+              organizationSlug={organizationSlug}
+              templates={savedTemplates}
+            />
           </div>
         </section>
       </div>
+
+      {/* Template Selection Modal */}
+      <Dialog
+        onOpenChange={setTemplateSelectionModalOpen}
+        open={templateSelectionModalOpen}
+      >
+        <DialogContent className="max-w-6xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Select a Template</DialogTitle>
+            <DialogDescription>
+              Choose a template to customize and create your own version
+            </DialogDescription>
+          </DialogHeader>
+          <TemplateSelectionModal
+            activeType={activeType}
+            allDefaultTemplates={allDefaultTemplates}
+            handleCustomize={handleCustomize}
+            handlePreview={handlePreview}
+            organizationSlug={organizationSlug}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Preview Modal */}
+      {previewTemplateId && (
+        <DefaultTemplatePreviewModal
+          onOpenChange={setPreviewModalOpen}
+          open={previewModalOpen}
+          organizationSlug={organizationSlug}
+          templateId={previewTemplateId}
+        />
+      )}
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog onOpenChange={setDeleteDialogOpen} open={deleteDialogOpen}>
@@ -462,16 +444,200 @@ export default function BuilderRoute({ loaderData }: Route.ComponentProps) {
   );
 }
 
+function TemplateSelectionModal({
+  activeType,
+  allDefaultTemplates,
+  handleCustomize,
+  handlePreview,
+  organizationSlug,
+}: {
+  activeType: BuilderType;
+  allDefaultTemplates: Record<string, Template[]>;
+  handleCustomize: (id: string, isDefault: boolean) => void;
+  handlePreview: (id: string, e: React.MouseEvent) => void;
+  organizationSlug: string;
+}) {
+  const templates = allDefaultTemplates[activeType] || [];
+
+  return (
+    <div className="space-y-4">
+      {templates.length === 0 ? (
+        <div className="text-center py-12 text-muted-foreground">
+          <p>No templates available for this type.</p>
+        </div>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2">
+          {templates.map((template) => (
+            <Card
+              className="flex flex-col cursor-pointer hover:border-primary transition-colors"
+              data-testid={`default-template-card-${template.id}`}
+              key={template.id}
+              onClick={() => handleCustomize(template.id, true)}
+            >
+              <CardHeader>
+                <TemplatePreviewThumbnail
+                  organizationSlug={organizationSlug}
+                  template={template}
+                />
+                <CardTitle>{template.name}</CardTitle>
+                <CardDescription>
+                  {template.type
+                    ? template.type.charAt(0).toUpperCase() +
+                      template.type.slice(1)
+                    : "Template"}{" "}
+                  Template
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="flex-1" />
+              <CardFooter>
+                <Button
+                  className="w-full"
+                  data-testid={`default-template-preview-button-${template.id}`}
+                  onClick={(e) => handlePreview(template.id, e)}
+                  variant="outline"
+                >
+                  <Eye className="h-4 w-4 mr-2" />
+                  Preview
+                </Button>
+              </CardFooter>
+            </Card>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function DefaultTemplatePreviewModal({
+  onOpenChange,
+  open,
+  organizationSlug,
+  templateId,
+}: {
+  onOpenChange: (open: boolean) => void;
+  open: boolean;
+  organizationSlug: string;
+  templateId: string;
+}) {
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  const handleGeneratePreview = useCallback(async () => {
+    if (!templateId) return;
+
+    setIsGenerating(true);
+    setPreviewUrl(null);
+
+    try {
+      const response = await fetch(
+        `/organizations/${organizationSlug}/builder/${templateId}/preview`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ sections: {} }),
+        },
+      );
+
+      if (!response.ok) {
+        const errorData = await response
+          .json()
+          .catch(() => ({ error: "Unknown error" }));
+        throw new Error(
+          errorData.message ||
+            errorData.error ||
+            `HTTP ${response.status}: ${response.statusText}`,
+        );
+      }
+
+      const contentType = response.headers.get("content-type");
+      if (contentType?.includes("application/json")) {
+        const errorData = await response.json();
+        throw new Error(
+          errorData.message || errorData.error || "Failed to generate preview",
+        );
+      }
+
+      const html = await response.text();
+      if (!html || html.trim().length === 0) {
+        throw new Error("Received empty response from server");
+      }
+
+      const blob = new Blob([html], { type: "text/html" });
+      const url = URL.createObjectURL(blob);
+      setPreviewUrl(url);
+    } catch (error) {
+      console.error("Error generating preview:", error);
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Failed to generate preview. Please try again.";
+      alert(errorMessage);
+    } finally {
+      setIsGenerating(false);
+    }
+  }, [templateId, organizationSlug]);
+
+  const handleOpenChange = (newOpen: boolean) => {
+    if (!newOpen && previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+      setPreviewUrl(null);
+    }
+    onOpenChange(newOpen);
+  };
+
+  useEffect(() => {
+    if (open && templateId && !previewUrl && !isGenerating) {
+      handleGeneratePreview();
+    }
+  }, [open, templateId, previewUrl, isGenerating, handleGeneratePreview]);
+
+  useEffect(() => {
+    return () => {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
+
+  return (
+    <Dialog onOpenChange={handleOpenChange} open={open}>
+      <DialogContent className="w-[95vw]! max-w-[210mm]! h-[90vh]! flex flex-col">
+        <DialogHeader>
+          <DialogTitle>Preview</DialogTitle>
+        </DialogHeader>
+
+        {previewUrl ? (
+          <div className="flex-1 min-h-0 border rounded-lg overflow-hidden">
+            <iframe
+              className="w-full h-full border-0"
+              src={previewUrl}
+              title="Template Preview"
+            />
+          </div>
+        ) : (
+          <div className="mt-4 border rounded-lg overflow-hidden p-8 text-center text-muted-foreground">
+            {isGenerating ? (
+              <p>Generating preview...</p>
+            ) : (
+              <p>Loading preview...</p>
+            )}
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function TemplateGrid({
   templates,
-  activeView,
   organizationSlug,
   handleEdit,
   handleCustomize,
   handleDeleteClick,
 }: {
   templates: Template[];
-  activeView: ViewTab;
   organizationSlug: string;
   handleEdit: (id: string) => void;
   handleCustomize: (id: string, isDefault: boolean) => void;
@@ -484,9 +650,8 @@ function TemplateGrid({
         data-testid="no-templates-message"
       >
         <p>
-          {activeView === "defaults"
-            ? 'No default templates available. Click "Create New" to get started.'
-            : "No saved templates yet. Customize a default template to save it here."}
+          No saved templates yet. Click "Create New" to select a template and
+          get started.
         </p>
       </div>
     );
@@ -521,7 +686,7 @@ function TemplateGrid({
                     template.type.slice(1)
                   : "Template"}{" "}
                 Template
-                {activeView === "saved" && template.updatedAt && (
+                {template.updatedAt && (
                   <span className="block text-xs mt-1">
                     Last modified:{" "}
                     {new Date(template.updatedAt).toLocaleDateString()}
@@ -531,47 +696,34 @@ function TemplateGrid({
             </CardHeader>
             <CardContent className="flex-1" />
             <CardFooter className="gap-2">
-              {activeView === "saved" ? (
-                <>
-                  <Button
-                    className="flex-1"
-                    data-testid={`template-edit-button-${template.id}`}
-                    onClick={() => handleEdit(template.id)}
-                    variant="default"
-                  >
-                    <Edit className="h-4 w-4 mr-2" />
-                    Edit
-                  </Button>
-                  <Button
-                    className="flex-1"
-                    data-testid={`template-customize-button-${template.id}`}
-                    onClick={() => handleCustomize(template.id, false)}
-                    variant="outline"
-                  >
-                    <Copy className="h-4 w-4 mr-2" />
-                    Duplicate
-                  </Button>
-                  <Button
-                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                    data-testid={`template-delete-button-${template.id}`}
-                    onClick={() => handleDeleteClick(template)}
-                    size="icon"
-                    variant="ghost"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                    <span className="sr-only">Delete</span>
-                  </Button>
-                </>
-              ) : (
-                <Button
-                  className="w-full"
-                  data-testid={`template-customize-button-${template.id}`}
-                  onClick={() => handleCustomize(template.id, true)}
-                  variant="outline"
-                >
-                  Customize
-                </Button>
-              )}
+              <Button
+                className="flex-1"
+                data-testid={`template-edit-button-${template.id}`}
+                onClick={() => handleEdit(template.id)}
+                variant="default"
+              >
+                <Edit className="h-4 w-4 mr-2" />
+                Edit
+              </Button>
+              <Button
+                className="flex-1"
+                data-testid={`template-customize-button-${template.id}`}
+                onClick={() => handleCustomize(template.id, false)}
+                variant="outline"
+              >
+                <Copy className="h-4 w-4 mr-2" />
+                Duplicate
+              </Button>
+              <Button
+                className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                data-testid={`template-delete-button-${template.id}`}
+                onClick={() => handleDeleteClick(template)}
+                size="icon"
+                variant="ghost"
+              >
+                <Trash2 className="h-4 w-4" />
+                <span className="sr-only">Delete</span>
+              </Button>
             </CardFooter>
           </Card>
         ))}
