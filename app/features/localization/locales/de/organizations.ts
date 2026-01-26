@@ -53,9 +53,9 @@ export default {
     breadcrumb: "Analytik",
     pageTitle: "Analytik",
   },
-  builder: {
-    breadcrumb: "Vorlagen-Editor",
-    pageTitle: "Vorlagen-Editor",
+  templates: {
+    breadcrumb: "Vorlagen",
+    pageTitle: "Vorlagen",
   },
   dashboard: {
     breadcrumb: "Dashboard",
@@ -74,7 +74,7 @@ export default {
       nav: {
         app: {
           analytics: "Analytik",
-          builder: "Vorlagen-Editor",
+          templates: "Vorlagen",
           dashboard: "Dashboard",
           jobsAndClients: "Jobs und Kunden",
           projects: {

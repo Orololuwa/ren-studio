@@ -1,15 +1,14 @@
 import { z } from "zod";
 
-import type { Route } from "./+types/export";
-import { retrieveTemplateFromDatabaseById } from "~/features/builder/shared/builder-model.server";
-import { getTemplateById } from "~/features/builder/shared/templates";
-import { generateExportHTML } from "~/features/builder/shared/utils/html-generator.server";
-import { mergeDataIntoTemplate } from "~/features/builder/shared/utils/merge-template-data.server";
-import { generatePDF } from "~/features/builder/shared/utils/pdf-generator.server";
+import type { Route } from "./+types/preview";
 import { organizationMembershipContext } from "~/features/organizations/organizations-middleware.server";
+import { getTemplateById } from "~/features/templates/shared/templates";
+import { retrieveTemplateFromDatabaseById } from "~/features/templates/shared/templates-model.server";
+import { generatePreviewHTML } from "~/features/templates/shared/utils/html-generator.server";
+import { mergeDataIntoTemplate } from "~/features/templates/shared/utils/merge-template-data.server";
 import { validateJson } from "~/utils/validate-json.server";
 
-const exportSchema = z.object({
+const previewSchema = z.object({
   sections: z
     .record(z.string(), z.record(z.string(), z.unknown()))
     .optional()
@@ -23,7 +22,7 @@ export async function action({ request, context, params }: Route.ActionArgs) {
     templateId: string;
   };
 
-  const result = await validateJson(request, exportSchema);
+  const result = await validateJson(request, previewSchema);
 
   if (!result.success) {
     return result.response;
@@ -56,28 +55,25 @@ export async function action({ request, context, params }: Route.ActionArgs) {
     // Merge provided data into template sections
     const mergedSections = mergeDataIntoTemplate(template, body.sections || {});
 
-    // Generate PDF using template config and merged sections
-    const html = generateExportHTML(
+    // Generate HTML using template config and merged sections
+    const html = generatePreviewHTML(
       mergedSections,
       template.globalStyles,
       template.type,
       template.colorPalette,
     );
 
-    const pdfBuffer = await generatePDF(html);
-
-    return new Response(pdfBuffer as unknown as BodyInit, {
+    return new Response(html, {
       headers: {
-        "Content-Disposition": `attachment; filename="${template.name || "template"}.pdf"`,
-        "Content-Type": "application/pdf",
+        "Content-Type": "text/html",
         ...Object.fromEntries(headers),
       },
     });
   } catch (error) {
-    console.error("Error generating export PDF:", error);
+    console.error("Error generating preview HTML:", error);
     return Response.json(
       {
-        error: "Failed to generate PDF",
+        error: "Failed to generate preview",
         message: error instanceof Error ? error.message : "Unknown error",
       },
       { headers: Object.fromEntries(headers), status: 500 },

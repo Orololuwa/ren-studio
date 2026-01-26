@@ -31,7 +31,7 @@ export function TemplatePreviewThumbnail({
 
     try {
       const response = await fetch(
-        `/organizations/${organizationSlug}/builder/${template.id}/preview`,
+        `/organizations/${organizationSlug}/templates/${template.id}/preview`,
         {
           method: "POST",
           headers: {

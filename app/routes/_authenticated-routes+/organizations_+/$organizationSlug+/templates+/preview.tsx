@@ -1,9 +1,9 @@
 import { z } from "zod";
 
 import type { Route } from "./+types/preview";
-import type { TemplateSection } from "~/features/builder/shared/types";
-import { generatePreviewHTML } from "~/features/builder/shared/utils/html-generator.server";
 import { organizationMembershipContext } from "~/features/organizations/organizations-middleware.server";
+import type { TemplateSection } from "~/features/templates/shared/types";
+import { generatePreviewHTML } from "~/features/templates/shared/utils/html-generator.server";
 import { validateFormData } from "~/utils/validate-form-data.server";
 
 const previewSchema = z.object({

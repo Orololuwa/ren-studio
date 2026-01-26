@@ -1,10 +1,10 @@
-import { componentLibrary } from "~/features/builder/shared/components/component-library-registry";
+import { componentLibrary } from "~/features/templates/shared/components/component-library-registry";
 import type {
   SectionType,
   TemplateType,
-} from "~/features/builder/shared/types";
-import { getComponentTypesForTemplateType } from "~/features/builder/shared/utils/generate-example-payload";
-import { generateSectionId } from "~/features/builder/shared/utils/generate-section-id";
+} from "~/features/templates/shared/types";
+import { getComponentTypesForTemplateType } from "~/features/templates/shared/utils/generate-example-payload";
+import { generateSectionId } from "~/features/templates/shared/utils/generate-section-id";
 
 export interface FieldSchema {
   name: string;

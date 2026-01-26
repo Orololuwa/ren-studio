@@ -23,7 +23,7 @@ export function ExportButton() {
 
     try {
       const response = await fetch(
-        `/organizations/${params.organizationSlug}/builder/${params.templateId}/export`,
+        `/organizations/${params.organizationSlug}/templates/${params.templateId}/export`,
         {
           method: "POST",
           headers: {

@@ -35,7 +35,7 @@ export function PreviewModal({
 
     try {
       const response = await fetch(
-        `/organizations/${params.organizationSlug}/builder/${params.templateId}/preview`,
+        `/organizations/${params.organizationSlug}/templates/${params.templateId}/preview`,
         {
           method: "POST",
           headers: {

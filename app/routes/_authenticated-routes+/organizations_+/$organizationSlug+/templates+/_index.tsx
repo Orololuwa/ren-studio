@@ -52,15 +52,15 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "~/components/ui/tooltip";
+import { getInstance } from "~/features/localization/i18next-middleware.server";
+import { organizationMembershipContext } from "~/features/organizations/organizations-middleware.server";
+import { TemplatePreviewThumbnail } from "~/features/templates/shared/components/template-preview-thumbnail";
+import { getTemplatesByType } from "~/features/templates/shared/templates";
 import {
   deleteTemplateFromDatabase,
   retrieveTemplatesByOrganizationIdAndType,
-} from "~/features/builder/shared/builder-model.server";
-import { TemplatePreviewThumbnail } from "~/features/builder/shared/components/template-preview-thumbnail";
-import { getTemplatesByType } from "~/features/builder/shared/templates";
-import type { Template } from "~/features/builder/shared/types";
-import { getInstance } from "~/features/localization/i18next-middleware.server";
-import { organizationMembershipContext } from "~/features/organizations/organizations-middleware.server";
+} from "~/features/templates/shared/templates-model.server";
+import type { Template } from "~/features/templates/shared/types";
 import { cn } from "~/lib/utils";
 import { getPageTitle } from "~/utils/get-page-title.server";
 import { createToastHeaders } from "~/utils/toast.server";
@@ -92,15 +92,15 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
   return data(
     {
       breadcrumb: {
-        title: t("organizations:builder.breadcrumb"),
-        to: href("/organizations/:organizationSlug/builder", {
+        title: t("organizations:templates.breadcrumb"),
+        to: href("/organizations/:organizationSlug/templates", {
           organizationSlug: params.organizationSlug,
         }),
       },
       activeType,
       allDefaultTemplates,
       organizationSlug: params.organizationSlug,
-      pageTitle: getPageTitle(t, "organizations:builder.pageTitle"),
+      pageTitle: getPageTitle(t, "organizations:templates.pageTitle"),
       savedTemplates,
     },
     { headers },
@@ -226,7 +226,7 @@ export default function BuilderRoute({ loaderData }: Route.ComponentProps) {
   };
 
   const handleCustomize = (templateId: string, isDefault: boolean) => {
-    const url = `/organizations/${organizationSlug}/builder/${templateId}?mode=customize&source=${templateId}`;
+    const url = `/organizations/${organizationSlug}/templates/${templateId}?mode=customize&source=${templateId}`;
     navigate(url);
     if (isDefault) {
       setTemplateSelectionModalOpen(false);
@@ -240,7 +240,7 @@ export default function BuilderRoute({ loaderData }: Route.ComponentProps) {
   };
 
   const handleEdit = (templateId: string) => {
-    const url = `/organizations/${organizationSlug}/builder/${templateId}?mode=edit`;
+    const url = `/organizations/${organizationSlug}/templates/${templateId}?mode=edit`;
     navigate(url);
   };
 
@@ -530,7 +530,7 @@ function DefaultTemplatePreviewModal({
 
     try {
       const response = await fetch(
-        `/organizations/${organizationSlug}/builder/${templateId}/preview`,
+        `/organizations/${organizationSlug}/templates/${templateId}/preview`,
         {
           method: "POST",
           headers: {

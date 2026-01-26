@@ -1,11 +1,11 @@
 import { z } from "zod";
 
 import type { Route } from "./+types/preview";
-import { retrieveTemplateFromDatabaseById } from "~/features/builder/shared/builder-model.server";
-import { getTemplateById } from "~/features/builder/shared/templates";
-import type { PreviewResponseFormat } from "~/features/builder/shared/utils/preview-handler.server";
-import { handlePreviewRequest } from "~/features/builder/shared/utils/preview-handler.server";
 import { authenticateApiKey } from "~/features/organizations/settings/api-keys/api-key-auth.server";
+import { getTemplateById } from "~/features/templates/shared/templates";
+import { retrieveTemplateFromDatabaseById } from "~/features/templates/shared/templates-model.server";
+import type { PreviewResponseFormat } from "~/features/templates/shared/utils/preview-handler.server";
+import { handlePreviewRequest } from "~/features/templates/shared/utils/preview-handler.server";
 import { validateJson } from "~/utils/validate-json.server";
 
 const previewSchema = z.object({

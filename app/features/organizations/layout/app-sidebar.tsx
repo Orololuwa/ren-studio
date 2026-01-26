@@ -99,8 +99,8 @@ export function AppSidebar({
             },
             {
               icon: HammerIcon,
-              title: t("app.builder"),
-              url: href("/organizations/:organizationSlug/builder", {
+              title: t("app.templates"),
+              url: href("/organizations/:organizationSlug/templates", {
                 organizationSlug,
               }),
             },

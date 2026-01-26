@@ -6,7 +6,7 @@ import {
   createTemplateInDatabase,
   deleteAllTemplatesForOrganization,
   deleteTemplateFromDatabase,
-} from "~/features/builder/shared/builder-model.server";
+} from "~/features/templates/shared/templates-model.server";
 
 test.describe("builder template selection page", () => {
   let organizationSlug: string;

@@ -30,7 +30,7 @@ import {
 } from "react-router";
 import { z } from "zod";
 
-import type { Route } from "../$templateId/+types/_index";
+import type { Route } from "./+types/_index";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import {
@@ -53,26 +53,26 @@ import {
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
 import { Sheet, SheetContent } from "~/components/ui/sheet";
+import { getInstance } from "~/features/localization/i18next-middleware.server";
+import { organizationMembershipContext } from "~/features/organizations/organizations-middleware.server";
+import { ApiPayloadModal } from "~/features/templates/shared/components/api-payload-modal";
+import { ColorPaletteEditor } from "~/features/templates/shared/components/color-palette-editor";
+import { ComponentPalette } from "~/features/templates/shared/components/component-palette";
+import { InlineEditor } from "~/features/templates/shared/components/inline-editor";
+import { PreviewModal } from "~/features/templates/shared/components/preview-modal";
+import { PropertiesPanel } from "~/features/templates/shared/components/properties-panel";
+import { TemplateCanvas } from "~/features/templates/shared/components/template-canvas";
+import { useBuilderStore } from "~/features/templates/shared/store/builder-store";
+import { getTemplateById } from "~/features/templates/shared/templates";
 import {
   createTemplateInDatabase,
   retrieveTemplateFromDatabaseById,
   saveTemplateToDatabase,
-} from "~/features/builder/shared/builder-model.server";
-import { ApiPayloadModal } from "~/features/builder/shared/components/api-payload-modal";
-import { ColorPaletteEditor } from "~/features/builder/shared/components/color-palette-editor";
-import { ComponentPalette } from "~/features/builder/shared/components/component-palette";
-import { InlineEditor } from "~/features/builder/shared/components/inline-editor";
-import { PreviewModal } from "~/features/builder/shared/components/preview-modal";
-import { PropertiesPanel } from "~/features/builder/shared/components/properties-panel";
-import { TemplateCanvas } from "~/features/builder/shared/components/template-canvas";
-import { useBuilderStore } from "~/features/builder/shared/store/builder-store";
-import { getTemplateById } from "~/features/builder/shared/templates";
+} from "~/features/templates/shared/templates-model.server";
 import type {
   Template,
   TemplateSection,
-} from "~/features/builder/shared/types";
-import { getInstance } from "~/features/localization/i18next-middleware.server";
-import { organizationMembershipContext } from "~/features/organizations/organizations-middleware.server";
+} from "~/features/templates/shared/types";
 import { cn } from "~/lib/utils";
 import { getPageTitle } from "~/utils/get-page-title.server";
 import { validateFormData } from "~/utils/validate-form-data.server";
@@ -308,8 +308,8 @@ export async function loader({ params, context, request }: Route.LoaderArgs) {
 
   return {
     breadcrumb: {
-      title: t("organizations:builder.breadcrumb"),
-      to: href("/organizations/:organizationSlug/builder/:templateId", {
+      title: t("organizations:templates.breadcrumb"),
+      to: href("/organizations/:organizationSlug/templates/:templateId", {
         organizationSlug: typedParams.organizationSlug,
         templateId: typedParams.templateId,
       }),
@@ -317,7 +317,7 @@ export async function loader({ params, context, request }: Route.LoaderArgs) {
     isNewFromDefault,
     mode,
     organizationSlug: typedParams.organizationSlug,
-    pageTitle: getPageTitle(t, "organizations:builder.pageTitle"),
+    pageTitle: getPageTitle(t, "organizations:templates.pageTitle"),
     sourceTemplate,
     template,
     templateId: template?.id || typedParams.templateId,
@@ -394,7 +394,7 @@ function ExportButtonMenuItem({
 
     try {
       const response = await fetch(
-        `/organizations/${organizationSlug}/builder/${templateId}/export`,
+        `/organizations/${organizationSlug}/templates/${templateId}/export`,
         {
           method: "POST",
           headers: {
@@ -631,7 +631,7 @@ export default function BuilderEditorRoute({
       // If it's a new template from customize, redirect to the new URL
       if (loaderData.isNewFromDefault && template.id !== templateId) {
         navigate(
-          `/organizations/${organizationSlug}/builder/${template.id}?mode=edit`,
+          `/organizations/${organizationSlug}/templates/${template.id}?mode=edit`,
           { replace: true },
         );
       }
@@ -701,7 +701,7 @@ export default function BuilderEditorRoute({
           </p>
           <Button
             onClick={() => {
-              navigate(`/organizations/${organizationSlug}/builder`);
+              navigate(`/organizations/${organizationSlug}/templates`);
             }}
             variant="outline"
           >
@@ -795,7 +795,7 @@ export default function BuilderEditorRoute({
                   <Button
                     className="h-8 w-8 shrink-0"
                     onClick={() => {
-                      navigate(`/organizations/${organizationSlug}/builder`);
+                      navigate(`/organizations/${organizationSlug}/templates`);
                     }}
                     size="icon"
                     variant="ghost"
