@@ -16,6 +16,7 @@ import {
   FileCode,
   Layers,
   Loader2,
+  Mail,
   MoreVertical,
   Palette,
   Settings,
@@ -61,6 +62,7 @@ import { ComponentPalette } from "~/features/templates/shared/components/compone
 import { InlineEditor } from "~/features/templates/shared/components/inline-editor";
 import { PreviewModal } from "~/features/templates/shared/components/preview-modal";
 import { PropertiesPanel } from "~/features/templates/shared/components/properties-panel";
+import { SendEmailModal } from "~/features/templates/shared/components/send-email-modal";
 import { TemplateCanvas } from "~/features/templates/shared/components/template-canvas";
 import { useBuilderStore } from "~/features/templates/shared/store/builder-store";
 import { getTemplateById } from "~/features/templates/shared/templates";
@@ -448,6 +450,7 @@ export default function BuilderEditorRoute({
   const [_searchParams] = useSearchParams();
   const [previewOpen, setPreviewOpen] = useState(false);
   const [apiPayloadOpen, setApiPayloadOpen] = useState(false);
+  const [sendEmailOpen, setSendEmailOpen] = useState(false);
   const [templateNotFound, setTemplateNotFound] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
@@ -951,6 +954,13 @@ export default function BuilderEditorRoute({
                       templateId={templateId}
                     />
                     <DropdownMenuItem
+                      data-testid="send-email-button"
+                      onSelect={() => setSendEmailOpen(true)}
+                    >
+                      <Mail className="h-4 w-4 mr-2" />
+                      Send Email
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
                       data-testid="api-payload-button"
                       onSelect={() => setApiPayloadOpen(true)}
                     >
@@ -1020,6 +1030,7 @@ export default function BuilderEditorRoute({
         )}
 
         <PreviewModal onOpenChange={setPreviewOpen} open={previewOpen} />
+        <SendEmailModal onOpenChange={setSendEmailOpen} open={sendEmailOpen} />
         <ApiPayloadModal
           onOpenChange={setApiPayloadOpen}
           open={apiPayloadOpen}
