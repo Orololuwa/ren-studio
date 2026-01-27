@@ -95,7 +95,7 @@ export const receiptTemplates: Template[] = [
     createdAt: new Date(),
     colorPalette: ["#f0fdf4", "#166534", "#16a34a", "#ffffff"],
     globalStyles: {
-      backgroundColor: "$colorPalette[0]",
+      backgroundColor: "$colorPalette[3]",
       fontFamily: "Inter, system-ui, -apple-system, sans-serif",
       fontSize: "14px",
       color: "$colorPalette[1]",

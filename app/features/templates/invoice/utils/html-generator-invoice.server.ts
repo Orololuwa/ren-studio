@@ -249,10 +249,22 @@ function generateInvoiceHTML(
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${isExport ? "Invoice Export" : "Invoice Preview"}</title>
   <style>
+    @page {
+      margin: 0;
+      size: A4;
+    }
+    
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
+    }
+    
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
     }
     
     body {
@@ -262,8 +274,7 @@ function generateInvoiceHTML(
     }
     
     .template-container {
-      max-width: 210mm;
-      margin: 0 auto;
+      ${isExport ? `width: 210mm; margin: 0;` : `max-width: 210mm; margin: 0 auto;`}
       background: white;
       padding: 0;
     }

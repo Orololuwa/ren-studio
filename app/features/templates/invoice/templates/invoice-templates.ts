@@ -100,7 +100,7 @@ export const invoiceTemplates: Template[] = [
     createdAt: new Date(),
     colorPalette: ["#eff6ff", "#0F2854", "#4988C4", "#ffffff"],
     globalStyles: {
-      backgroundColor: "$colorPalette[0]",
+      backgroundColor: "$colorPalette[3]",
       fontFamily: "Inter, system-ui, -apple-system, sans-serif",
       fontSize: "14px",
       color: "$colorPalette[1]",
