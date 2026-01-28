@@ -163,4 +163,4 @@ WORKDIR /app
 EXPOSE 3000
 
 # Run Prisma migrations and generate client, then start the app
-CMD ["sh", "-c", "npx prisma migrate deploy && npx prisma generate && npm run start"]
+CMD ["sh", "-c", "npm run start"]
