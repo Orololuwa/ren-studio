@@ -56,6 +56,23 @@ async function seed() {
         name: "Business User",
       }),
     },
+    {
+      lookupKey: priceLookupKeysByTierAndInterval.high.monthly,
+      organization: createPopulatedOrganization({
+        name: "Orololuwa",
+        imageUrl:
+          "https://iwvduhvsxhjpxapdochp.supabase.co/storage/v1/object/public/app-images/organization-logos/uyztdp5v8a8gowxfxlbrciys.jpg",
+        slug: "ororo",
+      }),
+      seats: 100,
+      tier: "Enterprise",
+      user: createPopulatedUserAccount({
+        email: "emmybest.ea@gmail.com",
+        name: "Emmanuel Awolusi",
+        imageUrl:
+          "https://iwvduhvsxhjpxapdochp.supabase.co/storage/v1/object/public/app-images/user-avatars/z5nxmk6hqkk5aq75458ljgsj.jpeg",
+      }),
+    },
   ];
 
   console.time(`👥 Created ${demoOrgs.length} organizations with owners`);

@@ -15,18 +15,18 @@ model UserAccount {
   email                     String                        @unique
   name                      String                        @default("")
   imageUrl                  String                        @default("")
-  memberships               OrganizationMembership[]
-  createdInviteLinks        OrganizationInviteLink[]
   usedInviteLinks           InviteLinkUse[]
-  createdEmailInvites       OrganizationEmailInviteLink[]
-  stripeSubscriptionsBought StripeSubscription[]
   notificationPanels        NotificationPanel[]
   notificationRecipient     NotificationRecipient[]
+  createdEmailInvites       OrganizationEmailInviteLink[]
+  createdInviteLinks        OrganizationInviteLink[]
+  memberships               OrganizationMembership[]
+  stripeSubscriptionsBought StripeSubscription[]
   createdApiKeys            OrganizationApiKey[]
 }
 
 model Organization {
-  id                          String                        @id() @default(cuid(2))
+  id                          String                        @id @default(cuid(2))
   createdAt                   DateTime                      @default(now())
   updatedAt                   DateTime                      @updatedAt
   name                        String
@@ -38,31 +38,25 @@ model Organization {
   stripeCustomerId            String?                       @unique
   /// We set this to 14 days from now by default in the Prisma middleware.
   trialEnd                    DateTime
-  memberships                 OrganizationMembership[]
-  organizationInviteLinks     OrganizationInviteLink[]
-  organizationEmailInviteLink OrganizationEmailInviteLink[]
-  stripeSubscriptions         StripeSubscription[]
-  notificationPanels          NotificationPanel[]
   notifications               Notification[]
-  templates                   Template[]
+  notificationPanels          NotificationPanel[]
+  organizationEmailInviteLink OrganizationEmailInviteLink[]
+  organizationInviteLinks     OrganizationInviteLink[]
+  memberships                 OrganizationMembership[]
+  stripeSubscriptions         StripeSubscription[]
   apiKey                      OrganizationApiKey?
-}
-
-enum OrganizationMembershipRole {
-  owner
-  admin
-  member
+  templates                   Template[]
 }
 
 model OrganizationMembership {
   createdAt      DateTime                   @default(now())
   updatedAt      DateTime                   @updatedAt
-  member         UserAccount                @relation(fields: [memberId], references: [id], onDelete: Cascade)
   memberId       String
-  organization   Organization               @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   organizationId String
   deactivatedAt  DateTime?
   role           OrganizationMembershipRole @default(member)
+  member         UserAccount                @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  organization   Organization               @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   @@id([memberId, organizationId])
 }
@@ -71,32 +65,24 @@ model OrganizationInviteLink {
   id             String          @id @default(cuid(2))
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
-  organization   Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   organizationId String
-  // The user who created the invite link. If the creator is deleted, the
-  // `creatorId` will be null, which is why this property is optional.
-  creator        UserAccount?    @relation(fields: [creatorId], references: [id], onDelete: SetNull)
   creatorId      String?
-  // Users who used the invite link.
-  linkUsages     InviteLinkUse[]
-  // The date when the invite link expires.
   expiresAt      DateTime
-  // The token that is used to authenticate the invite link.
   token          String          @unique @default(cuid(2))
-  // The date when the link was manually deactivated.
   deactivatedAt  DateTime?
+  linkUsages     InviteLinkUse[]
+  creator        UserAccount?    @relation(fields: [creatorId], references: [id])
+  organization   Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 }
 
 model InviteLinkUse {
   id           String                 @id @default(cuid(2))
   createdAt    DateTime               @default(now())
   updatedAt    DateTime               @updatedAt
-  // The invite link that was used.
-  inviteLink   OrganizationInviteLink @relation(fields: [inviteLinkId], references: [id], onDelete: Cascade)
   inviteLinkId String
-  // The user who used the invite link.
-  user         UserAccount?           @relation(fields: [userId], references: [id], onDelete: SetNull)
   userId       String?
+  inviteLink   OrganizationInviteLink @relation(fields: [inviteLinkId], references: [id], onDelete: Cascade)
+  user         UserAccount?           @relation(fields: [userId], references: [id])
 
   @@unique([inviteLinkId, userId])
 }
@@ -105,15 +91,15 @@ model OrganizationEmailInviteLink {
   id             String                     @id @default(cuid(2))
   createdAt      DateTime                   @default(now())
   updatedAt      DateTime                   @updatedAt
-  organization   Organization               @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   organizationId String
-  invitedBy      UserAccount?               @relation(fields: [invitedById], references: [id], onDelete: SetNull)
   invitedById    String?
   email          String
   token          String                     @unique @default(cuid(2))
   role           OrganizationMembershipRole @default(member)
   expiresAt      DateTime
   deactivatedAt  DateTime?
+  invitedBy      UserAccount?               @relation(fields: [invitedById], references: [id])
+  organization   Organization               @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 }
 
 model ContactSalesFormSubmission {
@@ -128,15 +114,170 @@ model ContactSalesFormSubmission {
   workEmail   String
 }
 
-// Stripe models
-
 model StripeProduct {
   stripeId String        @id
   name     String
   /// Max seats is set via the `metadata` field of the product as `max_seats`.
   maxSeats Int
-  prices   StripePrice[]
   active   Boolean
+  prices   StripePrice[]
+}
+
+model StripeSubscription {
+  /// The Stripe subscription's real ID
+  stripeId          String                      @id
+  organizationId    String
+  purchasedById     String?
+  /// Time at which the object was created. Stripe measures it in in seconds
+  /// since the Unix epoch, but we convert it to a Date.
+  created           DateTime
+  /// If the subscription has been canceled with the at_period_end flag set to
+  /// true, cancel_at_period_end on the subscription will be true. You can use
+  /// this attribute to determine whether a subscription that has a status of
+  /// active is scheduled to be canceled at the end of the current period.
+  cancelAtPeriodEnd Boolean
+  /// Possible values are incomplete, incomplete_expired, trialing, active,
+  /// past_due, canceled, unpaid, or paused.
+  status            StripeSubscriptionStatus
+  organization      Organization                @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  purchasedBy       UserAccount?                @relation(fields: [purchasedById], references: [id])
+  items             StripeSubscriptionItem[]
+  schedule          StripeSubscriptionSchedule?
+}
+
+model StripeSubscriptionItem {
+  stripeId             String             @id
+  stripeSubscriptionId String
+  /// End of the current period that the subscription item has been invoiced for.
+  /// At the end of this period, a new invoice will be created.
+  currentPeriodEnd     DateTime
+  /// Start of the current period that the subscription item has been invoiced for.
+  currentPeriodStart   DateTime
+  priceId              String
+  price                StripePrice        @relation(fields: [priceId], references: [stripeId], onDelete: Cascade)
+  stripeSubscription   StripeSubscription @relation(fields: [stripeSubscriptionId], references: [stripeId], onDelete: Cascade)
+}
+
+model StripePrice {
+  stripeId          String                            @id
+  lookupKey         String                            @unique
+  productId         String
+  currency          String
+  active            Boolean
+  unitAmount        Int
+  interval          StripePriceInterval
+  product           StripeProduct                     @relation(fields: [productId], references: [stripeId], onDelete: Cascade)
+  subscriptionItems StripeSubscriptionItem[]
+  schedulePhases    StripeSubscriptionSchedulePhase[]
+}
+
+model StripeSubscriptionSchedule {
+  stripeId          String                            @id
+  subscriptionId    String                            @unique
+  created           DateTime
+  currentPhaseStart DateTime?
+  currentPhaseEnd   DateTime?
+  subscription      StripeSubscription                @relation(fields: [subscriptionId], references: [stripeId], onDelete: Cascade)
+  phases            StripeSubscriptionSchedulePhase[]
+}
+
+model StripeSubscriptionSchedulePhase {
+  id         String                     @id @default(cuid(2))
+  scheduleId String
+  startDate  DateTime
+  endDate    DateTime
+  priceId    String
+  quantity   Int
+  price      StripePrice                @relation(fields: [priceId], references: [stripeId], onDelete: Cascade)
+  schedule   StripeSubscriptionSchedule @relation(fields: [scheduleId], references: [stripeId], onDelete: Cascade)
+}
+
+model Notification {
+  id             String                  @id @default(cuid(2))
+  createdAt      DateTime                @default(now())
+  updatedAt      DateTime                @updatedAt
+  organizationId String
+  content        Json
+  organization   Organization            @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  recipients     NotificationRecipient[]
+}
+
+model NotificationRecipient {
+  id             String       @id @default(cuid(2))
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  notificationId String
+  userId         String
+  /// When the user marked it read
+  readAt         DateTime?
+  notification   Notification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+  user           UserAccount  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([notificationId, userId])
+}
+
+model NotificationPanel {
+  id             String       @id @default(cuid(2))
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  userId         String
+  organizationId String
+  /// When badge was last cleared
+  lastOpenedAt   DateTime?
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user           UserAccount  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, organizationId])
+}
+
+model Template {
+  id               String       @id @default(cuid(2))
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  name             String
+  type             TemplateType
+  organizationId   String
+  sections         Json
+  globalStyles     Json
+  colorPalette     Json?
+  sourceTemplateId String?
+  organization     Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, type])
+  @@map("templates")
+}
+
+model OrganizationApiKey {
+  id             String       @id @default(cuid(2))
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organizationId String       @unique
+  /// Encrypted API key - encrypted using AES-256-GCM, never exposed in responses
+  encryptedKey   String
+  /// First 8 characters of the key for display purposes (e.g., "sk_live_")
+  keyPrefix      String
+  createdById    String?
+  createdBy      UserAccount? @relation(fields: [createdById], references: [id])
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@map("organization_api_keys")
+}
+
+/// A mock session table used exclusively for E2E testing.
+/// This enables passing access tokens between MSW and the main application,
+/// as Playwright's utilities cannot programmatically set access tokens directly
+model MockAccessTokenSession {
+  /// The access token used as the unique identifier for this mock session
+  accessToken String @id
+  /// The full mock session data stored as JSON, representing a Supabase session
+  sessionData Json
+}
+
+enum OrganizationMembershipRole {
+  owner
+  admin
+  member
 }
 
 enum StripeSubscriptionStatus {
@@ -170,128 +311,12 @@ enum StripeSubscriptionStatus {
   unpaid
 }
 
-model StripeSubscription {
-  /// The Stripe subscription's real ID
-  stripeId       String       @id
-  /// One‐to‐many with Organization
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  organizationId String
-  /// Who purchased it
-  purchasedBy    UserAccount? @relation(fields: [purchasedById], references: [id], onDelete: SetNull)
-  purchasedById  String?
-
-  /// Time at which the object was created. Stripe measures it in in seconds
-  /// since the Unix epoch, but we convert it to a Date.
-  created           DateTime
-  /// If the subscription has been canceled with the at_period_end flag set to
-  /// true, cancel_at_period_end on the subscription will be true. You can use
-  /// this attribute to determine whether a subscription that has a status of
-  /// active is scheduled to be canceled at the end of the current period.
-  cancelAtPeriodEnd Boolean
-  /// List of subscription items, each with an attached price.
-  items             StripeSubscriptionItem[]
-  /// Possible values are incomplete, incomplete_expired, trialing, active,
-  /// past_due, canceled, unpaid, or paused.
-  status            StripeSubscriptionStatus
-  /// A subscription can have only one schedule.
-  schedule          StripeSubscriptionSchedule?
-}
-
-model StripeSubscriptionItem {
-  stripeId             String             @id
-  stripeSubscription   StripeSubscription @relation(fields: [stripeSubscriptionId], references: [stripeId], onDelete: Cascade)
-  stripeSubscriptionId String
-  /// End of the current period that the subscription item has been invoiced for.
-  /// At the end of this period, a new invoice will be created.
-  currentPeriodEnd     DateTime
-  /// Start of the current period that the subscription item has been invoiced for.
-  currentPeriodStart   DateTime
-  price                StripePrice        @relation(fields: [priceId], references: [stripeId], onDelete: Cascade)
-  priceId              String
-}
-
 enum StripePriceInterval {
   day
   week
   month
   year
 }
-
-model StripePrice {
-  stripeId          String                            @id
-  lookupKey         String                            @unique
-  product           StripeProduct                     @relation(fields: [productId], references: [stripeId], onDelete: Cascade)
-  productId         String
-  currency          String
-  active            Boolean
-  unitAmount        Int
-  interval          StripePriceInterval
-  subscriptionItems StripeSubscriptionItem[]
-  schedulePhases    StripeSubscriptionSchedulePhase[]
-}
-
-model StripeSubscriptionSchedule {
-  stripeId          String                            @id
-  subscriptionId    String                            @unique
-  subscription      StripeSubscription                @relation(fields: [subscriptionId], references: [stripeId], onDelete: Cascade)
-  created           DateTime
-  currentPhaseStart DateTime?
-  currentPhaseEnd   DateTime?
-  phases            StripeSubscriptionSchedulePhase[]
-}
-
-model StripeSubscriptionSchedulePhase {
-  id         String                     @id @default(cuid(2))
-  scheduleId String
-  schedule   StripeSubscriptionSchedule @relation(fields: [scheduleId], references: [stripeId], onDelete: Cascade)
-  startDate  DateTime
-  endDate    DateTime
-  priceId    String
-  price      StripePrice                @relation(fields: [priceId], references: [stripeId], onDelete: Cascade)
-  quantity   Int
-}
-
-// Notification models
-
-model Notification {
-  id             String                  @id @default(cuid(2))
-  createdAt      DateTime                @default(now())
-  updatedAt      DateTime                @updatedAt
-  organization   Organization            @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  organizationId String
-  content        Json
-  recipients     NotificationRecipient[]
-}
-
-model NotificationRecipient {
-  id             String       @id @default(cuid(2))
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
-  notification   Notification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
-  notificationId String
-  user           UserAccount  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId         String
-  /// When the user marked it read
-  readAt         DateTime?
-
-  @@unique([notificationId, userId])
-}
-
-model NotificationPanel {
-  id             String       @id @default(cuid(2))
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
-  user           UserAccount  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId         String
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  organizationId String
-  /// When badge was last cleared
-  lastOpenedAt   DateTime?
-
-  @@unique([userId, organizationId])
-}
-
-// Template Builder models
 
 enum TemplateType {
   resume
@@ -308,54 +333,4 @@ enum TemplateType {
   letter
   form
   label
-}
-
-model Template {
-  id              String       @id @default(cuid(2))
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
-  name            String
-  type            TemplateType
-  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  organizationId String
-  sections        Json         // Array of TemplateSection
-  globalStyles    Json         // Record<string, string>
-  colorPalette    Json?        // Array of string (color values)
-  sourceTemplateId String?     // ID of the default template this was created from
-
-  @@index([organizationId, type])
-  @@map("templates")
-}
-
-// API Key models
-
-model OrganizationApiKey {
-  id             String       @id @default(cuid(2))
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  organizationId String       @unique
-  /// Encrypted API key - encrypted using AES-256-GCM, never exposed in responses
-  encryptedKey   String
-  /// First 8 characters of the key for display purposes (e.g., "sk_live_")
-  keyPrefix      String
-  /// User who created/regenerated this API key
-  createdBy      UserAccount? @relation(fields: [createdById], references: [id], onDelete: SetNull)
-  createdById    String?
-
-  @@index([organizationId])
-  @@map("organization_api_keys")
-}
-
-// Test models
-
-/// A mock session table used exclusively for E2E testing.
-/// This enables passing access tokens between MSW and the main application,
-/// as Playwright's utilities cannot programmatically set access tokens directly
-// for user login.
-model MockAccessTokenSession {
-  /// The access token used as the unique identifier for this mock session
-  accessToken String @id
-  /// The full mock session data stored as JSON, representing a Supabase session
-  sessionData Json
 }
