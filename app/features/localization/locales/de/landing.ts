@@ -5,31 +5,31 @@ export default {
       secondary: "Dokumentation",
     },
     description:
-      "Richte dein Projekt heute ein und beginne morgen mit der Entwicklung. Spare Monate bei der Einrichtung, damit du dich auf Features konzentrieren kannst.",
-    title: "Starte dein SaaS so schnell wie möglich.",
+      "Erstelle deinen ersten Lebenslauf oder deine erste Rechnung in Minuten. Keine Kreditkarte erforderlich.",
+    title: "Beginne noch heute mit dem Erstellen von Dokumenten",
   },
   description: {
-    eyebrow: "Warum dieses Template verwenden?",
+    eyebrow: "Warum unseren Dokumenten-Builder wählen?",
     features: [
       {
         description:
-          "TypeScript, ESLint & Prettier, Commitlint und GitHub Actions sind alle eingerichtet, damit dein Team von Tag eins an sauberen, konsistenten Code schreibt.",
-        title: "Werkzeuge ohne Konfiguration.",
+          "Intuitive Benutzeroberfläche ermöglicht es dir, Dokumente ohne Programmierung zu erstellen. Ziehe Abschnitte, passe Stile an und sieh Änderungen in Echtzeit.",
+        title: "Visueller Drag-and-Drop-Builder",
       },
       {
         description:
-          "In ein Template mit Zehntausenden von Codezeilen einzusteigen ist beängstigend. Vollständige Unit-, Integrations-, Komponenten- und E2E-Tests (Vitest, React Testing Library & Playwright) lassen dich ohne Angst refaktorieren.",
-        title: "Mit TDD entwickelt.",
+          "Aktuell unterstützt: Lebensläufe und Rechnungen. Kommt bald: Angebote, Vorschläge, Verträge und weitere Geschäftsdokumenttypen.",
+        title: "Mehrere Dokumenttypen",
       },
       {
         description:
-          "Sieh dir reale Muster für Bild-Uploads (Client vs. Server), MSW-umhüllte Mocks auf Client und Server, Factory-Funktionen und Test-Helfer für einfaches Testen, nahtlosen Dark-Mode ohne Flackern, Stripe-Zahlungsintegration, Authentifizierung und mehr an.",
-        title: "Lerne durch Beispiele.",
+          "Generiere hochwertige PDFs mit serverseitigem Rendering. Perfekt zum Drucken, Teilen oder Einbetten in deine Anwendungen.",
+        title: "Professioneller PDF-Export",
       },
       {
         description:
-          "Alles ist modular - entferne, was du nicht brauchst, passe die Ordnerstruktur an und erfasse neue Anforderungen mit Tests, während du wächst.",
-        title: "Vollständig anpassbar.",
+          "Sende generierte Dokumente direkt per E-Mail mit PDF-Anhängen. Passe E-Mail-Betreff und -Text an und sende professionelle Dokumente sofort an Kunden, Kunden oder Teammitglieder.",
+        title: "E-Mail-Integration",
       },
     ],
     image: {
@@ -37,11 +37,31 @@ export default {
       light: "Produkt-Screenshot (hell)",
     },
     subtitle:
-      "Wenn du ein SaaS startest, ist dein größter Vorteil Geschwindigkeit. Nutze diese produktionsreife Grundlage, damit du Monate der Einrichtung überspringen und direkt mit dem Ausliefern von Features beginnen kannst.",
-    title: "Fokussiere dich auf dein PMF",
+      "Erstelle Lebensläufe, Rechnungen und Geschäftsdokumente mit unserem intuitiven visuellen Builder. Keine Designkenntnisse erforderlich—ziehen, ablegen und exportieren.",
+    title: "Erstelle professionelle Dokumente in Minuten",
   },
   faq: {
     items: [
+      {
+        answer:
+          "Aktuell unterstützen wir Lebensläufe und Rechnungen. Kommt bald: Zertifikate, Zeugnisse, Angebote, Vorschläge, Verträge, Bestellungen, Quittungen, Kostenvoranschläge, Kontoauszüge, Briefe, Formulare und Etiketten.",
+        question: "Welche Dokumenttypen werden unterstützt?",
+      },
+      {
+        answer:
+          "Aktuell unterstützen wir PDF-Export. Kommt bald: DOCX (Word-Dokumente), HTML (web-freundlich) und PNG/JPG (Bildformate) Export-Optionen.",
+        question: "Kann ich in andere Formate als PDF exportieren?",
+      },
+      {
+        answer:
+          "Ja! Du kannst generierte Dokumente direkt per E-Mail mit PDF-Anhängen senden. Passe einfach den E-Mail-Betreff und -Text an und sende professionelle Dokumente sofort an Empfänger. Das PDF wird automatisch generiert und an deine E-Mail angehängt.",
+        question: "Kann ich Dokumente per E-Mail senden?",
+      },
+      {
+        answer:
+          "Die Plattform ist mit API-ready Architektur gebaut. REST-API-Endpunkte für Vorlagenverwaltung, Dokumentenerstellung und Bulk-Operationen kommen bald für Entwickler und B2B-Integrationen.",
+        question: "Gibt es eine API?",
+      },
       {
         answer:
           "Ja! Dies ist ein Open-Source-Projekt und kann kostenlos unter der MIT-Lizenz genutzt werden. Einige der integrierten Dienste (zum Beispiel Supabase, Stripe, Hosting-Anbieter usw.) können jedoch eigene Nutzungsgebühren verursachen, für die du verantwortlich bist.",
@@ -56,28 +76,16 @@ export default {
       {
         answer:
           "Schön, dass du fragst! Wir suchen immer nach Hilfe für das Projekt. Wenn du daran interessiert bist, beizutragen, schau dir bitte unseren <1>Leitfaden für Mitwirkende</1> an.",
-        links: {
-          contributing: "/docs",
-        },
         question: "Wie kann ich beitragen?",
       },
       {
         answer:
           "Du kannst in den GitHub-Diskussionen fragen. Wenn du an professioneller Hilfe beim Aufbau deiner App von erfahrenen React-Entwicklern interessiert bist, wende dich an <1>ReactSquad</1>.",
-        links: {
-          reactsquad: "https://reactsquad.io",
-        },
         question: "Ich stecke fest! Wo kann ich Hilfe bekommen?",
       },
       {
         answer:
           "Vielen Dank! Du kannst Jan Hesters auf <1>X</1>, <2>LinkedIn</2> oder <3>YouTube</3> folgen und ein Dankeschön hinterlassen. Und wenn du jemanden kennst, der erfahrene React-Entwickler braucht, empfiehl bitte <4>ReactSquad</4>. Vielen Dank!",
-        links: {
-          linkedin: "https://www.linkedin.com/in/Orololuwa/",
-          reactsquad: "https://reactsquad.io",
-          x: "https://x.com/Orololuwa",
-          youtube: "https://www.youtube.com/@Orololuwa",
-        },
         question: "Das ist großartig! Wie kann ich dich unterstützen?",
       },
     ],
@@ -87,69 +95,52 @@ export default {
     cards: [
       {
         description:
-          "Jeder Bildschirm funktioniert auf Desktop, Tablet und Mobilgerät. So kannst du alle Kunden bedienen.",
-        eyebrow: "TailwindCSS & Shadcn",
+          "Erstelle Dokumente visuell mit Drag-and-Drop-Komponenten. Keine Programmierung erforderlich—ziehe einfach Abschnitte, passe Stile an und sieh deine Änderungen sofort.",
+        eyebrow: "Visueller Builder",
         image: {
           dark: "Mobil-Screenshot (dunkel)",
           light: "Mobil-Screenshot (hell)",
         },
-        title: "Responsivität & Barrierefreiheit",
+        title: "Drag-and-Drop-Oberfläche",
       },
       {
         description:
-          "Die meisten SaaS-Apps erheben eine Form von wiederkehrendem Abonnement. Dieses Template kommt mit drei vorkonfigurierten Stufen. Aber selbst wenn deine Bedürfnisse anders sind, gibt dir dies einen Vorsprung.",
-        eyebrow: "Stripe",
+          "Erstelle heute Lebensläufe und Rechnungen. Kommt bald: Angebote, Vorschläge, Verträge, Bestellungen, Quittungen und weitere Geschäftsdokumenttypen.",
+        eyebrow: "Dokumenttypen",
         image: {
           dark: "Abrechnung (dunkel)",
           light: "Abrechnung (hell)",
         },
-        title: "Abrechnung",
+        title: "Mehrere Dokumenttypen",
       },
       {
         description:
-          "Mit Supabase Auth (E-Mail Magic Links & Google OAuth), einer verwalteten Postgres-Datenbank und Supabase Storage kümmert sich dieses Template um dein Backend. Storage bietet sogar zwei Upload-Flows: direkte Client-Uploads für große Dateien und server-vermittelte Uploads für kleine Assets wie Profilavatare.",
-        eyebrow: "Supabase",
+          "Generiere professionelle PDFs mit serverseitigem Rendering. Hochwertige Ausgabe, perfekt zum Drucken, Versenden oder Einbetten in deine Anwendungen.",
+        eyebrow: "Export",
         image: {
           dark: "Authentifizierung (dunkel)",
           light: "Authentifizierung (hell)",
         },
-        title: "Authentifizierung & Datenbank",
+        title: "Professioneller PDF-Export",
       },
       {
         description:
-          "Dieses Template enthält ein Benachrichtigungssystem, das Text, Erwähnungen und Links unterstützt, komplett mit Gelesen/Ungelesen-Tracking.",
+          "Sieh deine Dokumentänderungen in Echtzeit während du bearbeitest. Vorschau genau so, wie dein Dokument aussehen wird, bevor du exportierst.",
         image: {
           dark: "Benachrichtigungen (dunkel)",
           light: "Benachrichtigungen (hell)",
         },
-        title: "Benachrichtigungen",
+        title: "Echtzeit-Vorschau",
       },
       {
         description:
-          "Der integrierte Cookie-basierte Dark Mode verhindert Flackern beim Laden und respektiert standardmäßig helle, dunkle oder Systemeinstellungen.",
-        title: "Dark Mode",
-      },
-      {
-        description:
-          "Füge Mitglieder über teilbare Einladungslinks oder E-Mail-Einladungen hinzu, bei denen du Rollen zuweisen kannst - Owner, Admin oder Member - um Zugriff und Berechtigungen zu steuern.",
-        eyebrow: "Multi-Tenancy",
-        title: "Mitgliederverwaltung",
-      },
-      {
-        description:
-          "Verwalte Übersetzungen, wechsle Sprachen im laufenden Betrieb und handhabe gebietsspezifische Formatierung (Daten, Zahlen, Währungen) ohne zusätzliche Einrichtung.",
-        eyebrow: "React i18next",
-        title: "Internationalisierung",
-      },
-      {
-        description:
-          "Enthält Benutzerkontoeinstellungen, E-Mail-Versand (mit Resend), einen Onboarding-Flow und eine Vielzahl anderer Hilfsprogramme, die dir helfen, sofort loszulegen.",
-        eyebrow: "Verschiedenes",
-        title: "Und vieles mehr ...",
+          "Sende generierte Dokumente direkt per E-Mail mit PDF-Anhängen. Passe E-Mail-Betreff und -Text an und liefere professionelle Dokumente sofort an Empfänger.",
+        eyebrow: "E-Mail-Integration",
+        title: "Dokumente per E-Mail senden",
       },
     ],
     eyebrow: "Features",
-    title: "Alles, was dein SaaS braucht",
+    title: "Alles, was du zum Erstellen von Dokumenten brauchst",
   },
   footer: {
     madeWithLove: "Gemacht mit ❤️ von",
@@ -169,18 +160,18 @@ export default {
     register: "Registrieren",
   },
   hero: {
-    badge: "<1>KEIN</1> offizielles Template",
+    badge: "Visuelle Dokumentenerstellungsplattform",
     cta: {
       primary: "Jetzt starten",
       secondary: "Dokumentation",
     },
     description:
-      "Spare deinem Team Monate beim Aufbau von B2B & B2C SaaS-Anwendungen mit diesem <1>kostenlosen</1> React Router Community-Template.",
+      "Erstelle Lebensläufe, Rechnungen und mehr mit unserem visuellen Builder. Exportiere als PDF, sende per E-Mail, passe mit über 120 Styling-Optionen an und integriere über API.",
     image: {
       dark: "App-Screenshot (dunkel)",
       light: "App-Screenshot (hell)",
     },
-    title: "Document Builder",
+    title: "Erstelle professionelle Dokumente per Drag & Drop",
   },
   logos: {
     title: "Der Stack hinter dem Template",

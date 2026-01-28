@@ -3,7 +3,6 @@ import type { CSSProperties } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { Link } from "react-router";
 
-import { RenStudioLogo } from "~/components/ren-studio-logo";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { cn } from "~/lib/utils";
@@ -45,10 +44,6 @@ export function Hero() {
         </Badge>
 
         <h1 className="">
-          <RenStudioLogo className="mx-auto h-auto w-1/2" />
-
-          <br />
-
           <span
             aria-hidden="true"
             className="font-mono text-4xl font-semibold sm:text-7xl"

@@ -5,31 +5,31 @@ export default {
       secondary: "Documentation",
     },
     description:
-      "Set up your project today and start building tomorrow. Save months on setup so you can focus on features.",
-    title: "Launch your SaaS asap.",
+      "Create your first resume or invoice in minutes. No credit card required.",
+    title: "Start Building Documents Today",
   },
   description: {
-    eyebrow: "Why use this template?",
+    eyebrow: "Why choose our document builder?",
     features: [
       {
         description:
-          "TypeScript, ESLint & Prettier, Commitlint and GitHub Actions are all wired up, so your team writes clean, consistent code from day one.",
-        title: "Zero-config tooling.",
+          "Intuitive interface lets you build documents without writing code. Drag sections, customize styles, and see changes in real-time.",
+        title: "Visual Drag-and-Drop Builder",
       },
       {
         description:
-          "Jumping into a template with tens of thousands of lines of code is scary. Complete unit, integration, component and E2E tests (Vitest, React Testing Library & Playwright) let you refactor without fear.",
-        title: "Built with TDD.",
+          "Currently supports Resumes and Invoices. Coming soon: Quotes, Proposals, Contracts, and more business document types.",
+        title: "Multiple Document Types",
       },
       {
         description:
-          "See real-world patterns for image uploads (client vs. server), MSW-wrapped mocks on both client and server, factory functions and test helpers for easy testing, seamless dark-mode without flicker, Stripe payments integration, authentication, and more.",
-        title: "Learn by example.",
+          "Generate high-quality PDFs with server-side rendering. Perfect for printing, sharing, or embedding in your applications.",
+        title: "Professional PDF Export",
       },
       {
         description:
-          "Everything's modular - strip out what you don't need, tweak folder structure, and capture new requirements with tests as you grow.",
-        title: "Fully customizable.",
+          "Send generated documents directly via email with PDF attachments. Customize email subject and body, then send professional documents to clients, customers, or team members instantly.",
+        title: "Email Integration",
       },
     ],
     image: {
@@ -37,48 +37,30 @@ export default {
       light: "Product screenshot (light)",
     },
     subtitle:
-      "When you're launching a SaaS, your biggest advantage is speed. Use this production-ready foundation so you can skip months of setup and dive straight into shipping features.",
-    title: "Focus on your PMF",
+      "Build resumes, invoices, and business documents with our intuitive visual builder. No design skills needed—drag, drop, and export.",
+    title: "Create Professional Documents in Minutes",
   },
   faq: {
     items: [
       {
         answer:
-          "Yes! This is an open-source project and is free to use under the MIT license. However, some of the integrated services (for example Supabase, Stripe, hosting providers, etc.) may incur their own usage fees, which you are responsible for covering.",
-        question: "Is this free?",
+          "Currently, we support Resumes and Invoices. Coming soon: Certificates, Report Cards, Quotes, Proposals, Contracts, Purchase Orders, Receipts, Estimates, Statements, Letters, Forms, and Labels.",
+        question: "What document types are supported?",
       },
       {
         answer:
-          'No. This is an independent, community-maintained, open-source template. It is not sponsored by, affiliated with, or endorsed by Shopify Inc. "React Router" and its logos are trademarks of Shopify Inc., and this project makes no claim of official partnership or endorsement.',
-        question:
-          "Is this template officially supported by or endorsed by Shopify Inc.?",
+          "Currently, we support PDF export. Coming soon: DOCX (Word documents), HTML (web-friendly), and PNG/JPG (image formats) export options.",
+        question: "Can I export to formats other than PDF?",
       },
       {
         answer:
-          "Glad you asked! We're always looking for help with the project. If you're interested in contributing, please check out our <1>contributing guide</1> for more information.",
-        links: {
-          contributing: "/docs",
-        },
-        question: "How do I contribute?",
+          "Yes! You can send generated documents directly via email with PDF attachments. Simply customize the email subject and body, then send professional documents to recipients instantly. The PDF is automatically generated and attached to your email.",
+        question: "Can I send documents via email?",
       },
       {
         answer:
-          "You can ask in GitHub discussions. If you're interested in professional help building your app from senior React developers, reach out to us at <1>ReactSquad</1>.",
-        links: {
-          reactsquad: "https://reactsquad.io",
-        },
-        question: "I'm stuck! Where can I get help?",
-      },
-      {
-        answer:
-          "Thank you so much! You can follow Jan Hesters on <1>X</1>, <2>LinkedIn</2>, or <3>YouTube</3>, and drop a thank you. And if you know anyone who needs senior React developers, please recommend <4>ReactSquad</4>. Thank you!",
-        links: {
-          linkedin: "https://www.linkedin.com/in/Orololuwa/",
-          reactsquad: "https://reactsquad.io",
-          x: "https://x.com/Orololuwa",
-          youtube: "https://www.youtube.com/@Orololuwa",
-        },
-        question: "This is awesome! How can I support you?",
+          "The platform is built with API-ready architecture. REST API endpoints for template management, document generation, and bulk operations are coming soon for developers and B2B integrations.",
+        question: "Is there an API available?",
       },
     ],
     title: "Frequently asked questions",
@@ -87,23 +69,54 @@ export default {
     cards: [
       {
         description:
-          "Every screen works on desktop, tablet and mobile. So you can serve all customers.",
-        eyebrow: "TailwindCSS & Shadcn",
+          "Build documents visually with drag-and-drop components. No coding required—just drag sections, customize styles, and see your changes instantly.",
+        eyebrow: "Visual Builder",
         image: {
           dark: "Mobile screenshot (dark)",
           light: "Mobile screenshot (light)",
         },
-        title: "Responsiveness & Accessibility",
+        title: "Drag-and-Drop Interface",
       },
       {
         description:
-          "Most SaaS apps charge some form of recurring subscription. This template comes with three tiers preconfigured. But even if your needs are different, this will give you a head start.",
-        eyebrow: "Stripe",
+          "Create Resumes and Invoices today. Coming soon: Quotes, Proposals, Contracts, Purchase Orders, Receipts, and more business document types.",
+        eyebrow: "Document Types",
         image: {
           dark: "Billing (dark)",
           light: "Billing (light)",
         },
-        title: "Billing",
+        title: "Multiple Document Types",
+      },
+      {
+        description:
+          "Generate professional PDFs with server-side rendering. High-quality output perfect for printing, emailing, or embedding in your applications.",
+        eyebrow: "Export",
+        image: {
+          dark: "Authentication (dark)",
+          light: "Authentication (light)",
+        },
+        title: "Professional PDF Export",
+      },
+      {
+        description:
+          "See your document changes in real-time as you edit. Preview exactly how your document will look before exporting.",
+        image: {
+          dark: "Notifications (dark)",
+          light: "Notifications (light)",
+        },
+        title: "Real-Time Preview",
+      },
+      {
+        description:
+          "Send generated documents directly via email with PDF attachments. Customize email subject and body, then deliver professional documents to recipients instantly.",
+        eyebrow: "Email Integration",
+        title: "Send Documents via Email",
+      },
+      {
+        description:
+          "Built with API-ready architecture for seamless integrations. REST API coming soon for developers and B2B customers.",
+        eyebrow: "API Integration",
+        title: "Developer-Friendly",
       },
       {
         description:
@@ -117,39 +130,17 @@ export default {
       },
       {
         description:
-          "This template includes a notifications system supporting text, mentions, and links, complete with read/unread tracking.",
+          "Most SaaS apps charge some form of recurring subscription. This template comes with three tiers preconfigured. But even if your needs are different, this will give you a head start.",
+        eyebrow: "Stripe",
         image: {
-          dark: "Notifications (dark)",
-          light: "Notifications (light)",
+          dark: "Billing (dark)",
+          light: "Billing (light)",
         },
-        title: "Notifications",
-      },
-      {
-        description:
-          "Built-in cookie-based dark mode prevents flicker on load and respects light, dark, or system settings out of the box.",
-        title: "Dark Mode",
-      },
-      {
-        description:
-          "Add members via shareable invite links or email invites where you can assign roles - Owner, Admin, or Member - to control access and permissions.",
-        eyebrow: "Multi-tenancy",
-        title: "Member Management",
-      },
-      {
-        description:
-          "Manage translations, switch languages on the fly, and handle locale-specific formatting (dates, numbers, currencies) without any extra setup.",
-        eyebrow: "React i18next",
-        title: "Internationalization",
-      },
-      {
-        description:
-          "Includes user account settings, sending emails (with Resend), an onboarding flow, and a host of other utilities to help you hit the ground running.",
-        eyebrow: "Miscellaneous",
-        title: "And much more ...",
+        title: "Billing",
       },
     ],
     eyebrow: "Features",
-    title: "Everything your SaaS needs",
+    title: "Everything you need to build documents",
   },
   footer: {
     madeWithLove: "Made with ❤️ by",
@@ -169,18 +160,18 @@ export default {
     register: "Register",
   },
   hero: {
-    badge: "<1>NOT</1> an official template",
+    badge: "Visual document generation platform",
     cta: {
       primary: "Get Started",
       secondary: "Documentation",
     },
     description:
-      "Save your team months when building B2B & B2C SaaS applications with this <1>free</1> React Router community template.",
+      "Create resumes, invoices, and more with our visual builder. Export to PDF, send via email, customize with 120+ styling options, and integrate via API.",
     image: {
       dark: "App screenshot (dark)",
       light: "App screenshot (light)",
     },
-    title: "Document Builder",
+    title: "Build Professional Documents with Drag & Drop",
   },
   logos: {
     title: "The Stack Behind the Template",
