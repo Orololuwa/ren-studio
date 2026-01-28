@@ -21,6 +21,8 @@ async function getBrowserInstance(): Promise<Browser> {
 
   const launchOptions: Parameters<typeof puppeteer.launch>[0] = {
     headless: true,
+    // Use system Chromium in Docker, or bundled Chromium in local dev
+    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
     args: [
       "--no-sandbox",
       "--disable-setuid-sandbox",

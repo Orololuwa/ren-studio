@@ -109,12 +109,8 @@ export default async function handleRequest(
                     "'self'",
                   ],
                   "font-src": ["'self'"],
-                  "frame-src": ["'self'"],
-                  "img-src": [
-                    "'self'",
-                    "data:",
-                    MODE === "test" ? "blob:" : undefined,
-                  ],
+                  "frame-src": ["'self'", "blob:"],
+                  "img-src": ["*"],
                   // Script sources with nonce and strict-dynamic
                   "script-src": [
                     "'strict-dynamic'",
