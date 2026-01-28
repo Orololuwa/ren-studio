@@ -106,6 +106,8 @@ COPY ./prisma /app/prisma
 COPY ./prisma.config.ts /app/prisma.config.ts
 WORKDIR /app
 # Generate Prisma client before building (doesn't require database connection)
+# Provide a dummy DATABASE_URL for prisma.config.ts (not actually used during generation)
+ENV DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
 RUN npx prisma generate
 RUN npm run build
 
