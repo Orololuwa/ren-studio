@@ -57,8 +57,7 @@ export default {
         answer:
           "Glad you asked! We're always looking for help with the project. If you're interested in contributing, please check out our <1>contributing guide</1> for more information.",
         links: {
-          contributing:
-            "https://github.com/janhesters/react-router-saas-template/blob/main/CONTRIBUTING.md",
+          contributing: "/docs",
         },
         question: "How do I contribute?",
       },
@@ -74,10 +73,10 @@ export default {
         answer:
           "Thank you so much! You can follow Jan Hesters on <1>X</1>, <2>LinkedIn</2>, or <3>YouTube</3>, and drop a thank you. And if you know anyone who needs senior React developers, please recommend <4>ReactSquad</4>. Thank you!",
         links: {
-          linkedin: "https://www.linkedin.com/in/jan-hesters/",
+          linkedin: "https://www.linkedin.com/in/Orololuwa/",
           reactsquad: "https://reactsquad.io",
-          x: "https://x.com/janhesters",
-          youtube: "https://www.youtube.com/@janhesters",
+          x: "https://x.com/Orololuwa",
+          youtube: "https://www.youtube.com/@Orololuwa",
         },
         question: "This is awesome! How can I support you?",
       },
@@ -181,7 +180,7 @@ export default {
       dark: "App screenshot (dark)",
       light: "App screenshot (light)",
     },
-    title: "SaaS Template",
+    title: "Document Builder",
   },
   logos: {
     title: "The Stack Behind the Template",

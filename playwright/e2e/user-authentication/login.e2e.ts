@@ -70,7 +70,7 @@ test.describe("login page", () => {
     await page.goto(path);
 
     // The page title is correct.
-    await expect(page).toHaveTitle(/login | react router saas template/i);
+    await expect(page).toHaveTitle(/login | Ren Studio/i);
 
     // The register button has the correct link.
     await expect(page.getByRole("link", { name: /sign up/i })).toHaveAttribute(

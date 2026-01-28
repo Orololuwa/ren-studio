@@ -1,8 +1,9 @@
-import { GalleryVerticalEndIcon } from "lucide-react";
 import type { ComponentProps } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 
+import { ThemeToggle } from "../color-scheme/theme-toggle";
+import { RenStudioLogo } from "~/components/ren-studio-logo";
 import { Button } from "~/components/ui/button";
 import { cn } from "~/lib/utils";
 
@@ -18,14 +19,12 @@ export function Header({ className, ...props }: ComponentProps<"header">) {
       )}
       {...props}
     >
-      <div className="container mx-auto flex h-[var(--header-height)] items-center justify-between gap-2 px-4">
+      <div className="container mx-auto flex h-(--header-height) items-center justify-between gap-2 px-4">
         <Link
           className="flex items-center gap-2 self-center font-medium"
           to="/"
         >
-          <div className="bg-primary text-primary-foreground flex size-8 items-center justify-center rounded-md sm:size-6">
-            <GalleryVerticalEndIcon className="size-6 sm:size-4" />
-          </div>
+          <RenStudioLogo className="size-8 sm:size-6" />
 
           <span className="hidden font-mono sm:block">
             {tCommon("appName")}
@@ -49,6 +48,8 @@ export function Header({ className, ...props }: ComponentProps<"header">) {
           <Button asChild size="sm">
             <Link to="/login">{t("register")}</Link>
           </Button>
+
+          <ThemeToggle />
         </div>
       </div>
     </header>

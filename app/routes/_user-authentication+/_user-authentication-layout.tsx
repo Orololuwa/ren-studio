@@ -1,9 +1,11 @@
-import { ChevronLeftIcon, GalleryVerticalEndIcon } from "lucide-react";
+import { ChevronLeftIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { href, Link, Outlet, useMatch } from "react-router";
 
 import type { Route } from "./+types/_user-authentication-layout";
+import { RenStudioLogo } from "~/components/ren-studio-logo";
 import { Button } from "~/components/ui/button";
+import { ThemeToggle } from "~/features/color-scheme/theme-toggle";
 import { FloatingPaths } from "~/features/user-authentication/floating-paths";
 
 /**
@@ -36,9 +38,7 @@ export default function UserAuthenticationLayout({
           className="z-10 flex items-center gap-2 font-medium"
           to={href("/")}
         >
-          <div className="bg-primary text-primary-foreground flex size-6 items-center justify-center rounded-md">
-            <GalleryVerticalEndIcon className="size-4" />
-          </div>
+          <RenStudioLogo className="size-6" />
           {tCommon("appName")}
         </Link>
         <div className="z-10 mt-auto">
@@ -70,16 +70,21 @@ export default function UserAuthenticationLayout({
           <div className="-translate-y-87.5 absolute top-0 right-0 h-320 w-60 rounded-full bg-[radial-gradient(50%_50%_at_50%_50%,--theme(--color-primary/.04)_0,--theme(--color-primary/.01)_80%,transparent_100%)]" />
         </div>
         {(loginMatch || registerMatch) && (
-          <Button
-            asChild
-            className="absolute top-7 left-5 z-10"
-            variant="ghost"
-          >
-            <Link to={href("/")}>
-              <ChevronLeftIcon />
-              {t("home")}
-            </Link>
-          </Button>
+          <>
+            <Button
+              asChild
+              className="absolute top-7 left-5 z-10"
+              variant="ghost"
+            >
+              <Link to={href("/")}>
+                <ChevronLeftIcon />
+                {t("home")}
+              </Link>
+            </Button>
+            <div className="absolute top-7 right-5 z-10">
+              <ThemeToggle />
+            </div>
+          </>
         )}
         <div className="relative flex min-h-screen flex-col justify-center p-4">
           <div className="mx-auto w-full max-w-sm">

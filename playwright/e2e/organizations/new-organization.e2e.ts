@@ -64,9 +64,7 @@ test.describe("new organization page", () => {
         "href",
         "/organizations",
       );
-      await expect(page).toHaveTitle(
-        /new organization | react router saas template/i,
-      );
+      await expect(page).toHaveTitle(/new organization | Ren Studio/i);
       await expect(page.getByText(/create a new organization/i)).toBeVisible();
       await expect(
         page.getByText(/tell us about your organization/i),
@@ -151,9 +149,7 @@ test.describe("new organization page", () => {
         "href",
         "/organizations",
       );
-      await expect(page).toHaveTitle(
-        /new organization | react router saas template/i,
-      );
+      await expect(page).toHaveTitle(/new organization | Ren Studio/i);
       await expect(page.getByText(/create a new organization/i)).toBeVisible();
       await expect(
         page.getByText(/tell us about your organization/i),
@@ -235,9 +231,7 @@ test.describe("new organization page", () => {
       await page.getByRole("link", { name: /new organization/i }).click();
 
       // Verify page content
-      await expect(page).toHaveTitle(
-        /new organization | react router saas template/i,
-      );
+      await expect(page).toHaveTitle(/new organization | Ren Studio/i);
       await expect(page.getByText(/create a new organization/i)).toBeVisible();
       await expect(
         page.getByText(/tell us about your organization/i),
@@ -295,9 +289,7 @@ test.describe("new organization page", () => {
       await page.getByRole("link", { name: /new organization/i }).click();
 
       // Verify page content
-      await expect(page).toHaveTitle(
-        /new organization | react router saas template/i,
-      );
+      await expect(page).toHaveTitle(/new organization | Ren Studio/i);
       await expect(page.getByText(/create a new organization/i)).toBeVisible();
       await expect(
         page.getByText(/tell us about your organization/i),
@@ -350,9 +342,7 @@ test.describe("new organization page", () => {
       await page.goto(path);
 
       // Verify page content
-      await expect(page).toHaveTitle(
-        /new organization | react router saas template/i,
-      );
+      await expect(page).toHaveTitle(/new organization | Ren Studio/i);
       await expect(page.getByText(/create a new organization/i)).toBeVisible();
       await expect(
         page.getByText(/tell us about your organization/i),

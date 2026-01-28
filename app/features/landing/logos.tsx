@@ -15,9 +15,8 @@ import {
 } from "react-icons/si";
 
 import { PlaywrightIcon } from "./svgs/playwright-icon";
-import { RRLockupDarkIcon } from "./svgs/rr-lockup-dark-icon";
-import { RRLockupLightIcon } from "./svgs/rr-lockup-light-icon";
 import { Marquee } from "~/components/magicui/marquee";
+import { RenStudioLogo } from "~/components/ren-studio-logo";
 
 export function Logos() {
   const { t } = useTranslation("landing", { keyPrefix: "logos" });
@@ -32,12 +31,7 @@ export function Logos() {
         <Marquee className="max-w-full">
           {[
             {
-              icon: (
-                <>
-                  <RRLockupDarkIcon className="hidden h-24 w-auto dark:block" />
-                  <RRLockupLightIcon className="block h-24 w-auto dark:hidden" />
-                </>
-              ),
+              icon: <RenStudioLogo className="size-16" />,
               key: "react-router",
             },
             {

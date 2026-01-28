@@ -30,10 +30,10 @@ export function CTA() {
             className="text-background dark:text-foreground"
             variant="link"
           >
-            <a href="https://github.com/janhesters/react-router-saas-template">
+            <Link to="/docs">
               {t("buttons.secondary")}
               <BookTextIcon />
-            </a>
+            </Link>
           </Button>
         </div>
 

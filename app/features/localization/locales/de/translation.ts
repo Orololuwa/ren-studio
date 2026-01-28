@@ -1,5 +1,5 @@
 export default {
-  appName: "React Router SaaS Template",
+  appName: "Ren Studio",
   breadcrumbNavigation: "Navigationspfad",
   notFound: {
     description:

@@ -3,8 +3,7 @@ import type { CSSProperties } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { Link } from "react-router";
 
-import { RRLockupDarkIcon } from "./svgs/rr-lockup-dark-icon";
-import { RRLockupLightIcon } from "./svgs/rr-lockup-light-icon";
+import { RenStudioLogo } from "~/components/ren-studio-logo";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { cn } from "~/lib/utils";
@@ -46,8 +45,7 @@ export function Hero() {
         </Badge>
 
         <h1 className="">
-          <RRLockupLightIcon className="block px-2 dark:hidden" />
-          <RRLockupDarkIcon className="hidden px-2 dark:block" />
+          <RenStudioLogo className="mx-auto h-auto w-1/2" />
 
           <br />
 
@@ -83,10 +81,10 @@ export function Hero() {
           </Button>
 
           <Button asChild className="text-foreground" variant="link">
-            <a href="https://github.com/janhesters/react-router-saas-template">
+            <Link to="/docs">
               {t("cta.secondary")}
               <BookTextIcon />
-            </a>
+            </Link>
           </Button>
         </div>
       </div>

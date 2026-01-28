@@ -1,4 +1,4 @@
-# Welcome to the React Router SaaS Template!
+# Welcome to the Ren Studio!
 
 A modern, production-ready template for building full-stack B2B & B2C SaaS
 applications using React Router.
@@ -60,7 +60,7 @@ when you update the template and change or ammend its code.
 Get the code:
 
 ```bash
-npx create-react-router@latest --template janhesters/react-router-saas-template
+npx create-react-router@latest --template Orololuwa/react-router-saas-template
 ```
 
 ### Installation
@@ -365,7 +365,7 @@ For each price, set the "Product tax code" to "SaaS" and the "Unit label" to
 
 #### 1. Create your products & prices
 
-The React Router SaaS Template is set up to listen to product & prices webhooks.
+The Ren Studio is set up to listen to product & prices webhooks.
 This also allows your account managers to create and manage products & prices in
 the Stripe Dashboard, and have them automatically reflected in your app.
 
@@ -531,7 +531,7 @@ subscription via the portal.
 
 Here are a few miscellaneous things you might want to change:
 
-1. Give it your own name! Fuzzy search for `React Router SaaS Template` to find
+1. Give it your own name! Fuzzy search for `Ren Studio` to find
    all the places you need to change the name.
 2. The current theme violates color contrast. It's best for you to pick a theme
    that is accessible and configure it in your `app.css` file. Then you can
@@ -736,14 +736,14 @@ This template uses [flat routes](https://github.com/kiliman/remix-flat-routes).
 
 ### i18n
 
-This React Router SaaS template comes with localization support through
+This Ren Studio comes with localization support through
 [remix-i18next](https://github.com/sergiodxa/remix-i18next).
 
 The namespaces live in `public/locales/`.
 
 ### Toasts
 
-This React Router SaaS template includes utilities for toast notifications based
+This Ren Studio includes utilities for toast notifications based
 on flash sessions.
 
 **Flash Data:** Temporary session values, ideal for transferring data to the

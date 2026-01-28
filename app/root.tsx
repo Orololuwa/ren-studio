@@ -44,6 +44,18 @@ import { securityMiddleware } from "./utils/security-middleware.server";
 import { getToast } from "./utils/toast.server";
 
 export const links: Route.LinksFunction = () => [
+  {
+    rel: "icon",
+    type: "image/svg+xml",
+    href: "https://iwvduhvsxhjpxapdochp.supabase.co/storage/v1/object/public/app-images/ren-studio/ren-studio.svg",
+    media: "(prefers-color-scheme: light)",
+  },
+  {
+    rel: "icon",
+    type: "image/svg+xml",
+    href: "https://iwvduhvsxhjpxapdochp.supabase.co/storage/v1/object/public/app-images/ren-studio/ren-studio-dark-mode.svg",
+    media: "(prefers-color-scheme: dark)",
+  },
   { href: sonnerStyles, rel: "stylesheet" },
 ];
 

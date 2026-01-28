@@ -10,7 +10,7 @@ const createMockT = (pageTitle: string): TFunction => {
         return pageTitle.split(".")[0];
       }
       case "appName": {
-        return "React Router SaaS Template";
+        return "Ren Studio";
       }
       default: {
         return key;
@@ -26,7 +26,7 @@ describe("getPageTitle", () => {
     const mockT = createMockT("login.pageTitle");
 
     const actual = getPageTitle(mockT, "login.pageTitle");
-    const expected = "login | React Router SaaS Template";
+    const expected = "login | Ren Studio";
 
     expect(actual).toEqual(expected);
   });
@@ -35,7 +35,7 @@ describe("getPageTitle", () => {
     const mockT = createMockT("register.pageTitle");
 
     const actual = getPageTitle(mockT, "register.pageTitle");
-    const expected = "register | React Router SaaS Template";
+    const expected = "register | Ren Studio";
 
     expect(actual).toEqual(expected);
   });

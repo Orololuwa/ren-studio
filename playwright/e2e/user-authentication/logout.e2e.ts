@@ -23,7 +23,7 @@ test.describe("logout", () => {
     await expect(
       page.getByRole("heading", {
         level: 1,
-        name: /react router saas template/i,
+        name: /Ren Studio/i,
       }),
     ).toBeVisible();
 

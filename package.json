@@ -109,7 +109,7 @@
       "biome check --write --unsafe"
     ]
   },
-  "name": "reactsquad-react-router-saas-template",
+  "name": "ren-studio",
   "packageManager": "npm@11.6.4",
   "private": true,
   "scripts": {
