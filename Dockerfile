@@ -106,8 +106,10 @@ COPY ./prisma /app/prisma
 COPY ./prisma.config.ts /app/prisma.config.ts
 WORKDIR /app
 # Generate Prisma client before building (doesn't require database connection)
-# Provide a dummy DATABASE_URL for prisma.config.ts (not actually used during generation)
-ENV DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
+# Accept DATABASE_URL as build arg from Railway (with dummy fallback)
+# Railway will pass this from your environment variables if configured
+ARG DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
+ENV DATABASE_URL=$DATABASE_URL
 RUN npx prisma generate
 RUN npm run build
 
@@ -144,6 +146,8 @@ ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 
 # Set NODE_ENV to production
 ENV NODE_ENV=production
+# Provide a fallback DATABASE_URL (Railway will override this with the real value at runtime)
+ENV DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
 
 COPY ./package.json package-lock.json /app/
 COPY --from=production-dependencies-env /app/node_modules /app/node_modules
