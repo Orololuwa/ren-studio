@@ -166,12 +166,12 @@ export default {
       secondary: "Documentation",
     },
     description:
-      "Create resumes, invoices, and more with our visual builder. Export to PDF, send via email, customize with 120+ styling options, and integrate via API.",
+      "Create resumes, invoices, and more with our visual builder. Export to PDF, send via email, customize with professional templates, and integrate via API.",
     image: {
       dark: "App screenshot (dark)",
       light: "App screenshot (light)",
     },
-    title: "Build Professional Documents with Drag & Drop",
+    title: "Build Professional Documents",
   },
   logos: {
     title: "The Stack Behind the Template",
