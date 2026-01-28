@@ -1,8 +1,5 @@
 import {
-  BriefcaseIcon,
-  ChartNoAxesColumnIncreasingIcon,
   CircleHelpIcon,
-  FolderIcon,
   HammerIcon,
   LayoutDashboardIcon,
   SettingsIcon,
@@ -59,41 +56,6 @@ export function AppSidebar({
               icon: LayoutDashboardIcon,
               title: t("app.dashboard"),
               url: href("/organizations/:organizationSlug/dashboard", {
-                organizationSlug,
-              }),
-            },
-            {
-              icon: FolderIcon,
-              items: [
-                {
-                  title: t("app.projects.all"),
-                  url: href("/organizations/:organizationSlug/projects", {
-                    organizationSlug,
-                  }),
-                },
-                {
-                  title: t("app.projects.active"),
-                  url: href(
-                    "/organizations/:organizationSlug/projects/active",
-                    {
-                      organizationSlug,
-                    },
-                  ),
-                },
-              ],
-              title: t("app.projects.title"),
-            },
-            {
-              icon: ChartNoAxesColumnIncreasingIcon,
-              title: t("app.analytics"),
-              url: href("/organizations/:organizationSlug/analytics", {
-                organizationSlug,
-              }),
-            },
-            {
-              icon: BriefcaseIcon,
-              title: t("app.jobsAndClients"),
-              url: href("/organizations/:organizationSlug/jobs-and-clients", {
                 organizationSlug,
               }),
             },
