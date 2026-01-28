@@ -101,7 +101,12 @@ ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 
 COPY . /app/
 COPY --from=development-dependencies-env /app/node_modules /app/node_modules
+# Copy Prisma files needed for client generation
+COPY ./prisma /app/prisma
+COPY ./prisma.config.ts /app/prisma.config.ts
 WORKDIR /app
+# Generate Prisma client before building (doesn't require database connection)
+RUN npx prisma generate
 RUN npm run build
 
 # Final production image
@@ -144,6 +149,8 @@ COPY --from=build-env /app/build /app/build
 # Copy Prisma schema and migrations for runtime migrations
 COPY ./prisma /app/prisma
 COPY ./prisma.config.ts /app/prisma.config.ts
+# Copy generated Prisma client (needed at runtime)
+COPY --from=build-env /app/app/generated /app/app/generated
 WORKDIR /app
 
 # Expose port (Railway will set PORT env var)
