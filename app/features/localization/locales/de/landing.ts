@@ -69,13 +69,38 @@ export default {
     cards: [
       {
         description:
-          "Erstelle Dokumente visuell mit Drag-and-Drop-Komponenten. Keine Programmierung erforderlich—ziehe einfach Abschnitte, passe Stile an und sieh deine Änderungen sofort.",
-        eyebrow: "Visueller Builder",
+          "Volle Kontrolle über Inhalt und Struktur deines Dokuments. Bearbeite Texte direkt auf der Live-Leinwand für schnelle Anpassungen oder nutze den dedizierten Content-Editor für detaillierte Änderungen – inklusive intuitivem Drag-and-Drop für die Abschnittsreihenfolge.",
+        eyebrow: "Nahtloses Bearbeiten",
         image: {
           dark: "Mobil-Screenshot (dunkel)",
           light: "Mobil-Screenshot (hell)",
         },
-        title: "Drag-and-Drop-Oberfläche",
+        title: "Interaktive Leinwand & Strukturierter Editor",
+      },
+      {
+        description:
+          "Sieh deine Änderungen in Echtzeit. Vorschau genau so, wie dein Dokument aussehen wird, bevor du exportierst.",
+        image: {
+          dark: "Echtzeit-Vorschau (dunkel)",
+          light: "Echtzeit-Vorschau (hell)",
+        },
+        title: "Echtzeit-Vorschau",
+      },
+      {
+        description:
+          "Sende generierte Dokumente direkt per E-Mail mit PDF-Anhang. Passe Betreff und Nachricht an und liefere professionelle Dokumente sofort an Empfänger.",
+        eyebrow: "E-Mail-Integration",
+        title: "Dokumente per E-Mail senden",
+      },
+      {
+        description:
+          "Erzeuge professionelle PDFs mit serverseitigem Rendering. Hochwertige Ausgabe – ideal zum Drucken, Versenden per E-Mail oder Einbetten in deine Anwendungen.",
+        eyebrow: "Export",
+        image: {
+          dark: "Authentifizierung (dunkel)",
+          light: "Authentifizierung (hell)",
+        },
+        title: "Professioneller PDF-Export",
       },
       {
         description:
@@ -89,28 +114,29 @@ export default {
       },
       {
         description:
-          "Generiere professionelle PDFs mit serverseitigem Rendering. Hochwertige Ausgabe, perfekt zum Drucken, Versenden oder Einbetten in deine Anwendungen.",
-        eyebrow: "Export",
-        image: {
-          dark: "Authentifizierung (dunkel)",
-          light: "Authentifizierung (hell)",
-        },
-        title: "Professioneller PDF-Export",
+          "Gebaut mit API-ready Architektur für nahtlose Integrationen. REST-API kommt bald für Entwickler und B2B-Kunden.",
+        eyebrow: "API-Integration",
+        title: "Entwicklerfreundlich",
       },
       {
         description:
-          "Sieh deine Dokumentänderungen in Echtzeit während du bearbeitest. Vorschau genau so, wie dein Dokument aussehen wird, bevor du exportierst.",
+          "Von Anfang an für Multi-Tenant-Teams gebaut. Erstelle Organisationen, halte Daten pro Workspace getrennt und steuere Zugriffe per Rollen – damit jeder Kunde sauber isoliert bleibt.",
+        eyebrow: "Multi-Tenancy",
         image: {
-          dark: "Benachrichtigungen (dunkel)",
-          light: "Benachrichtigungen (hell)",
+          dark: "Multi-Tenancy (dunkel)",
+          light: "Multi-Tenancy (hell)",
         },
-        title: "Echtzeit-Vorschau",
+        title: "Organisations-Workspaces",
       },
       {
         description:
-          "Sende generierte Dokumente direkt per E-Mail mit PDF-Anhängen. Passe E-Mail-Betreff und -Text an und liefere professionelle Dokumente sofort an Empfänger.",
-        eyebrow: "E-Mail-Integration",
-        title: "Dokumente per E-Mail senden",
+          "Lade Teammitglieder per Link oder E-Mail ein, weise Rollen zu (Owner, Admin, Member) und arbeite mit dem passenden Zugriffsniveau zusammen, während dein Team wächst.",
+        eyebrow: "Teamverwaltung",
+        image: {
+          dark: "Teamverwaltung (dunkel)",
+          light: "Teamverwaltung (hell)",
+        },
+        title: "Teammitglieder einladen & verwalten",
       },
     ],
     eyebrow: "Features",

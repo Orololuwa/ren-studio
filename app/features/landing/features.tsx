@@ -139,22 +139,6 @@ export function Features() {
 
         {/* Notifications Card */}
         <BentoCard>
-          <BentoCardMedia>
-            <img
-              alt={cards[3].image?.light}
-              className={cn("rounded-t-lg", "dark:hidden")}
-              src="/images/notifications-light.png"
-              style={imageFadeStyle}
-            />
-
-            <img
-              alt={cards[3].image?.dark}
-              className={cn("rounded-t-lg", "hidden dark:block")}
-              src="/images/notifications-dark.png"
-              style={imageFadeStyle}
-            />
-          </BentoCardMedia>
-
           <BentoCardHeader>
             <BentoCardTitle>{cards[3].title}</BentoCardTitle>
             <BentoCardDescription>{cards[3].description}</BentoCardDescription>

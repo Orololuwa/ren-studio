@@ -120,23 +120,23 @@ export default {
       },
       {
         description:
-          "With Supabase Auth (email magic links & Google OAuth), a managed Postgres database, and Supabase Storage, this template takes care of your backend. Storage even offers two upload flows: direct client uploads for large files and server-mediated uploads for small assets like profile avatars.",
-        eyebrow: "Supabase",
+          "Built for multi-tenant teams from day one. Create organizations, keep data isolated by workspace, and manage access with roles so every customer stays securely separated.",
+        eyebrow: "Multi-tenancy",
         image: {
-          dark: "Authentication (dark)",
-          light: "Authentication (light)",
+          dark: "Multi-tenancy (dark)",
+          light: "Multi-tenancy (light)",
         },
-        title: "Authentication & Database",
+        title: "Organization Workspaces",
       },
       {
         description:
-          "Most SaaS apps charge some form of recurring subscription. This template comes with three tiers preconfigured. But even if your needs are different, this will give you a head start.",
-        eyebrow: "Stripe",
+          "Invite teammates by link or email, assign roles (Owner, Admin, Member), and collaborate with the right level of access for each person as your team grows.",
+        eyebrow: "Team Management",
         image: {
-          dark: "Billing (dark)",
-          light: "Billing (light)",
+          dark: "Team Management (dark)",
+          light: "Team Management (light)",
         },
-        title: "Billing",
+        title: "Invite & Manage Team Members",
       },
     ],
     eyebrow: "Features",
