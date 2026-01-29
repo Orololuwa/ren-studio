@@ -87,7 +87,7 @@ export function Features() {
                 "lg:rounded-tr-4xl",
                 "dark:hidden",
               )}
-              src="/images/app-billing-light.png"
+              src="/images/real-time-preview-light.png"
               style={imageFadeStyle}
             />
             <img
@@ -97,7 +97,7 @@ export function Features() {
                 "lg:rounded-tr-4xl",
                 "hidden dark:block",
               )}
-              src="/images/app-billing-dark.png"
+              src="/images/real-time-preview-dark.png"
               style={imageFadeStyle}
             />
           </BentoCardMedia>

@@ -79,13 +79,12 @@ export default {
       },
       {
         description:
-          "Create Resumes and Invoices today. Coming soon: Quotes, Proposals, Contracts, Purchase Orders, Receipts, and more business document types.",
-        eyebrow: "Document Types",
+          "See your document changes in real-time as you edit. Preview exactly how your document will look before exporting.",
         image: {
-          dark: "Billing (dark)",
-          light: "Billing (light)",
+          dark: "Real-Time Preview (dark)",
+          light: "Real-Time Preview (light)",
         },
-        title: "Multiple Document Types",
+        title: "Real-Time Preview",
       },
       {
         description:
@@ -99,12 +98,13 @@ export default {
       },
       {
         description:
-          "See your document changes in real-time as you edit. Preview exactly how your document will look before exporting.",
+          "Create Resumes and Invoices today. Coming soon: Quotes, Proposals, Contracts, Purchase Orders, Receipts, and more business document types.",
+        eyebrow: "Document Types",
         image: {
-          dark: "Notifications (dark)",
-          light: "Notifications (light)",
+          dark: "Billing (dark)",
+          light: "Billing (light)",
         },
-        title: "Real-Time Preview",
+        title: "Multiple Document Types",
       },
       {
         description:
