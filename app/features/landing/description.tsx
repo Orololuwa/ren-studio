@@ -62,7 +62,7 @@ export function Description() {
             alt={t("image.light")}
             className={cn(imageClassNames, "dark:hidden")}
             height={1442}
-            src="/images/app-light-members.png"
+            src="/images/infographics-light.png"
             width={2432}
           />
 
@@ -70,7 +70,7 @@ export function Description() {
             alt={t("image.dark")}
             className={cn(imageClassNames, "hidden dark:block")}
             height={1442}
-            src="/images/app-dark-members.png"
+            src="/images/infographics-dark.png"
             width={2432}
           />
         </div>

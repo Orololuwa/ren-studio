@@ -64,7 +64,7 @@ export const anonymousContext = createContext<{
 }>();
 
 // Public routes that authenticated users can still access
-const PUBLIC_ROUTES_ACCESSIBLE_TO_AUTHENTICATED = ["/docs", "/pricing"];
+const PUBLIC_ROUTES_ACCESSIBLE_TO_AUTHENTICATED = ["/", "/docs", "/pricing"];
 
 export const anonymousMiddleware: MiddlewareFunction = async (
   { request, context },
