@@ -69,13 +69,13 @@ export default {
     cards: [
       {
         description:
-          "Build documents visually with drag-and-drop components. No coding required—just drag sections, customize styles, and see your changes instantly.",
-        eyebrow: "Visual Builder",
+          "Total control over your document's message and structure. Edit inline on the live visual canvas for quick refinements, or switch to the dedicated content editor for deeper customization, supported by intuitive drag-and-drop section control.",
+        eyebrow: "Seamless Editing",
         image: {
           dark: "Mobile screenshot (dark)",
           light: "Mobile screenshot (light)",
         },
-        title: "Drag-and-Drop Interface",
+        title: "Interactive Canvas & Structured Editor",
       },
       {
         description:
