@@ -111,11 +111,11 @@ export function Features() {
 
         {/* Authentication Card */}
         <BentoCard className="max-h-min lg:col-span-2 lg:row-span-2">
-          <BentoCardMedia className="h-64 lg:h-88">
+          <BentoCardMedia className="h-64 lg:h-88 object-fill object-top">
             <img
               alt={cards[2].image?.light}
               className={cn(imageClassNames, "object-center", "dark:hidden")}
-              src="/images/authentication-light.png"
+              src="/images/send-email-light.png"
               style={imageFadeStyle}
             />
             <img
@@ -125,7 +125,7 @@ export function Features() {
                 "object-center",
                 "hidden dark:block",
               )}
-              src="/images/authentication-dark.png"
+              src="/images/send-email-dark.png"
               style={imageFadeStyle}
             />
           </BentoCardMedia>

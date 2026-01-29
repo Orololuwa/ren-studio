@@ -88,6 +88,12 @@ export default {
       },
       {
         description:
+          "Send generated documents directly via email with PDF attachments. Customize email subject and body, then deliver professional documents to recipients instantly.",
+        eyebrow: "Email Integration",
+        title: "Send Documents via Email",
+      },
+      {
+        description:
           "Generate professional PDFs with server-side rendering. High-quality output perfect for printing, emailing, or embedding in your applications.",
         eyebrow: "Export",
         image: {
@@ -105,12 +111,6 @@ export default {
           light: "Billing (light)",
         },
         title: "Multiple Document Types",
-      },
-      {
-        description:
-          "Send generated documents directly via email with PDF attachments. Customize email subject and body, then deliver professional documents to recipients instantly.",
-        eyebrow: "Email Integration",
-        title: "Send Documents via Email",
       },
       {
         description:
@@ -167,8 +167,8 @@ export default {
     description:
       "Create resumes, invoices, and more with our visual builder. Export to PDF, send via email, customize with professional templates, and integrate via API.",
     image: {
-      dark: "App screenshot (dark)",
-      light: "App screenshot (light)",
+      dark: "Send Email (dark)",
+      light: "Send Email (light)",
     },
     title: "Build Professional Documents",
   },
