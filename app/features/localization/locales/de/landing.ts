@@ -62,32 +62,6 @@ export default {
           "Die Plattform ist mit API-ready Architektur gebaut. REST-API-Endpunkte für Vorlagenverwaltung, Dokumentenerstellung und Bulk-Operationen kommen bald für Entwickler und B2B-Integrationen.",
         question: "Gibt es eine API?",
       },
-      {
-        answer:
-          "Ja! Dies ist ein Open-Source-Projekt und kann kostenlos unter der MIT-Lizenz genutzt werden. Einige der integrierten Dienste (zum Beispiel Supabase, Stripe, Hosting-Anbieter usw.) können jedoch eigene Nutzungsgebühren verursachen, für die du verantwortlich bist.",
-        question: "Ist das kostenlos?",
-      },
-      {
-        answer:
-          'Nein. Dies ist ein unabhängiges, von der Community gepflegtes Open-Source-Template. Es wird nicht von Shopify Inc. gesponsert, ist nicht mit ihnen verbunden oder wird von ihnen unterstützt. "React Router" und seine Logos sind Marken von Shopify Inc., und dieses Projekt erhebt keinen Anspruch auf eine offizielle Partnerschaft oder Unterstützung.',
-        question:
-          "Wird dieses Template offiziell von Shopify Inc. unterstützt oder befürwortet?",
-      },
-      {
-        answer:
-          "Schön, dass du fragst! Wir suchen immer nach Hilfe für das Projekt. Wenn du daran interessiert bist, beizutragen, schau dir bitte unseren <1>Leitfaden für Mitwirkende</1> an.",
-        question: "Wie kann ich beitragen?",
-      },
-      {
-        answer:
-          "Du kannst in den GitHub-Diskussionen fragen. Wenn du an professioneller Hilfe beim Aufbau deiner App von erfahrenen React-Entwicklern interessiert bist, wende dich an <1>ReactSquad</1>.",
-        question: "Ich stecke fest! Wo kann ich Hilfe bekommen?",
-      },
-      {
-        answer:
-          "Vielen Dank! Du kannst Jan Hesters auf <1>X</1>, <2>LinkedIn</2> oder <3>YouTube</3> folgen und ein Dankeschön hinterlassen. Und wenn du jemanden kennst, der erfahrene React-Entwickler braucht, empfiehl bitte <4>ReactSquad</4>. Vielen Dank!",
-        question: "Das ist großartig! Wie kann ich dich unterstützen?",
-      },
     ],
     title: "Häufig gestellte Fragen",
   },
@@ -144,7 +118,6 @@ export default {
   },
   footer: {
     madeWithLove: "Gemacht mit ❤️ von",
-    reactsquad: "ReactSquad",
     social: {
       github: "Github",
       linkedin: "LinkedIn",

@@ -63,17 +63,9 @@ export function Footer({ className, ...props }: ComponentProps<"footer">) {
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="flex items-center gap-2">
-            <a
-              aria-label={t("reactsquad")}
-              className="text-foreground h-6 w-auto"
-              href="https://reactsquad.io"
-              rel="noreferrer"
-              target="_blank"
-            >
-              <RenStudioLogo />
-            </a>
-          </span>
+          <Link to="/">
+            <RenStudioLogo />
+          </Link>
         </div>
       </div>
     </footer>

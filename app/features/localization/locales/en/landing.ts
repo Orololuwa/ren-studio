@@ -144,7 +144,6 @@ export default {
   },
   footer: {
     madeWithLove: "Made with ❤️ by",
-    reactsquad: "ReactSquad",
     social: {
       github: "Github",
       linkedin: "LinkedIn",
