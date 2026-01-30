@@ -24,23 +24,76 @@ export function TemplateStatsChartComponent({
   });
   const containerRef = useRef<HTMLDivElement>(null);
   const [primaryColor, setPrimaryColor] = useState("hsl(221.2, 83.2%, 53.3%)");
+  const [foregroundColor, setForegroundColor] = useState("hsl(0, 0%, 0%)");
 
   useEffect(() => {
-    if (containerRef.current) {
+    const updateColors = () => {
       // Create a temporary element to get computed primary color
-      const tempEl = document.createElement("div");
-      tempEl.className = "text-primary";
-      tempEl.style.position = "absolute";
-      tempEl.style.visibility = "hidden";
-      document.body.appendChild(tempEl);
+      const tempElPrimary = document.createElement("div");
+      tempElPrimary.className = "text-primary";
+      tempElPrimary.style.position = "absolute";
+      tempElPrimary.style.visibility = "hidden";
+      document.body.appendChild(tempElPrimary);
 
-      const computedColor = getComputedStyle(tempEl).color;
-      document.body.removeChild(tempEl);
+      const computedPrimaryColor = getComputedStyle(tempElPrimary).color;
+      document.body.removeChild(tempElPrimary);
 
-      if (computedColor && computedColor !== "rgba(0, 0, 0, 0)") {
-        setPrimaryColor(computedColor);
+      if (computedPrimaryColor && computedPrimaryColor !== "rgba(0, 0, 0, 0)") {
+        setPrimaryColor(computedPrimaryColor);
       }
+
+      // Create a temporary element to get computed foreground color
+      const tempElForeground = document.createElement("div");
+      tempElForeground.className = "text-foreground";
+      tempElForeground.style.position = "absolute";
+      tempElForeground.style.visibility = "hidden";
+      document.body.appendChild(tempElForeground);
+
+      const computedForegroundColor = getComputedStyle(tempElForeground).color;
+      document.body.removeChild(tempElForeground);
+
+      if (
+        computedForegroundColor &&
+        computedForegroundColor !== "rgba(0, 0, 0, 0)"
+      ) {
+        setForegroundColor(computedForegroundColor);
+      }
+    };
+
+    updateColors();
+
+    // Listen for manual theme changes (class changes on html element)
+    const observer = new MutationObserver(() => {
+      updateColors();
+    });
+
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+
+    // Listen for system theme changes (prefers-color-scheme media query)
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    const handleMediaChange = () => {
+      updateColors();
+    };
+
+    // Modern browsers
+    if (mediaQuery.addEventListener) {
+      mediaQuery.addEventListener("change", handleMediaChange);
+    } else {
+      // Fallback for older browsers
+      mediaQuery.addListener(handleMediaChange);
     }
+
+    return () => {
+      observer.disconnect();
+      if (mediaQuery.removeEventListener) {
+        mediaQuery.removeEventListener("change", handleMediaChange);
+      } else {
+        mediaQuery.removeListener(handleMediaChange);
+      }
+    };
   }, []);
 
   const chartData = data.map((item) => ({
@@ -70,8 +123,8 @@ export function TemplateStatsChartComponent({
               </linearGradient>
             </defs>
             <CartesianGrid stroke="hsl(var(--muted))" strokeDasharray="3 3" />
-            <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" />
-            <YAxis stroke="hsl(var(--muted-foreground))" />
+            <XAxis dataKey="date" stroke={foregroundColor} />
+            <YAxis stroke={foregroundColor} />
             <Tooltip
               contentStyle={{
                 backgroundColor: "hsl(var(--card))",
