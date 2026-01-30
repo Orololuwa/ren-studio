@@ -58,8 +58,63 @@ export default {
     pageTitle: "Vorlagen",
   },
   dashboard: {
+    activityFeed: {
+      description: "Aktuelle Aktivitäten in deiner Organisation",
+      empty: "Keine aktuellen Aktivitäten",
+      title: "Aktivitäts-Feed",
+    },
     breadcrumb: "Dashboard",
+    charts: {
+      templateTimeline: {
+        title: "Vorlagen-Erstellungszeitlinie",
+      },
+      templateTypes: {
+        invoice: "Rechnung",
+        receipt: "Quittung",
+        resume: "Lebenslauf",
+        title: "Vorlagen nach Typ",
+      },
+    },
     pageTitle: "Dashboard",
+    recentTemplates: {
+      description: "Deine zuletzt aktualisierten Vorlagen",
+      empty:
+        "Noch keine Vorlagen. Erstelle deine erste Vorlage, um zu beginnen.",
+      title: "Aktuelle Vorlagen",
+    },
+    stats: {
+      recentActivity: {
+        description: "Aktivitäten in den letzten 7 Tagen",
+        title: "Aktuelle Aktivität",
+      },
+      teamMembers: {
+        description: "Gesamtzahl der Teammitglieder",
+        title: "Teammitglieder",
+      },
+      templatesThisMonth: {
+        description: "Diesen Monat erstellt",
+        title: "Vorlagen diesen Monat",
+      },
+      totalTemplates: {
+        description: "Alle Vorlagen in deiner Organisation",
+        title: "Vorlagen gesamt",
+      },
+    },
+    teamOverview: {
+      description: "{{count}} Teammitglied",
+      description_plural: "{{count}} Teammitglieder",
+      recent: {
+        title: "Aktuelle Mitglieder",
+      },
+      roles: {
+        admin: "Admin",
+        member: "Mitglied",
+        owner: "Besitzer",
+        title: "Nach Rolle",
+      },
+      title: "Team-Übersicht",
+      viewAll: "Alle Mitglieder anzeigen",
+    },
   },
   getHelp: {
     breadcrumb: "Hilfe erhalten",

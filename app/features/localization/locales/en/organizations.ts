@@ -54,8 +54,62 @@ export default {
     pageTitle: "Templates",
   },
   dashboard: {
+    activityFeed: {
+      description: "Recent activity in your organization",
+      empty: "No recent activity",
+      title: "Activity Feed",
+    },
     breadcrumb: "Dashboard",
+    charts: {
+      templateTimeline: {
+        title: "Template Creation Timeline",
+      },
+      templateTypes: {
+        invoice: "Invoice",
+        receipt: "Receipt",
+        resume: "Resume",
+        title: "Templates by Type",
+      },
+    },
     pageTitle: "Dashboard",
+    recentTemplates: {
+      description: "Your most recently updated templates",
+      empty: "No templates yet. Create your first template to get started.",
+      title: "Recent Templates",
+    },
+    stats: {
+      recentActivity: {
+        description: "Activities in the last 7 days",
+        title: "Recent Activity",
+      },
+      teamMembers: {
+        description: "Total team members",
+        title: "Team Members",
+      },
+      templatesThisMonth: {
+        description: "Created this month",
+        title: "Templates This Month",
+      },
+      totalTemplates: {
+        description: "All templates in your organization",
+        title: "Total Templates",
+      },
+    },
+    teamOverview: {
+      description: "{{count}} team member",
+      description_plural: "{{count}} team members",
+      recent: {
+        title: "Recent Members",
+      },
+      roles: {
+        admin: "Admin",
+        member: "Member",
+        owner: "Owner",
+        title: "By Role",
+      },
+      title: "Team Overview",
+      viewAll: "View all members",
+    },
   },
   getHelp: {
     breadcrumb: "Get Help",
