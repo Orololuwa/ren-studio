@@ -906,19 +906,6 @@ export function SectionRenderer({
                     {project.date}
                   </button>
                 </p>
-                {Array.isArray(project.technologies) &&
-                  project.technologies.length > 0 && (
-                    <div className="flex flex-wrap gap-2 my-2">
-                      {project.technologies.map((tech) => (
-                        <span
-                          className="px-2 py-1 bg-gray-200 rounded text-gray-800 text-sm"
-                          key={`tech-${tech}`}
-                        >
-                          {tech}
-                        </span>
-                      ))}
-                    </div>
-                  )}
                 {/* biome-ignore lint/a11y/useSemanticElements: Rich text content div needs to be clickable but cannot be a button element */}
                 <div
                   className="rich-text-content cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left block w-full"
@@ -948,6 +935,19 @@ export function SectionRenderer({
                   role="button"
                   tabIndex={0}
                 />
+                {Array.isArray(project.technologies) &&
+                  project.technologies.length > 0 && (
+                    <div className="flex flex-wrap gap-2 my-2">
+                      {project.technologies.map((tech) => (
+                        <span
+                          className="px-2 py-1 bg-gray-200 rounded text-gray-800 text-sm"
+                          key={`tech-${tech}`}
+                        >
+                          {tech}
+                        </span>
+                      ))}
+                    </div>
+                  )}
               </div>
             ))}
           </div>

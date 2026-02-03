@@ -393,6 +393,14 @@ function generateReceiptHTML(
     .receipt-items-table td {
       padding: 0.75rem;
       border-bottom: 1px solid #e5e7eb;
+      max-width: 0;
+      overflow-wrap: break-word;
+      word-wrap: break-word;
+      word-break: break-word;
+    }
+    
+    .receipt-item-description {
+      max-width: 50%;
     }
     
     .receipt-item-number {
@@ -460,6 +468,10 @@ function generateReceiptHTML(
       color: #6b7280;
       white-space: pre-line;
       font-weight: 500;
+      max-width: 100%;
+      overflow-wrap: break-word;
+      word-wrap: break-word;
+      word-break: break-word;
     }
     
     ${

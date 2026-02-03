@@ -215,7 +215,7 @@ export const resumeTemplates: Template[] = [
       fontFamily: "Georgia, serif",
       fontSize: "14px",
       textColor: "$colorPalette[1]",
-      borderLeft: "6px solid $colorPalette[2]",
+      // borderLeft: "6px solid $colorPalette[2]",
     },
     id: "resume-classic-elegant",
     name: "Classic Elegant",

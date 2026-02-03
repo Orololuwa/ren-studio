@@ -10,6 +10,7 @@ import {
   getSectionColorPalette,
   resolveStyleColors,
 } from "../../shared/utils/color-resolver";
+import { sanitizeQuillHtml } from "../../shared/utils/sanitize-quill-html.server";
 
 function escapeHtml(text: string): string {
   const map: Record<string, string> = {
@@ -92,7 +93,7 @@ function renderResumeSectionToHTML(
         <section class="section-summary" style="${inlineStyles}">
           <h2>Summary</h2>
           <div class="summary-entry">
-            <div class="rich-text-content">${(section.data.content as string) || ""}</div>
+            <div class="rich-text-content">${sanitizeQuillHtml((section.data.content as string) || "")}</div>
           </div>
         </section>
       `;
@@ -117,7 +118,7 @@ function renderResumeSectionToHTML(
             <div class="experience-entry">
               <h3>${escapeHtml(exp.company || "")} - ${escapeHtml(exp.position || "")}</h3>
               <p class="date-range">${escapeHtml(exp.startDate || "")} - ${escapeHtml(exp.endDate || "")}</p>
-              <div class="description">${exp.description || ""}</div>
+              <div class="description">${sanitizeQuillHtml(exp.description || "")}</div>
             </div>
           `,
             )
@@ -211,6 +212,7 @@ function renderResumeSectionToHTML(
                 ${project.link ? ` - <a href="${escapeHtml(project.link)}">View Project</a>` : ""}
               </h3>
               <p class="date">${escapeHtml(project.date || "")}</p>
+              <div class="description">${sanitizeQuillHtml(project.description || "")}</div>
               ${
                 Array.isArray(project.technologies) &&
                 project.technologies.length > 0
@@ -226,7 +228,6 @@ function renderResumeSectionToHTML(
               `
                   : ""
               }
-              <div class="description">${project.description || ""}</div>
             </div>
           `,
             )
@@ -274,7 +275,29 @@ function generateResumeHTML(
   colorPalette: string[] = [],
 ): string {
   const sortedSections = [...sections].sort((a, b) => a.order - b.order);
-  const globalCSS = objectToCSS(globalStyles as SectionStyles, colorPalette);
+
+  // Extract border properties to apply to template-container (so they appear on all pages)
+  const borderProperties = [
+    "borderLeft",
+    "borderRight",
+    "borderTop",
+    "borderBottom",
+    "border",
+  ];
+  const borderStyles: Record<string, string> = {};
+  const nonBorderStyles: Record<string, string> = {};
+
+  Object.entries(globalStyles).forEach(([key, value]) => {
+    if (borderProperties.includes(key)) {
+      borderStyles[key] = value;
+    } else {
+      nonBorderStyles[key] = value;
+    }
+  });
+
+  const globalCSS = objectToCSS(nonBorderStyles as SectionStyles, colorPalette);
+  const borderCSS = objectToCSS(borderStyles as SectionStyles, colorPalette);
+
   const sectionsHTML = sortedSections
     .map((section) => renderResumeSectionToHTML(section, colorPalette))
     .join("\n");
@@ -319,6 +342,7 @@ function generateResumeHTML(
       background: ${backgroundColor};
       padding: 0;
       min-height: 100vh;
+      ${borderCSS}
     }
     
     .section-header h1 {
@@ -400,12 +424,32 @@ function generateResumeHTML(
       margin-bottom: 0.5rem;
     }
     
+    .rich-text-content,
+    .description {
+      max-width: 100%;
+      overflow-wrap: break-word;
+      word-wrap: break-word;
+      word-break: break-word;
+      box-sizing: border-box;
+      overflow-x: hidden;
+    }
+    
+    .rich-text-content *,
+    .description * {
+      max-width: 100%;
+      box-sizing: border-box;
+      overflow-wrap: break-word;
+      word-wrap: break-word;
+    }
+    
     .rich-text-content ul,
     .rich-text-content ol,
     .description ul,
     .description ol {
       margin: 0.5rem 0;
       padding-left: 1.5rem;
+      overflow-wrap: break-word;
+      word-wrap: break-word;
     }
     
     .rich-text-content ul:last-child,
@@ -428,6 +472,9 @@ function generateResumeHTML(
     .rich-text-content li,
     .description li {
       margin: 0.25rem 0;
+      overflow-wrap: break-word;
+      word-wrap: break-word;
+      word-break: break-word;
     }
     
     .rich-text-content li:last-child,
@@ -437,6 +484,9 @@ function generateResumeHTML(
     
     .rich-text-content p {
       margin: 0.5rem 0;
+      overflow-wrap: break-word;
+      word-wrap: break-word;
+      word-break: break-word;
     }
     
     .rich-text-content p:first-child {
@@ -445,6 +495,61 @@ function generateResumeHTML(
     
     .rich-text-content p:last-child {
       margin-bottom: 0;
+    }
+    
+    .rich-text-content img,
+    .description img {
+      max-width: 100%;
+      height: auto;
+      display: block;
+    }
+    
+    .rich-text-content pre,
+    .description pre {
+      max-width: 100%;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+    }
+    
+    .rich-text-content code,
+    .description code {
+      overflow-wrap: break-word;
+      word-wrap: break-word;
+      word-break: break-word;
+    }
+    
+    .rich-text-content blockquote,
+    .description blockquote {
+      max-width: 100%;
+      overflow-wrap: break-word;
+      word-wrap: break-word;
+    }
+    
+    .rich-text-content h1,
+    .rich-text-content h2,
+    .rich-text-content h3,
+    .rich-text-content h4,
+    .rich-text-content h5,
+    .rich-text-content h6,
+    .description h1,
+    .description h2,
+    .description h3,
+    .description h4,
+    .description h5,
+    .description h6 {
+      max-width: 100%;
+      overflow-wrap: break-word;
+      word-wrap: break-word;
+      word-break: break-word;
+    }
+    
+    .rich-text-content a,
+    .description a {
+      overflow-wrap: break-word;
+      word-wrap: break-word;
+      word-break: break-all;
     }
     
     .skills-list {
@@ -541,15 +646,27 @@ function generateResumeHTML(
       
       /* Prevent sections from breaking across pages */
       .section-header,
-      .section-summary,
-      .section-experience,
+      .section-summary {
+        page-break-inside: avoid;
+        break-inside: avoid;
+        page-break-before: auto;
+      }
+      
+      /* Allow experience section to break naturally, but keep entries together */
+      .section-experience {
+        page-break-inside: auto;
+        break-inside: auto;
+        page-break-before: auto;
+      }
+      
+      /* Other sections can break if needed */
       .section-education,
       .section-skills,
       .section-certifications,
       .section-projects,
       .section-languages {
-        page-break-inside: avoid;
-        break-inside: avoid;
+        page-break-inside: auto;
+        break-inside: auto;
         page-break-before: auto;
       }
       
@@ -563,6 +680,18 @@ function generateResumeHTML(
         break-inside: avoid;
         orphans: 2;
         widows: 2;
+      }
+      
+      /* Keep experience section header with at least the first entry */
+      .section-experience > h2 {
+        page-break-after: avoid;
+        break-after: avoid;
+      }
+      
+      /* Keep first experience entry with section header */
+      .section-experience > .experience-entry:first-of-type {
+        page-break-before: avoid;
+        break-before: avoid;
       }
       
       /* Keep section headers with their content */

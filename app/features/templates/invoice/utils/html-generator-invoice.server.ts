@@ -436,6 +436,14 @@ function generateInvoiceHTML(
     .invoice-items-table td {
       padding: 0.75rem;
       border-bottom: 1px solid #e5e7eb;
+      max-width: 0;
+      overflow-wrap: break-word;
+      word-wrap: break-word;
+      word-break: break-word;
+    }
+    
+    .invoice-item-description {
+      max-width: 50%;
     }
     
     .invoice-item-number {
@@ -496,6 +504,10 @@ function generateInvoiceHTML(
       font-size: 0.875rem;
       color: #6b7280;
       white-space: pre-line;
+      max-width: 100%;
+      overflow-wrap: break-word;
+      word-wrap: break-word;
+      word-break: break-word;
     }
     
     ${
