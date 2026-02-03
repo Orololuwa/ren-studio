@@ -350,7 +350,7 @@ export function PropertiesPanel() {
                     (link, idx) => (
                       <div
                         className="p-3 border rounded-lg space-y-2 bg-background"
-                        key={`social-${link.name}-${link.link}-${idx}`}
+                        key={`${section.id}-social-${idx}`}
                       >
                         <div className="flex items-center justify-between">
                           <Label className="text-xs font-medium">
@@ -505,7 +505,7 @@ export function PropertiesPanel() {
             {entries.map((entry, idx) => (
               <div
                 className="p-3 border rounded-lg space-y-3 bg-background"
-                key={`exp-${entry.company}-${entry.position}-${idx}`}
+                key={`${section.id}-experience-${idx}`}
               >
                 <div className="flex items-center justify-between">
                   <Label className="text-xs font-medium">Entry {idx + 1}</Label>
@@ -634,7 +634,7 @@ export function PropertiesPanel() {
             {entries.map((entry, idx) => (
               <div
                 className="p-3 border rounded-lg space-y-3 bg-background"
-                key={`edu-${entry.institution}-${entry.degree}-${idx}`}
+                key={`${section.id}-education-${idx}`}
               >
                 <div className="flex items-center justify-between">
                   <Label className="text-xs font-medium">Entry {idx + 1}</Label>
@@ -743,7 +743,7 @@ export function PropertiesPanel() {
                 {items.map((skill, idx) => (
                   <div
                     className="flex gap-2"
-                    key={`skill-${String(skill)}-${idx}`}
+                    key={`${section.id}-skill-${idx}`}
                   >
                     <Input
                       className="flex-1"
@@ -813,7 +813,7 @@ export function PropertiesPanel() {
             {entries.map((entry, idx) => (
               <div
                 className="p-3 border rounded-lg space-y-3 bg-background"
-                key={`cert-${entry.name}-${idx}`}
+                key={`${section.id}-certification-${idx}`}
               >
                 <div className="flex items-center justify-between">
                   <Label className="text-xs font-medium">Entry {idx + 1}</Label>
@@ -968,7 +968,7 @@ export function PropertiesPanel() {
             {entries.map((entry, idx) => (
               <div
                 className="p-3 border rounded-lg space-y-3 bg-background"
-                key={`project-${entry.name}-${idx}`}
+                key={`${section.id}-project-${idx}`}
               >
                 <div className="flex items-center justify-between">
                   <Label className="text-xs font-medium">Entry {idx + 1}</Label>
@@ -1036,7 +1036,7 @@ export function PropertiesPanel() {
                       entry.technologies.map((tech, techIdx) => (
                         <div
                           className="flex gap-2"
-                          key={`tech-${String(tech)}-${techIdx}`}
+                          key={`${section.id}-project-${idx}-tech-${techIdx}`}
                         >
                           <Input
                             className="flex-1"
@@ -1115,7 +1115,7 @@ export function PropertiesPanel() {
             {entries.map((entry, idx) => (
               <div
                 className="p-3 border rounded-lg space-y-3 bg-background"
-                key={`lang-${entry.language}-${idx}`}
+                key={`${section.id}-language-${idx}`}
               >
                 <div className="flex items-center justify-between">
                   <Label className="text-xs font-medium">Entry {idx + 1}</Label>
