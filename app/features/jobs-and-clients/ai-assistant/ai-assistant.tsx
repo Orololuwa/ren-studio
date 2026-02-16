@@ -175,3 +175,5 @@ export function AIAssistant({
     </div>
   );
 }
+
+//one-line comment for the plot
