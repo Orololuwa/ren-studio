@@ -10,6 +10,7 @@ import type {
   SocialLink,
   TemplateSection,
 } from "../types";
+import { recalculateFooterFromItems } from "../utils/calculations";
 import {
   getSectionColorPalette,
   resolveStyleColors,
@@ -154,68 +155,16 @@ export function SectionRenderer({
         ? (updatedData.items as InvoiceItem[])
         : [];
 
-      const subtotal = items.reduce((sum, item) => {
-        const qty = Number.parseFloat(item.quantity || "0");
-        const price = Number.parseFloat(item.unitPrice || "0");
-        return sum + qty * price;
-      }, 0);
-
-      // Find and update the footer section
       const footerSection = currentTemplate?.sections.find(
         (s) => s.type === "invoice-footer" || s.type === "receipt-footer",
       );
 
       if (footerSection) {
-        const footerData = { ...footerSection.data };
-        footerData.subtotal = subtotal.toFixed(2);
-
-        // Get current modes
-        const taxMode = (footerData.taxMode as string) || "percentage";
-        const discountMode =
-          (footerData.discountMode as string) || "percentage";
-
-        // Recalculate tax based on mode
-        if (taxMode === "percentage") {
-          const taxRate = Number.parseFloat(String(footerData.taxRate || "0"));
-          if (taxRate > 0 && subtotal > 0) {
-            footerData.taxAmount = ((subtotal * taxRate) / 100).toFixed(2);
-          }
-        } else {
-          // Amount mode: recalculate percentage from amount
-          const taxAmount = Number.parseFloat(
-            String(footerData.taxAmount || "0"),
-          );
-          if (taxAmount > 0 && subtotal > 0) {
-            footerData.taxRate = ((taxAmount / subtotal) * 100).toFixed(2);
-          }
-        }
-
-        // Recalculate discount based on mode
-        if (discountMode === "percentage") {
-          const discountRate = Number.parseFloat(
-            String(footerData.discountRate || "0"),
-          );
-          if (discountRate > 0 && subtotal > 0) {
-            footerData.discount = ((subtotal * discountRate) / 100).toFixed(2);
-          }
-        } else {
-          // Amount mode: recalculate percentage from amount
-          const discount = Number.parseFloat(
-            String(footerData.discount || "0"),
-          );
-          if (discount > 0 && subtotal > 0) {
-            footerData.discountRate = ((discount / subtotal) * 100).toFixed(2);
-          }
-        }
-
-        // Recalculate total
-        const taxAmount = Number.parseFloat(
-          String(footerData.taxAmount || "0"),
+        const updatedFooter = recalculateFooterFromItems(
+          items,
+          footerSection.data,
         );
-        const discount = Number.parseFloat(String(footerData.discount || "0"));
-        footerData.total = (subtotal + taxAmount - discount).toFixed(2);
-
-        updateSection(footerSection.id, { data: footerData });
+        updateSection(footerSection.id, { data: updatedFooter });
       }
     }
 
@@ -1702,31 +1651,36 @@ export function SectionRenderer({
               <div className="mt-4">
                 <p className="text-sm text-gray-600">
                   <span className="font-semibold">Payment Terms: </span>
-                  <button
-                    className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5"
-                    onClick={(e) =>
-                      handleFieldClick(
-                        e,
-                        ["paymentTerms"],
-                        section.data.paymentTerms as string,
-                        "Payment Terms",
-                        false,
-                      )
-                    }
-                    onKeyDown={(e) =>
-                      handleFieldKeyDown(
-                        e,
-                        ["paymentTerms"],
-                        section.data.paymentTerms as string,
-                        "Payment Terms",
-                        false,
-                      )
-                    }
-                    type="button"
-                  >
-                    {section.data.paymentTerms as string}
-                  </button>
                 </p>
+                {/* biome-ignore lint/a11y/useSemanticElements: Rich text content div needs to be clickable but cannot be a button element */}
+                <div
+                  className="rich-text-content text-sm text-gray-600 cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left block w-full"
+                  // biome-ignore lint/security/noDangerouslySetInnerHtml: Rich text content from editor needs to be rendered as HTML
+                  dangerouslySetInnerHTML={{
+                    __html: (section.data.paymentTerms as string) || "",
+                  }}
+                  data-testid={`rich-text-content-${section.id}-paymentTerms`}
+                  onClick={(e) =>
+                    handleFieldClick(
+                      e,
+                      ["paymentTerms"],
+                      section.data.paymentTerms as string,
+                      "Payment Terms",
+                      true,
+                    )
+                  }
+                  onKeyDown={(e) =>
+                    handleFieldKeyDown(
+                      e,
+                      ["paymentTerms"],
+                      section.data.paymentTerms as string,
+                      "Payment Terms",
+                      true,
+                    )
+                  }
+                  role="button"
+                  tabIndex={0}
+                />
               </div>
             )}
             {(section.data.notes as string | undefined) && (

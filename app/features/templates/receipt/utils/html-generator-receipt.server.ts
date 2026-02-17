@@ -316,13 +316,6 @@ function generateReceiptHTML(
       color: inherit;
     }
     
-    .section-receipt-footer[style*="color"] .receipt-total-label,
-    .section-receipt-footer[style*="color"] .receipt-payment-method,
-    .section-receipt-footer[style*="color"] .receipt-transaction-id,
-    .section-receipt-footer[style*="color"] .receipt-thank-you {
-      color: inherit;
-      opacity: 0.8;
-    }
     
     .section-receipt-footer[style*="color"] .receipt-total-value,
     .section-receipt-footer[style*="color"] .receipt-total-final {
@@ -435,7 +428,7 @@ function generateReceiptHTML(
     }
     
     .receipt-total-label {
-      color: #6b7280;
+      color: #4b5563;
     }
     
     .receipt-total-value {
@@ -453,19 +446,19 @@ function generateReceiptHTML(
     .receipt-payment-method {
       margin-top: 1.5rem;
       font-size: 0.875rem;
-      color: #6b7280;
+      color: #4b5563;
     }
     
     .receipt-transaction-id {
       margin-top: 0.5rem;
       font-size: 0.875rem;
-      color: #6b7280;
+      color: #4b5563;
     }
     
     .receipt-thank-you {
       margin-top: 1.5rem;
       font-size: 0.875rem;
-      color: #6b7280;
+      color: #4b5563;
       white-space: pre-line;
       font-weight: 500;
       max-width: 100%;

@@ -3,6 +3,7 @@ import {
   getSectionColorPalette,
   resolveStyleColors,
 } from "../../shared/utils/color-resolver";
+import { sanitizeQuillHtml } from "../../shared/utils/sanitize-quill-html.server";
 import { formatCurrency } from "./currency-formatter";
 
 function escapeHtml(text: string): string {
@@ -201,7 +202,7 @@ function renderInvoiceSectionToHTML(
           </div>
           ${
             section.data.paymentTerms
-              ? `<div class="invoice-payment-terms"><strong>Payment Terms:</strong> ${escapeHtml(String(section.data.paymentTerms))}</div>`
+              ? `<div class="invoice-payment-terms"><strong>Payment Terms:</strong> <div class="rich-text-content">${sanitizeQuillHtml(String(section.data.paymentTerms))}</div></div>`
               : ""
           }
           ${
@@ -330,12 +331,6 @@ function generateInvoiceHTML(
       color: inherit;
     }
     
-    .section-invoice-footer[style*="color"] .invoice-total-label,
-    .section-invoice-footer[style*="color"] .invoice-payment-terms,
-    .section-invoice-footer[style*="color"] .invoice-notes {
-      color: inherit;
-      opacity: 0.8;
-    }
     
     .section-invoice-footer[style*="color"] .invoice-total-value,
     .section-invoice-footer[style*="color"] .invoice-total-final {
@@ -478,7 +473,7 @@ function generateInvoiceHTML(
     }
     
     .invoice-total-label {
-      color: #6b7280;
+      color: #4b5563;
     }
     
     .invoice-total-value {
@@ -496,13 +491,13 @@ function generateInvoiceHTML(
     .invoice-payment-terms {
       margin-top: 1.5rem;
       font-size: 0.875rem;
-      color: #6b7280;
+      color: #4b5563;
     }
     
     .invoice-notes {
       margin-top: 1rem;
       font-size: 0.875rem;
-      color: #6b7280;
+      color: #4b5563;
       white-space: pre-line;
       max-width: 100%;
       overflow-wrap: break-word;

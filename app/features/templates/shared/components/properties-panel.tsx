@@ -11,6 +11,12 @@ import type {
   ProjectEntry,
   SocialLink,
 } from "../types";
+import {
+  calculateDiscount,
+  calculateTax,
+  calculateTotal,
+  recalculateFooterFromItems,
+} from "../utils/calculations";
 import { CurrencyInput, NumberInput, QuantityInput } from "./number-input";
 import { SectionColorPaletteEditor } from "./section-color-palette-editor";
 import { Button } from "~/components/ui/button";
@@ -185,63 +191,16 @@ export function PropertiesPanel() {
   const calculateAndUpdateSubtotal = (items: InvoiceItem[]) => {
     if (!currentTemplate) return;
 
-    const subtotal = items.reduce((sum, item) => {
-      const qty = Number.parseFloat(item.quantity || "0");
-      const price = Number.parseFloat(item.unitPrice || "0");
-      return sum + qty * price;
-    }, 0);
-
-    // Find and update the footer section (invoice-footer or receipt-footer)
     const footerSection = currentTemplate.sections.find(
       (s) => s.type === "invoice-footer" || s.type === "receipt-footer",
     );
 
     if (footerSection) {
-      const footerData = { ...footerSection.data };
-      footerData.subtotal = subtotal.toFixed(2);
-
-      // Get current modes
-      const taxMode = (footerData.taxMode as string) || "percentage";
-      const discountMode = (footerData.discountMode as string) || "percentage";
-
-      // Recalculate tax based on mode
-      if (taxMode === "percentage") {
-        const taxRate = Number.parseFloat(String(footerData.taxRate || "0"));
-        if (taxRate > 0 && subtotal > 0) {
-          footerData.taxAmount = ((subtotal * taxRate) / 100).toFixed(2);
-        }
-      } else {
-        // Amount mode: recalculate percentage from amount
-        const taxAmount = Number.parseFloat(
-          String(footerData.taxAmount || "0"),
-        );
-        if (taxAmount > 0 && subtotal > 0) {
-          footerData.taxRate = ((taxAmount / subtotal) * 100).toFixed(2);
-        }
-      }
-
-      // Recalculate discount based on mode
-      if (discountMode === "percentage") {
-        const discountRate = Number.parseFloat(
-          String(footerData.discountRate || "0"),
-        );
-        if (discountRate > 0 && subtotal > 0) {
-          footerData.discount = ((subtotal * discountRate) / 100).toFixed(2);
-        }
-      } else {
-        // Amount mode: recalculate percentage from amount
-        const discount = Number.parseFloat(String(footerData.discount || "0"));
-        if (discount > 0 && subtotal > 0) {
-          footerData.discountRate = ((discount / subtotal) * 100).toFixed(2);
-        }
-      }
-
-      // Recalculate total
-      const taxAmount = Number.parseFloat(String(footerData.taxAmount || "0"));
-      const discount = Number.parseFloat(String(footerData.discount || "0"));
-      footerData.total = (subtotal + taxAmount - discount).toFixed(2);
-
-      updateSection(footerSection.id, { data: footerData });
+      const updatedFooter = recalculateFooterFromItems(
+        items,
+        footerSection.data,
+      );
+      updateSection(footerSection.id, { data: updatedFooter });
     }
   };
 
@@ -1502,69 +1461,97 @@ export function PropertiesPanel() {
         };
 
         const handleTaxRateChange = (value: string) => {
-          const taxRate = Number.parseFloat(value || "0");
-          const taxAmount = subtotal > 0 ? (subtotal * taxRate) / 100 : 0;
+          const tax = calculateTax(
+            subtotal,
+            Number.parseFloat(value || "0"),
+            0,
+            "percentage",
+          );
           const currentDiscount = Number.parseFloat(
             String(section.data.discount || "0"),
           );
-          // Update both values in a single call to ensure they update together
           updateSection(section.id, {
             data: {
               ...section.data,
               taxRate: value,
-              taxAmount: taxAmount.toFixed(2),
-              total: (subtotal + taxAmount - currentDiscount).toFixed(2),
+              taxAmount: tax.taxAmount.toFixed(2),
+              total: calculateTotal(
+                subtotal,
+                tax.taxAmount,
+                currentDiscount,
+              ).toFixed(2),
             },
           });
         };
 
         const handleTaxAmountChange = (value: string) => {
-          const taxAmount = Number.parseFloat(value || "0");
-          const taxRate = subtotal > 0 ? (taxAmount / subtotal) * 100 : 0;
+          const tax = calculateTax(
+            subtotal,
+            0,
+            Number.parseFloat(value || "0"),
+            "amount",
+          );
           const currentDiscount = Number.parseFloat(
             String(section.data.discount || "0"),
           );
-          // Update both values in a single call to ensure they update together
           updateSection(section.id, {
             data: {
               ...section.data,
               taxAmount: value,
-              taxRate: taxRate.toFixed(2),
-              total: (subtotal + taxAmount - currentDiscount).toFixed(2),
+              taxRate: tax.taxRate.toFixed(2),
+              total: calculateTotal(
+                subtotal,
+                tax.taxAmount,
+                currentDiscount,
+              ).toFixed(2),
             },
           });
         };
 
         const handleDiscountRateChange = (value: string) => {
-          const discountRate = Number.parseFloat(value || "0");
-          const discount = subtotal > 0 ? (subtotal * discountRate) / 100 : 0;
+          const disc = calculateDiscount(
+            subtotal,
+            Number.parseFloat(value || "0"),
+            0,
+            "percentage",
+          );
           const currentTaxAmount = Number.parseFloat(
             String(section.data.taxAmount || "0"),
           );
-          // Update both values in a single call to ensure they update together
           updateSection(section.id, {
             data: {
               ...section.data,
               discountRate: value,
-              discount: discount.toFixed(2),
-              total: (subtotal + currentTaxAmount - discount).toFixed(2),
+              discount: disc.discount.toFixed(2),
+              total: calculateTotal(
+                subtotal,
+                currentTaxAmount,
+                disc.discount,
+              ).toFixed(2),
             },
           });
         };
 
         const handleDiscountAmountChange = (value: string) => {
-          const discount = Number.parseFloat(value || "0");
-          const discountRate = subtotal > 0 ? (discount / subtotal) * 100 : 0;
+          const disc = calculateDiscount(
+            subtotal,
+            0,
+            Number.parseFloat(value || "0"),
+            "amount",
+          );
           const currentTaxAmount = Number.parseFloat(
             String(section.data.taxAmount || "0"),
           );
-          // Update both values in a single call to ensure they update together
           updateSection(section.id, {
             data: {
               ...section.data,
               discount: value,
-              discountRate: discountRate.toFixed(2),
-              total: (subtotal + currentTaxAmount - discount).toFixed(2),
+              discountRate: disc.discountRate.toFixed(2),
+              total: calculateTotal(
+                subtotal,
+                currentTaxAmount,
+                disc.discount,
+              ).toFixed(2),
             },
           });
         };
@@ -1790,18 +1777,11 @@ export function PropertiesPanel() {
                 value={String(section.data.total || "")}
               />
             </div>
-            <div>
-              <Label className="text-xs" htmlFor="paymentTerms">
-                Payment Terms
-              </Label>
-              <Input
-                className="mt-1"
-                id="paymentTerms"
-                onChange={(e) => updateData("paymentTerms", e.target.value)}
-                placeholder="Net 30"
-                value={String(section.data.paymentTerms || "")}
-              />
-            </div>
+            <RichTextEditor
+              label="Payment Terms"
+              onChange={(value) => updateData("paymentTerms", value)}
+              value={String(section.data.paymentTerms || "")}
+            />
             <div>
               <Label className="text-xs" htmlFor="notes">
                 Notes
@@ -2096,69 +2076,97 @@ export function PropertiesPanel() {
         };
 
         const handleTaxRateChange = (value: string) => {
-          const taxRate = Number.parseFloat(value || "0");
-          const taxAmount = subtotal > 0 ? (subtotal * taxRate) / 100 : 0;
+          const tax = calculateTax(
+            subtotal,
+            Number.parseFloat(value || "0"),
+            0,
+            "percentage",
+          );
           const currentDiscount = Number.parseFloat(
             String(section.data.discount || "0"),
           );
-          // Update both values in a single call to ensure they update together
           updateSection(section.id, {
             data: {
               ...section.data,
               taxRate: value,
-              taxAmount: taxAmount.toFixed(2),
-              total: (subtotal + taxAmount - currentDiscount).toFixed(2),
+              taxAmount: tax.taxAmount.toFixed(2),
+              total: calculateTotal(
+                subtotal,
+                tax.taxAmount,
+                currentDiscount,
+              ).toFixed(2),
             },
           });
         };
 
         const handleTaxAmountChange = (value: string) => {
-          const taxAmount = Number.parseFloat(value || "0");
-          const taxRate = subtotal > 0 ? (taxAmount / subtotal) * 100 : 0;
+          const tax = calculateTax(
+            subtotal,
+            0,
+            Number.parseFloat(value || "0"),
+            "amount",
+          );
           const currentDiscount = Number.parseFloat(
             String(section.data.discount || "0"),
           );
-          // Update both values in a single call to ensure they update together
           updateSection(section.id, {
             data: {
               ...section.data,
               taxAmount: value,
-              taxRate: taxRate.toFixed(2),
-              total: (subtotal + taxAmount - currentDiscount).toFixed(2),
+              taxRate: tax.taxRate.toFixed(2),
+              total: calculateTotal(
+                subtotal,
+                tax.taxAmount,
+                currentDiscount,
+              ).toFixed(2),
             },
           });
         };
 
         const handleDiscountRateChange = (value: string) => {
-          const discountRate = Number.parseFloat(value || "0");
-          const discount = subtotal > 0 ? (subtotal * discountRate) / 100 : 0;
+          const disc = calculateDiscount(
+            subtotal,
+            Number.parseFloat(value || "0"),
+            0,
+            "percentage",
+          );
           const currentTaxAmount = Number.parseFloat(
             String(section.data.taxAmount || "0"),
           );
-          // Update both values in a single call to ensure they update together
           updateSection(section.id, {
             data: {
               ...section.data,
               discountRate: value,
-              discount: discount.toFixed(2),
-              total: (subtotal + currentTaxAmount - discount).toFixed(2),
+              discount: disc.discount.toFixed(2),
+              total: calculateTotal(
+                subtotal,
+                currentTaxAmount,
+                disc.discount,
+              ).toFixed(2),
             },
           });
         };
 
         const handleDiscountAmountChange = (value: string) => {
-          const discount = Number.parseFloat(value || "0");
-          const discountRate = subtotal > 0 ? (discount / subtotal) * 100 : 0;
+          const disc = calculateDiscount(
+            subtotal,
+            0,
+            Number.parseFloat(value || "0"),
+            "amount",
+          );
           const currentTaxAmount = Number.parseFloat(
             String(section.data.taxAmount || "0"),
           );
-          // Update both values in a single call to ensure they update together
           updateSection(section.id, {
             data: {
               ...section.data,
               discount: value,
-              discountRate: discountRate.toFixed(2),
-              total: (subtotal + currentTaxAmount - discount).toFixed(2),
+              discountRate: disc.discountRate.toFixed(2),
+              total: calculateTotal(
+                subtotal,
+                currentTaxAmount,
+                disc.discount,
+              ).toFixed(2),
             },
           });
         };
