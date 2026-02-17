@@ -5,6 +5,7 @@ import {
   Edit,
   Eye,
   FileText,
+  Loader2,
   Plus,
   Receipt,
   ShoppingBag,
@@ -57,7 +58,9 @@ import { organizationMembershipContext } from "~/features/organizations/organiza
 import { TemplatePreviewThumbnail } from "~/features/templates/shared/components/template-preview-thumbnail";
 import { getTemplatesByType } from "~/features/templates/shared/templates";
 import {
+  createTemplateInDatabase,
   deleteTemplateFromDatabase,
+  retrieveTemplateFromDatabaseById,
   retrieveTemplatesByOrganizationIdAndType,
 } from "~/features/templates/shared/templates-model.server";
 import type { Template } from "~/features/templates/shared/types";
@@ -150,6 +153,57 @@ export async function action({ request, context }: Route.ActionArgs) {
     );
   }
 
+  if (intent === "duplicate") {
+    const templateId = formData.get("templateId") as string;
+
+    if (!templateId) {
+      return data(
+        { success: false, error: "Template ID is required" },
+        { status: 400, headers },
+      );
+    }
+
+    // Fetch the template to duplicate
+    const templateToDuplicate = await retrieveTemplateFromDatabaseById({
+      organizationId: organization.id,
+      templateId,
+    });
+
+    if (!templateToDuplicate) {
+      return data(
+        { success: false, error: "Template not found" },
+        { status: 404, headers },
+      );
+    }
+
+    // Create a duplicate with a modified name
+    const duplicateName = `${templateToDuplicate.name} (Copy)`;
+    const duplicated = await createTemplateInDatabase({
+      colorPalette: templateToDuplicate.colorPalette,
+      globalStyles: templateToDuplicate.globalStyles,
+      name: duplicateName,
+      organizationId: organization.id,
+      sections: templateToDuplicate.sections,
+      type: templateToDuplicate.type,
+      sourceTemplateId: templateToDuplicate.sourceTemplateId,
+    });
+
+    const toastHeaders = await createToastHeaders({
+      description: "Your template has been duplicated.",
+      title: "Template duplicated",
+    });
+
+    return data(
+      { success: true, templateId: duplicated.id },
+      {
+        headers: {
+          ...Object.fromEntries(headers),
+          ...Object.fromEntries(toastHeaders),
+        },
+      },
+    );
+  }
+
   return data({ success: false, error: "Unknown action" }, { status: 400 });
 }
 
@@ -206,6 +260,9 @@ export default function BuilderRoute({ loaderData }: Route.ComponentProps) {
   const [templateToDelete, setTemplateToDelete] = useState<Template | null>(
     null,
   );
+  const [duplicatingTemplateId, setDuplicatingTemplateId] = useState<
+    string | null
+  >(null);
   const navigate = useNavigate();
   const revalidator = useRevalidator();
   const { activeType, allDefaultTemplates, organizationSlug, savedTemplates } =
@@ -230,6 +287,38 @@ export default function BuilderRoute({ loaderData }: Route.ComponentProps) {
     navigate(url);
     if (isDefault) {
       setTemplateSelectionModalOpen(false);
+    }
+  };
+
+  const handleDuplicate = async (templateId: string) => {
+    setDuplicatingTemplateId(templateId);
+
+    try {
+      const formData = new FormData();
+      formData.set("intent", "duplicate");
+      formData.set("templateId", templateId);
+
+      const response = await fetch(window.location.pathname, {
+        method: "POST",
+        body: formData,
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+
+        if (result.success) {
+          // Revalidate to refresh the list with the new duplicated template
+          revalidator.revalidate();
+        } else {
+          // Show error toast if duplication failed
+          const errorMessage = result.error || "Failed to duplicate template";
+          alert(errorMessage);
+        }
+      } else {
+        alert("Failed to duplicate template. Please try again.");
+      }
+    } finally {
+      setDuplicatingTemplateId(null);
     }
   };
 
@@ -377,8 +466,9 @@ export default function BuilderRoute({ loaderData }: Route.ComponentProps) {
 
             {/* Saved Templates Grid */}
             <TemplateGrid
-              handleCustomize={handleCustomize}
+              duplicatingTemplateId={duplicatingTemplateId}
               handleDeleteClick={handleDeleteClick}
+              handleDuplicate={handleDuplicate}
               handleEdit={handleEdit}
               organizationSlug={organizationSlug}
               templates={savedTemplates}
@@ -634,14 +724,16 @@ function TemplateGrid({
   templates,
   organizationSlug,
   handleEdit,
-  handleCustomize,
   handleDeleteClick,
+  handleDuplicate,
+  duplicatingTemplateId,
 }: {
   templates: Template[];
   organizationSlug: string;
   handleEdit: (id: string) => void;
-  handleCustomize: (id: string, isDefault: boolean) => void;
   handleDeleteClick: (template: Template) => void;
+  handleDuplicate: (id: string) => void;
+  duplicatingTemplateId: string | null;
 }) {
   if (templates.length === 0) {
     return (
@@ -707,11 +799,16 @@ function TemplateGrid({
               </Button>
               <Button
                 className="flex-1"
-                data-testid={`template-customize-button-${template.id}`}
-                onClick={() => handleCustomize(template.id, false)}
+                data-testid={`template-duplicate-button-${template.id}`}
+                disabled={duplicatingTemplateId === template.id}
+                onClick={() => handleDuplicate(template.id)}
                 variant="outline"
               >
-                <Copy className="h-4 w-4 mr-2" />
+                {duplicatingTemplateId === template.id ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Copy className="h-4 w-4 mr-2" />
+                )}
                 Duplicate
               </Button>
               <Button
