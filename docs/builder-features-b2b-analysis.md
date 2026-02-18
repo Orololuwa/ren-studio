@@ -10,7 +10,7 @@ This document outlines the current capabilities, market opportunities, and monet
 
 ### Template Types
 
-**Currently Implemented:**
+**Currently Implemented (end-to-end):**
 - **Resumes** - 8+ section types:
   - Header (name, title, contact info, social links)
   - Experience (work history with rich text descriptions)
@@ -26,11 +26,16 @@ This document outlines the current capabilities, market opportunities, and monet
   - Invoice Items (description, quantity, unit price, totals)
   - Invoice Footer (subtotals, tax, discount, payment terms, notes)
 
-**Planned:**
+ - **Receipts** - Payment confirmations:
+  - Receipt Header (company info, receipt number, date)
+  - Receipt Items (description, quantity, price, totals)
+  - Receipt Footer (payment method, transaction ID, thank you message)
+
+**Planned (in type system + Prisma, need wiring + implementation):**
 - Certificates
 - Report Cards
 
-**Business Operations Document Types (Type System Ready):**
+**Business Operations Document Types (in type system, need implementation):**
 - **Quotes** - Price quotations for services/products:
   - Quote Header (company info, quote number, dates, client info)
   - Quote Items (description, quantity, unit price, totals)
@@ -50,11 +55,6 @@ This document outlines the current capabilities, market opportunities, and monet
   - PO Header (company info, PO number, vendor info, dates)
   - PO Items (description, quantity, unit price, totals)
   - PO Footer (subtotals, shipping, terms, approval)
-
-- **Receipts** - Payment confirmations:
-  - Receipt Header (company info, receipt number, date)
-  - Receipt Items (description, quantity, price, totals)
-  - Receipt Footer (payment method, transaction ID, thank you message)
 
 - **Estimates** - Cost estimates and budgets:
   - Estimate Header (company info, estimate number, client info)
@@ -93,7 +93,7 @@ This document outlines the current capabilities, market opportunities, and monet
    - Responsive design support
 
 3. **PDF Export**
-   - Server-side PDF generation (Puppeteer/Playwright)
+   - Server-side PDF generation (Puppeteer)
    - High-quality document output
    - Customizable styling
 
@@ -734,13 +734,38 @@ The Template Builder has strong potential as a B2B API product. The modular arch
 
 ---
 
+## Next Document Types to Build (Everyday Business, Cross-Industry)
+
+These are high-frequency documents used across most industries (services, retail, manufacturing, logistics, construction) and align well with the current invoice/receipt section model (header/items/footer, totals, rich text terms/notes, PDF export).
+
+### Highest Priority (Already in the Type System)
+
+- **Quote (`quote`)**: often the first step before invoice; reuses invoice header/items/footer and totals.
+- **Purchase Order (`purchase-order`)**: core procurement doc; very similar to invoice items + footer.
+- **Estimate (`estimate`)**: common in services/construction; basically quote + validity/notes.
+- **Statement (`statement`)**: summary of invoices/transactions; can start as “statement header + transactions + footer”.
+- **Proposal (`proposal`)** and **Contract (`contract`)**: widely used; focuses on rich text body + signature blocks.
+
+### Next Wave (Recommend Adding New Types)
+
+- **Credit Note / Debit Note (`credit-note`, `debit-note`)**: adjustments, refunds, corrections; structurally similar to invoice.
+- **Sales Order (`sales-order`)**: internal/external order record; pairs naturally with invoice generation flows.
+- **Order Confirmation (`order-confirmation`)**: sent to customers; similar to sales order but customer-facing.
+- **Packing Slip (`packing-slip`)**: fulfillment/shipping packing list; header + items + shipment metadata.
+- **Delivery Note (`delivery-note`)**: proof of delivery / goods delivered note; header + items + signatures.
+- **Proforma Invoice (`proforma-invoice`)**: used for customs and advance payments; close to invoice with different labels.
+- **Remittance Advice (`remittance-advice`)**: accompanies bank transfers; references invoice numbers and amounts paid.
+- **Work Order (`work-order`)**: job instructions + parts/labor; header/body/footer + signatures.
+- **Timesheet (`timesheet`)**: billable hours; table-heavy doc with approvals.
+- **Expense Report (`expense-report`)**: employee reimbursement; table + totals + approvals.
+
 ## How to Add New Document Types
 
 The builder is designed with an extensible architecture that makes adding new document types straightforward. Here's the step-by-step process:
 
 ### Step 1: Update Type Definitions
 
-**File:** `app/features/builder/shared/types.ts`
+**File:** `app/features/templates/shared/types.ts`
 
 1. Add the new type to `TemplateType`:
 ```typescript
@@ -766,10 +791,9 @@ export type SectionType =
 Update all Zod validation schemas to include the new type:
 
 **Files to update:**
-- `app/routes/_authenticated-routes+/organizations_+/$organizationSlug+/builder+/$templateId/_index.tsx`
-- `app/routes/_authenticated-routes+/organizations_+/$organizationSlug+/builder+/$templateId+/export.tsx`
-- `app/routes/_authenticated-routes+/organizations_+/$organizationSlug+/builder+/$templateId+/preview.tsx`
-- `app/routes/_authenticated-routes+/organizations_+/$organizationSlug+/builder+/_index.tsx`
+- `app/routes/_authenticated-routes+/organizations_+/$organizationSlug+/templates+/$templateId/_index.tsx` (save schema)
+- `app/routes/_authenticated-routes+/organizations_+/$organizationSlug+/templates+/preview.tsx` (form-data preview schema)
+- `app/routes/_authenticated-routes+/organizations_+/$organizationSlug+/templates+/_index.tsx` (allowed types + tabs if you want it selectable in the UI)
 
 Add to all `z.enum()` calls:
 ```typescript
@@ -803,7 +827,7 @@ enum TemplateType {
 
 Create a new folder following the existing pattern:
 ```
-app/features/builder/your-new-type/
+app/features/templates/your-new-type/
 ├── components/
 │   └── component-library.ts    # Define available components
 ├── templates/
@@ -814,7 +838,7 @@ app/features/builder/your-new-type/
 
 ### Step 5: Create Component Library
 
-**File:** `app/features/builder/your-new-type/components/component-library.ts`
+**File:** `app/features/templates/your-new-type/components/component-library.ts`
 
 ```typescript
 import type { ComponentDefinition } from "../../shared/types";
@@ -834,7 +858,7 @@ export const yourTypeComponentLibrary: Record<string, ComponentDefinition> = {
 
 ### Step 6: Register Components
 
-**File:** `app/features/builder/shared/components/component-library-registry.ts`
+**File:** `app/features/templates/shared/components/component-library-registry.ts`
 
 ```typescript
 import { yourTypeComponentLibrary } from "../../your-new-type/components/component-library";
@@ -849,7 +873,7 @@ export const componentLibrary: Record<string, ComponentDefinition> = {
 
 ### Step 7: Add to Component Palette
 
-**File:** `app/features/builder/shared/components/component-palette.tsx`
+**File:** `app/features/templates/shared/components/component-palette.tsx`
 
 Update the `getComponentsForType` function:
 ```typescript
@@ -863,7 +887,7 @@ const getComponentsForType = (type: string | undefined): string[] => {
 
 ### Step 8: Create HTML Generator
 
-**File:** `app/features/builder/your-new-type/utils/html-generator-your-type.server.ts`
+**File:** `app/features/templates/your-new-type/utils/html-generator-your-type.server.ts`
 
 Create functions to generate HTML for preview and export:
 ```typescript
@@ -884,7 +908,7 @@ export function generateYourTypeExportHTML(
 
 ### Step 9: Register HTML Generators
 
-**File:** `app/features/builder/shared/utils/html-generator.server.ts`
+**File:** `app/features/templates/shared/utils/html-generator.server.ts`
 
 Add cases to the switch statements:
 ```typescript
@@ -900,7 +924,7 @@ export function generatePreviewHTML(...) {
 
 ### Step 10: Create Section Renderer
 
-**File:** `app/features/builder/shared/components/section-renderer.tsx`
+**File:** `app/features/templates/shared/components/section-renderer.tsx`
 
 Add rendering logic for your new section types in the `renderSection()` function:
 ```typescript
@@ -912,7 +936,7 @@ case "your-type-header": {
 
 ### Step 11: Add to Builder Home Page
 
-**File:** `app/routes/_authenticated-routes+/organizations_+/$organizationSlug+/builder+/_index.tsx`
+**File:** `app/routes/_authenticated-routes+/organizations_+/$organizationSlug+/templates+/_index.tsx`
 
 1. Add to `builderTypes` array:
 ```typescript
@@ -936,7 +960,7 @@ const dbYourType = await retrieveTemplatesByOrganizationIdAndType({
 
 ### Step 12: Create Predefined Templates (Optional)
 
-**File:** `app/features/builder/your-new-type/templates/your-type-templates.ts`
+**File:** `app/features/templates/your-new-type/templates/your-type-templates.ts`
 
 ```typescript
 import type { Template } from "../../shared/types";
@@ -951,7 +975,7 @@ export const yourTypeTemplates: Template[] = [
 ];
 ```
 
-Register in `app/features/builder/shared/templates/index.ts`:
+Register in `app/features/templates/shared/templates/index.ts`:
 ```typescript
 import { yourTypeTemplates } from "../../your-new-type/templates/your-type-templates";
 
@@ -964,7 +988,7 @@ export const predefinedTemplates: Record<string, Template[]> = {
 ### Step 13: Update Database Model (if needed)
 
 If your new document type needs custom data structures, you may need to:
-1. Add new interfaces to `app/features/builder/shared/types.ts`
+1. Add new interfaces to `app/features/templates/shared/types.ts`
 2. Update Prisma schema if storing structured data
 3. Create migration
 

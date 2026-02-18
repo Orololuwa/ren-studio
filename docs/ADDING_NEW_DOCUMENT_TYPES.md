@@ -4,15 +4,14 @@ This is a quick reference guide for adding new document types to the builder. Fo
 
 ## Current Document Types
 
-**Implemented:**
+**Implemented end-to-end (UI + preview/export):**
 - ✅ resume
 - ✅ invoice
+- ✅ receipt
 
-**Planned:**
-- ⏳ certificate
-- ⏳ report-cards
-
-**Type System Ready (Need Implementation):**
+**In Type System + Prisma (need wiring + implementation):**
+- 📋 certificate
+- 📋 report-cards
 - 📋 quote
 - 📋 proposal
 - 📋 contract
@@ -26,15 +25,14 @@ This is a quick reference guide for adding new document types to the builder. Fo
 
 ## Quick Steps
 
-1. **Update Types** (`app/features/builder/shared/types.ts`)
+1. **Update Types** (`app/features/templates/shared/types.ts`)
    - Add to `TemplateType`
    - Add section types to `SectionType`
 
-2. **Update Validation** (4 files)
-   - `app/routes/_authenticated-routes+/organizations_+/$organizationSlug+/builder+/$templateId/_index.tsx`
-   - `app/routes/_authenticated-routes+/organizations_+/$organizationSlug+/builder+/$templateId+/export.tsx`
-   - `app/routes/_authenticated-routes+/organizations_+/$organizationSlug+/builder+/$templateId+/preview.tsx`
-   - `app/routes/_authenticated-routes+/organizations_+/$organizationSlug+/builder+/_index.tsx`
+2. **Update Validation / Allowed Types** (3 files)
+   - `app/routes/_authenticated-routes+/organizations_+/$organizationSlug+/templates+/$templateId/_index.tsx` (save schema)
+   - `app/routes/_authenticated-routes+/organizations_+/$organizationSlug+/templates+/preview.tsx` (form-data preview schema)
+   - `app/routes/_authenticated-routes+/organizations_+/$organizationSlug+/templates+/_index.tsx` (`VALID_BUILDER_TYPES`, and the UI tabs if the type should show up)
 
 3. **Update Prisma Schema** (`prisma/schema.prisma`)
    - Add to `TemplateType` enum
@@ -43,26 +41,26 @@ This is a quick reference guide for adding new document types to the builder. Fo
 
 4. **Create Feature Folder**
    ```
-   app/features/builder/your-type/
+   app/features/templates/your-type/
    ├── components/component-library.ts
    ├── templates/your-type-templates.ts
    └── utils/html-generator-your-type.server.ts
    ```
 
 5. **Register Components**
-   - Add to `component-library-registry.ts`
-   - Add to `component-palette.tsx`
+   - Add to `app/features/templates/shared/components/component-library-registry.ts`
+   - Add to `app/features/templates/shared/components/component-palette.tsx`
 
 6. **Create HTML Generators**
    - Implement preview and export HTML generation
-   - Register in `html-generator.server.ts`
+   - Register in `app/features/templates/shared/utils/html-generator.server.ts`
 
 7. **Add Section Renderer**
-   - Add rendering logic in `section-renderer.tsx`
+   - Add rendering logic in `app/features/templates/shared/components/section-renderer.tsx`
 
-8. **Update Builder UI**
-   - Add to `builderTypes` array
-   - Update loader to fetch templates
+8. **Update Templates UI (if you want it selectable in the app)**
+   - Add to `builderTypes` array in `app/routes/_authenticated-routes+/organizations_+/$organizationSlug+/templates+/_index.tsx`
+   - Update loader/template modal data in the same file (e.g. `allDefaultTemplates` and/or type tabs)
 
 ## Important Notes
 
@@ -100,6 +98,34 @@ enum TemplateType {
 - **TypeScript/URL:** Use kebab-case (`purchase-order`)
 - **Prisma Enum:** Use camelCase (`purchaseOrder`)
 - **Section Types:** Use kebab-case with type prefix (`purchase-order-header`)
+
+**Notable mappings used in this repo:**
+- `report-cards` (TS/URL) → `reportCards` (Prisma)
+- `purchase-order` (TS/URL) → `purchaseOrder` (Prisma)
+
+## Recommended Next Document Types (Everyday Business)
+
+These are commonly used across industries (services, retail, manufacturing, logistics, construction, agencies) and map well to the existing invoice/receipt architecture (header/items/footer, totals, rich text terms/notes).
+
+**High priority (already in `TemplateType`, not yet implemented end-to-end):**
+- 📌 quote
+- 📌 purchase-order
+- 📌 estimate
+- 📌 statement
+- 📌 proposal
+- 📌 contract
+
+**New recommended types to add next (not currently in `TemplateType`):**
+- 📌 credit-note (and debit-note): adjustments/refunds/overcharges
+- 📌 sales-order: internal/external order record before invoicing
+- 📌 order-confirmation: seller confirmation sent to customer
+- 📌 packing-slip: shipments/fulfillment packing list
+- 📌 delivery-note: proof of delivery / goods delivered note
+- 📌 proforma-invoice: pre-invoice for customs/advance payment
+- 📌 remittance-advice: payment details sent with bank transfers
+- 📌 work-order: service/job instruction sheet (often with line items)
+- 📌 timesheet: billable hours tracking (great fit for agencies/contractors)
+- 📌 expense-report: employee reimbursement
 
 ## Testing
 
