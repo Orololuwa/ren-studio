@@ -192,7 +192,11 @@ export function PropertiesPanel() {
     if (!currentTemplate) return;
 
     const footerSection = currentTemplate.sections.find(
-      (s) => s.type === "invoice-footer" || s.type === "receipt-footer",
+      (s) =>
+        s.type === "invoice-footer" ||
+        s.type === "receipt-footer" ||
+        s.type === "quote-footer" ||
+        s.type === "estimate-footer",
     );
 
     if (footerSection) {
@@ -1298,6 +1302,8 @@ export function PropertiesPanel() {
         );
       }
 
+      case "quote-items":
+      case "estimate-items":
       case "invoice-items": {
         const items = (
           Array.isArray(section.data.items) ? section.data.items : []
@@ -1346,7 +1352,13 @@ export function PropertiesPanel() {
         return (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <Label className="text-xs font-medium">Invoice Items</Label>
+              <Label className="text-xs font-medium">
+                {section.type === "quote-items"
+                  ? "Quote Items"
+                  : section.type === "estimate-items"
+                    ? "Estimate Items"
+                    : "Invoice Items"}
+              </Label>
               <Button
                 onClick={addItem}
                 size="sm"
@@ -1434,7 +1446,7 @@ export function PropertiesPanel() {
               ))}
               {items.length === 0 && (
                 <div className="text-sm text-muted-foreground text-center py-4">
-                  No items added. Click "Add Item" to add invoice line items.
+                  No items added. Click "Add Item" to add line items.
                 </div>
               )}
             </div>
@@ -1442,6 +1454,8 @@ export function PropertiesPanel() {
         );
       }
 
+      case "quote-footer":
+      case "estimate-footer":
       case "invoice-footer": {
         const subtotal = Number.parseFloat(
           String(section.data.subtotal || "0"),
@@ -1777,21 +1791,404 @@ export function PropertiesPanel() {
                 value={String(section.data.total || "")}
               />
             </div>
-            <RichTextEditor
-              label="Payment Terms"
-              onChange={(value) => updateData("paymentTerms", value)}
-              value={String(section.data.paymentTerms || "")}
-            />
+            {section.type === "invoice-footer" && (
+              <>
+                <RichTextEditor
+                  label="Payment Terms"
+                  onChange={(value) => updateData("paymentTerms", value)}
+                  value={String(section.data.paymentTerms || "")}
+                />
+                <div>
+                  <Label className="text-xs" htmlFor="notes">
+                    Notes
+                  </Label>
+                  <textarea
+                    className="mt-1 flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    id="notes"
+                    onChange={(e) => updateData("notes", e.target.value)}
+                    placeholder="Thank you for your business!"
+                    value={String(section.data.notes || "")}
+                  />
+                </div>
+              </>
+            )}
+            {section.type === "quote-footer" && (
+              <>
+                <div>
+                  <Label className="text-xs" htmlFor="validityPeriod">
+                    Validity Period
+                  </Label>
+                  <Input
+                    className="mt-1"
+                    id="validityPeriod"
+                    onChange={(e) =>
+                      updateData("validityPeriod", e.target.value)
+                    }
+                    placeholder="30 days"
+                    value={String(section.data.validityPeriod || "")}
+                  />
+                </div>
+                <RichTextEditor
+                  label="Terms"
+                  onChange={(value) => updateData("terms", value)}
+                  value={String(section.data.terms || "")}
+                />
+              </>
+            )}
+            {section.type === "estimate-footer" && (
+              <>
+                <div>
+                  <Label className="text-xs" htmlFor="validityPeriod">
+                    Validity Period
+                  </Label>
+                  <Input
+                    className="mt-1"
+                    id="validityPeriod"
+                    onChange={(e) =>
+                      updateData("validityPeriod", e.target.value)
+                    }
+                    placeholder="14 days"
+                    value={String(section.data.validityPeriod || "")}
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs" htmlFor="notes">
+                    Notes
+                  </Label>
+                  <textarea
+                    className="mt-1 flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    id="notes"
+                    onChange={(e) => updateData("notes", e.target.value)}
+                    placeholder="Additional notes or conditions"
+                    value={String(section.data.notes || "")}
+                  />
+                </div>
+              </>
+            )}
+          </div>
+        );
+      }
+
+      case "quote-header": {
+        return (
+          <div className="space-y-4">
             <div>
-              <Label className="text-xs" htmlFor="notes">
-                Notes
+              <Label className="text-xs" htmlFor="companyLogo">
+                Company Logo URL
+              </Label>
+              <Input
+                className="mt-1"
+                id="companyLogo"
+                onChange={(e) => updateData("companyLogo", e.target.value)}
+                placeholder="https://example.com/logo.png"
+                type="url"
+                value={String(section.data.companyLogo || "")}
+              />
+              {Boolean(section.data.companyLogo) && (
+                <div className="mt-2">
+                  <img
+                    alt="Logo Preview"
+                    className="h-12 object-contain border rounded"
+                    src={String(section.data.companyLogo)}
+                  />
+                </div>
+              )}
+            </div>
+            <div>
+              <Label className="text-xs" htmlFor="companyName">
+                Company Name
+              </Label>
+              <Input
+                className="mt-1"
+                id="companyName"
+                onChange={(e) => updateData("companyName", e.target.value)}
+                placeholder="Your Company Name"
+                value={String(section.data.companyName || "")}
+              />
+            </div>
+            <div>
+              <Label className="text-xs" htmlFor="companyAddress">
+                Company Address
               </Label>
               <textarea
                 className="mt-1 flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                id="notes"
-                onChange={(e) => updateData("notes", e.target.value)}
-                placeholder="Thank you for your business!"
-                value={String(section.data.notes || "")}
+                id="companyAddress"
+                onChange={(e) => updateData("companyAddress", e.target.value)}
+                placeholder="123 Business St&#10;City, State 12345"
+                value={String(section.data.companyAddress || "")}
+              />
+            </div>
+            <div>
+              <Label className="text-xs" htmlFor="companyEmail">
+                Company Email
+              </Label>
+              <Input
+                className="mt-1"
+                id="companyEmail"
+                onChange={(e) => updateData("companyEmail", e.target.value)}
+                placeholder="contact@company.com"
+                type="email"
+                value={String(section.data.companyEmail || "")}
+              />
+            </div>
+            <div>
+              <Label className="text-xs" htmlFor="companyPhone">
+                Company Phone
+              </Label>
+              <Input
+                className="mt-1"
+                id="companyPhone"
+                onChange={(e) => updateData("companyPhone", e.target.value)}
+                placeholder="+1 (555) 123-4567"
+                type="tel"
+                value={String(section.data.companyPhone || "")}
+              />
+            </div>
+            <div>
+              <Label className="text-xs" htmlFor="quoteNumber">
+                Quote Number
+              </Label>
+              <Input
+                className="mt-1"
+                id="quoteNumber"
+                onChange={(e) => updateData("quoteNumber", e.target.value)}
+                placeholder="QT-001"
+                value={String(section.data.quoteNumber || "")}
+              />
+            </div>
+            <div>
+              <Label className="text-xs" htmlFor="quoteDate">
+                Quote Date
+              </Label>
+              <Input
+                className="mt-1"
+                id="quoteDate"
+                onChange={(e) => updateData("quoteDate", e.target.value)}
+                placeholder="01/15/2024"
+                value={String(section.data.quoteDate || "")}
+              />
+            </div>
+            <div>
+              <Label className="text-xs" htmlFor="validityDate">
+                Valid Until
+              </Label>
+              <Input
+                className="mt-1"
+                id="validityDate"
+                onChange={(e) => updateData("validityDate", e.target.value)}
+                placeholder="02/15/2024"
+                value={String(section.data.validityDate || "")}
+              />
+            </div>
+            <div>
+              <Label className="text-xs" htmlFor="billToName">
+                Bill To Name
+              </Label>
+              <Input
+                className="mt-1"
+                id="billToName"
+                onChange={(e) => updateData("billToName", e.target.value)}
+                placeholder="Client Name"
+                value={String(section.data.billToName || "")}
+              />
+            </div>
+            <div>
+              <Label className="text-xs" htmlFor="billToAddress">
+                Bill To Address
+              </Label>
+              <textarea
+                className="mt-1 flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                id="billToAddress"
+                onChange={(e) => updateData("billToAddress", e.target.value)}
+                placeholder="456 Client Ave&#10;City, State 67890"
+                value={String(section.data.billToAddress || "")}
+              />
+            </div>
+            <div>
+              <Label className="text-xs" htmlFor="shipToName">
+                Ship To Name (Optional)
+              </Label>
+              <Input
+                className="mt-1"
+                id="shipToName"
+                onChange={(e) => updateData("shipToName", e.target.value)}
+                placeholder="Shipping Name"
+                value={String(section.data.shipToName || "")}
+              />
+            </div>
+            <div>
+              <Label className="text-xs" htmlFor="shipToAddress">
+                Ship To Address (Optional)
+              </Label>
+              <textarea
+                className="mt-1 flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                id="shipToAddress"
+                onChange={(e) => updateData("shipToAddress", e.target.value)}
+                placeholder="789 Shipping St&#10;City, State 54321"
+                value={String(section.data.shipToAddress || "")}
+              />
+            </div>
+          </div>
+        );
+      }
+
+      case "estimate-header": {
+        return (
+          <div className="space-y-4">
+            <div>
+              <Label className="text-xs" htmlFor="companyLogo">
+                Company Logo URL
+              </Label>
+              <Input
+                className="mt-1"
+                id="companyLogo"
+                onChange={(e) => updateData("companyLogo", e.target.value)}
+                placeholder="https://example.com/logo.png"
+                type="url"
+                value={String(section.data.companyLogo || "")}
+              />
+              {Boolean(section.data.companyLogo) && (
+                <div className="mt-2">
+                  <img
+                    alt="Logo Preview"
+                    className="h-12 object-contain border rounded"
+                    src={String(section.data.companyLogo)}
+                  />
+                </div>
+              )}
+            </div>
+            <div>
+              <Label className="text-xs" htmlFor="companyName">
+                Company Name
+              </Label>
+              <Input
+                className="mt-1"
+                id="companyName"
+                onChange={(e) => updateData("companyName", e.target.value)}
+                placeholder="Your Company Name"
+                value={String(section.data.companyName || "")}
+              />
+            </div>
+            <div>
+              <Label className="text-xs" htmlFor="companyAddress">
+                Company Address
+              </Label>
+              <textarea
+                className="mt-1 flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                id="companyAddress"
+                onChange={(e) => updateData("companyAddress", e.target.value)}
+                placeholder="123 Business St&#10;City, State 12345"
+                value={String(section.data.companyAddress || "")}
+              />
+            </div>
+            <div>
+              <Label className="text-xs" htmlFor="companyEmail">
+                Company Email
+              </Label>
+              <Input
+                className="mt-1"
+                id="companyEmail"
+                onChange={(e) => updateData("companyEmail", e.target.value)}
+                placeholder="contact@company.com"
+                type="email"
+                value={String(section.data.companyEmail || "")}
+              />
+            </div>
+            <div>
+              <Label className="text-xs" htmlFor="companyPhone">
+                Company Phone
+              </Label>
+              <Input
+                className="mt-1"
+                id="companyPhone"
+                onChange={(e) => updateData("companyPhone", e.target.value)}
+                placeholder="+1 (555) 123-4567"
+                type="tel"
+                value={String(section.data.companyPhone || "")}
+              />
+            </div>
+            <div>
+              <Label className="text-xs" htmlFor="estimateNumber">
+                Estimate Number
+              </Label>
+              <Input
+                className="mt-1"
+                id="estimateNumber"
+                onChange={(e) => updateData("estimateNumber", e.target.value)}
+                placeholder="EST-001"
+                value={String(section.data.estimateNumber || "")}
+              />
+            </div>
+            <div>
+              <Label className="text-xs" htmlFor="estimateDate">
+                Estimate Date
+              </Label>
+              <Input
+                className="mt-1"
+                id="estimateDate"
+                onChange={(e) => updateData("estimateDate", e.target.value)}
+                placeholder="01/15/2024"
+                value={String(section.data.estimateDate || "")}
+              />
+            </div>
+            <div>
+              <Label className="text-xs" htmlFor="validityDate">
+                Valid Until
+              </Label>
+              <Input
+                className="mt-1"
+                id="validityDate"
+                onChange={(e) => updateData("validityDate", e.target.value)}
+                placeholder="01/29/2024"
+                value={String(section.data.validityDate || "")}
+              />
+            </div>
+            <div>
+              <Label className="text-xs" htmlFor="billToName">
+                Bill To Name
+              </Label>
+              <Input
+                className="mt-1"
+                id="billToName"
+                onChange={(e) => updateData("billToName", e.target.value)}
+                placeholder="Client Name"
+                value={String(section.data.billToName || "")}
+              />
+            </div>
+            <div>
+              <Label className="text-xs" htmlFor="billToAddress">
+                Bill To Address
+              </Label>
+              <textarea
+                className="mt-1 flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                id="billToAddress"
+                onChange={(e) => updateData("billToAddress", e.target.value)}
+                placeholder="456 Client Ave&#10;City, State 67890"
+                value={String(section.data.billToAddress || "")}
+              />
+            </div>
+            <div>
+              <Label className="text-xs" htmlFor="shipToName">
+                Ship To Name (Optional)
+              </Label>
+              <Input
+                className="mt-1"
+                id="shipToName"
+                onChange={(e) => updateData("shipToName", e.target.value)}
+                placeholder="Shipping Name"
+                value={String(section.data.shipToName || "")}
+              />
+            </div>
+            <div>
+              <Label className="text-xs" htmlFor="shipToAddress">
+                Ship To Address (Optional)
+              </Label>
+              <textarea
+                className="mt-1 flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                id="shipToAddress"
+                onChange={(e) => updateData("shipToAddress", e.target.value)}
+                placeholder="789 Shipping St&#10;City, State 54321"
+                value={String(section.data.shipToAddress || "")}
               />
             </div>
           </div>

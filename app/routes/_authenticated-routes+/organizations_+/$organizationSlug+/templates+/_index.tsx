@@ -87,9 +87,11 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
 
   // Get all default templates for all types (for the modal)
   const allDefaultTemplates = {
-    resume: getTemplatesByType("resume"),
+    estimate: getTemplatesByType("estimate"),
+    quote: getTemplatesByType("quote"),
     invoice: getTemplatesByType("invoice"),
     receipt: getTemplatesByType("receipt"),
+    resume: getTemplatesByType("resume"),
   };
 
   return data(
@@ -214,8 +216,13 @@ export const meta: Route.MetaFunction = ({ loaderData }) => [
 const builderTypes = [
   {
     icon: FileText,
-    label: "Resume",
-    value: "resume",
+    label: "Estimate",
+    value: "estimate",
+  },
+  {
+    icon: FileText,
+    label: "Quote",
+    value: "quote",
   },
   {
     icon: Receipt,
@@ -226,6 +233,11 @@ const builderTypes = [
     icon: ShoppingBag,
     label: "Receipt",
     value: "receipt",
+  },
+  {
+    icon: FileText,
+    label: "Resume",
+    value: "resume",
   },
 ] as const;
 

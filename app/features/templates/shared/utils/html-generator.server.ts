@@ -1,7 +1,15 @@
 import {
+  generateEstimateExportHTML,
+  generateEstimatePreviewHTML,
+} from "../../estimate/utils/html-generator-estimate.server";
+import {
   generateInvoiceExportHTML,
   generateInvoicePreviewHTML,
 } from "../../invoice/utils/html-generator-invoice.server";
+import {
+  generateQuoteExportHTML,
+  generateQuotePreviewHTML,
+} from "../../quote/utils/html-generator-quote.server";
 import {
   generateReceiptExportHTML,
   generateReceiptPreviewHTML,
@@ -28,6 +36,10 @@ export function generatePreviewHTML(
       return generateInvoicePreviewHTML(sections, globalStyles, colorPalette);
     case "receipt":
       return generateReceiptPreviewHTML(sections, globalStyles, colorPalette);
+    case "quote":
+      return generateQuotePreviewHTML(sections, globalStyles, colorPalette);
+    case "estimate":
+      return generateEstimatePreviewHTML(sections, globalStyles, colorPalette);
     default:
       // Fallback for unsupported types - return basic HTML
       return `
@@ -64,6 +76,10 @@ export function generateExportHTML(
       return generateInvoiceExportHTML(sections, globalStyles, colorPalette);
     case "receipt":
       return generateReceiptExportHTML(sections, globalStyles, colorPalette);
+    case "quote":
+      return generateQuoteExportHTML(sections, globalStyles, colorPalette);
+    case "estimate":
+      return generateEstimateExportHTML(sections, globalStyles, colorPalette);
     default:
       // Fallback for unsupported types - return basic HTML
       return `

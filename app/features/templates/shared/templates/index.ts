@@ -1,14 +1,15 @@
+import { estimateTemplates } from "../../estimate/templates/estimate-templates";
 import { invoiceTemplates } from "../../invoice/templates/invoice-templates";
+import { quoteTemplates } from "../../quote/templates/quote-templates";
 import { receiptTemplates } from "../../receipt/templates/receipt-templates";
 import { resumeTemplates } from "../../resume/templates/resume-templates";
 import type { Template } from "../types";
 
-// Add more template imports as you create them
-// import { certificateTemplates } from "./certificate-templates";
-
 export const predefinedTemplates: Record<string, Template[]> = {
   certificate: [],
+  estimate: estimateTemplates,
   invoice: invoiceTemplates,
+  quote: quoteTemplates,
   receipt: receiptTemplates,
   "report-cards": [],
   resume: resumeTemplates,

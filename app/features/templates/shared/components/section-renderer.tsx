@@ -13,6 +13,7 @@ import type {
 import { recalculateFooterFromItems } from "../utils/calculations";
 import {
   getSectionColorPalette,
+  resolveColorReference,
   resolveStyleColors,
 } from "../utils/color-resolver";
 import { InlineEditor } from "./inline-editor";
@@ -80,7 +81,9 @@ export function SectionRenderer({
       // Handle bidirectional sync for tax and discount when editing from canvas
       if (
         section.type === "invoice-footer" ||
-        section.type === "receipt-footer"
+        section.type === "receipt-footer" ||
+        section.type === "quote-footer" ||
+        section.type === "estimate-footer"
       ) {
         const subtotal = Number.parseFloat(String(updatedData.subtotal || "0"));
 
@@ -150,13 +153,22 @@ export function SectionRenderer({
     updateSection(section.id, { data: updatedData });
 
     // Recalculate subtotal and footer totals if items section was edited
-    if (section.type === "invoice-items" || section.type === "receipt-items") {
+    if (
+      section.type === "invoice-items" ||
+      section.type === "receipt-items" ||
+      section.type === "quote-items" ||
+      section.type === "estimate-items"
+    ) {
       const items = Array.isArray(updatedData.items)
         ? (updatedData.items as InvoiceItem[])
         : [];
 
       const footerSection = currentTemplate?.sections.find(
-        (s) => s.type === "invoice-footer" || s.type === "receipt-footer",
+        (s) =>
+          s.type === "invoice-footer" ||
+          s.type === "receipt-footer" ||
+          s.type === "quote-footer" ||
+          s.type === "estimate-footer",
       );
 
       if (footerSection) {
@@ -207,6 +219,18 @@ export function SectionRenderer({
       sectionColorPalette,
     );
     const sectionStyles = resolvedStyles as React.CSSProperties;
+
+    // Theme-independent text colors for document sections - use template palette, not app theme
+    const globalStyles = currentTemplate?.globalStyles as
+      | Record<string, string>
+      | undefined;
+    const templateTextColor = resolveColorReference(
+      globalStyles?.textColor ?? globalStyles?.color ?? "#111827",
+      globalColorPalette,
+    );
+    const primaryTextColor =
+      (sectionStyles.color as string) || templateTextColor;
+    const secondaryTextColor = "#4b5563";
 
     switch (section.type) {
       case "header": {
@@ -951,10 +975,13 @@ export function SectionRenderer({
 
       case "invoice-header": {
         const logoUrl = (section.data.companyLogo as string) || "";
-        // Check if section has a color style to determine if we should use white text
         const hasColorStyle = sectionStyles.color;
-        const textColorClass = hasColorStyle ? "" : "text-gray-900";
-        const secondaryTextColorClass = hasColorStyle ? "" : "text-gray-600";
+        const textColorStyle = hasColorStyle
+          ? undefined
+          : { color: primaryTextColor };
+        const secondaryColorStyle = hasColorStyle
+          ? undefined
+          : { color: secondaryTextColor };
         return (
           <div style={sectionStyles}>
             <div className="flex justify-between mb-6">
@@ -991,7 +1018,7 @@ export function SectionRenderer({
                     </button>
                   </div>
                 )}
-                <h2 className={`${textColorClass} text-xl font-bold mb-2`}>
+                <h2 className="text-xl font-bold mb-2" style={textColorStyle}>
                   <button
                     className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left"
                     onClick={(e) =>
@@ -1017,7 +1044,7 @@ export function SectionRenderer({
                     {(section.data.companyName as string) || "Company Name"}
                   </button>
                 </h2>
-                <div className={`text-sm ${secondaryTextColorClass}`}>
+                <div className="text-sm" style={secondaryColorStyle}>
                   <button
                     className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left"
                     onClick={(e) =>
@@ -1098,12 +1125,12 @@ export function SectionRenderer({
                 </div>
               </div>
               <div className="text-right">
-                <h1 className={`${textColorClass} text-2xl font-bold mb-4`}>
+                <h1 className="text-2xl font-bold mb-4" style={textColorStyle}>
                   INVOICE
                 </h1>
-                <div className="text-sm space-y-1">
+                <div className="text-sm space-y-1" style={secondaryColorStyle}>
                   <div>
-                    <span className={secondaryTextColorClass}>Invoice #: </span>
+                    <span>Invoice #: </span>
                     <button
                       className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left"
                       onClick={(e) =>
@@ -1130,7 +1157,7 @@ export function SectionRenderer({
                     </button>
                   </div>
                   <div>
-                    <span className={secondaryTextColorClass}>Date: </span>
+                    <span>Date: </span>
                     <button
                       className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left"
                       onClick={(e) =>
@@ -1158,9 +1185,7 @@ export function SectionRenderer({
                   </div>
                   {(section.data.dueDate as string | undefined) && (
                     <div>
-                      <span className={secondaryTextColorClass}>
-                        Due Date:{" "}
-                      </span>
+                      <span>Due Date: </span>
                       <button
                         className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left"
                         onClick={(e) =>
@@ -1304,12 +1329,19 @@ export function SectionRenderer({
         );
       }
 
+      case "quote-items":
+      case "estimate-items":
       case "invoice-items": {
         const items = Array.isArray(section.data.items)
           ? (section.data.items as InvoiceItem[])
           : [];
         return (
-          <div className="text-gray-900" style={sectionStyles}>
+          <div
+            style={{
+              ...sectionStyles,
+              color: (sectionStyles.color as string) || primaryTextColor,
+            }}
+          >
             <table className="w-full border-collapse">
               <thead>
                 <tr className="border-b-2 border-gray-300">
@@ -1322,7 +1354,11 @@ export function SectionRenderer({
               <tbody>
                 {items.length === 0 ? (
                   <tr>
-                    <td className="p-2 text-gray-500" colSpan={4}>
+                    <td
+                      className="p-2"
+                      colSpan={4}
+                      style={{ color: secondaryTextColor }}
+                    >
                       No items added. Click to add items in the properties
                       panel.
                     </td>
@@ -1423,16 +1459,23 @@ export function SectionRenderer({
         );
       }
 
+      case "quote-footer":
+      case "estimate-footer":
       case "invoice-footer": {
         const taxMode = (section.data.taxMode as string) || "percentage";
         const discountMode =
           (section.data.discountMode as string) || "percentage";
         return (
-          <div className="text-gray-900" style={sectionStyles}>
+          <div
+            style={{
+              ...sectionStyles,
+              color: (sectionStyles.color as string) || primaryTextColor,
+            }}
+          >
             <div className="flex justify-end">
               <div className="w-64 space-y-2">
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Subtotal:</span>
+                  <span style={{ color: secondaryTextColor }}>Subtotal:</span>
                   <span className="text-right">
                     {formatCurrency(
                       section.data.subtotal as
@@ -1448,7 +1491,7 @@ export function SectionRenderer({
                 {(section.data.taxAmount as string | number | undefined) &&
                   Number(section.data.taxAmount) > 0 && (
                     <div className="flex justify-between">
-                      <span className="text-gray-600">
+                      <span style={{ color: secondaryTextColor }}>
                         {section.data.showTaxRate !== false &&
                         section.data.taxRate &&
                         Number(section.data.taxRate) > 0 ? (
@@ -1541,7 +1584,7 @@ export function SectionRenderer({
                 {(section.data.discount as string | number | undefined) &&
                   Number(section.data.discount) > 0 && (
                     <div className="flex justify-between">
-                      <span className="text-gray-600">
+                      <span style={{ color: secondaryTextColor }}>
                         {section.data.showDiscountRate !== false &&
                         section.data.discountRate &&
                         Number(section.data.discountRate) > 0 ? (
@@ -1647,54 +1690,198 @@ export function SectionRenderer({
                 </div>
               </div>
             </div>
-            {(section.data.paymentTerms as string | undefined) && (
-              <div className="mt-4">
-                <p className="text-sm text-gray-600">
-                  <span className="font-semibold">Payment Terms: </span>
-                </p>
-                {/* biome-ignore lint/a11y/useSemanticElements: Rich text content div needs to be clickable but cannot be a button element */}
-                <div
-                  className="rich-text-content text-sm text-gray-600 cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left block w-full"
-                  // biome-ignore lint/security/noDangerouslySetInnerHtml: Rich text content from editor needs to be rendered as HTML
-                  dangerouslySetInnerHTML={{
-                    __html: (section.data.paymentTerms as string) || "",
-                  }}
-                  data-testid={`rich-text-content-${section.id}-paymentTerms`}
-                  onClick={(e) =>
-                    handleFieldClick(
-                      e,
-                      ["paymentTerms"],
-                      section.data.paymentTerms as string,
-                      "Payment Terms",
-                      true,
-                    )
-                  }
-                  onKeyDown={(e) =>
-                    handleFieldKeyDown(
-                      e,
-                      ["paymentTerms"],
-                      section.data.paymentTerms as string,
-                      "Payment Terms",
-                      true,
-                    )
-                  }
-                  role="button"
-                  tabIndex={0}
-                />
-              </div>
-            )}
-            {(section.data.notes as string | undefined) && (
-              <div className="mt-4">
-                <p className="text-sm text-gray-600">
-                  <button
-                    className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left w-full"
+            {section.type === "invoice-footer" &&
+              (section.data.paymentTerms as string | undefined) && (
+                <div className="mt-4">
+                  <p className="text-sm" style={{ color: secondaryTextColor }}>
+                    <span className="font-semibold">Payment Terms: </span>
+                  </p>
+                  {/* biome-ignore lint/a11y/useSemanticElements: Rich text content div needs to be clickable but cannot be a button element */}
+                  <div
+                    className="rich-text-content text-sm cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left block w-full"
+                    // biome-ignore lint/security/noDangerouslySetInnerHtml: Rich text content from editor needs to be rendered as HTML
+                    dangerouslySetInnerHTML={{
+                      __html: (section.data.paymentTerms as string) || "",
+                    }}
+                    data-testid={`rich-text-content-${section.id}-paymentTerms`}
+                    onClick={(e) =>
+                      handleFieldClick(
+                        e,
+                        ["paymentTerms"],
+                        section.data.paymentTerms as string,
+                        "Payment Terms",
+                        true,
+                      )
+                    }
+                    onKeyDown={(e) =>
+                      handleFieldKeyDown(
+                        e,
+                        ["paymentTerms"],
+                        section.data.paymentTerms as string,
+                        "Payment Terms",
+                        true,
+                      )
+                    }
+                    role="button"
+                    style={{ color: secondaryTextColor }}
+                    tabIndex={0}
+                  />
+                </div>
+              )}
+            {section.type === "invoice-footer" &&
+              (section.data.notes as string | undefined) && (
+                <div className="mt-4">
+                  <p className="text-sm" style={{ color: secondaryTextColor }}>
+                    <button
+                      className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left w-full"
+                      onClick={(e) =>
+                        handleFieldClick(
+                          e,
+                          ["notes"],
+                          section.data.notes as string,
+                          "Notes",
+                          false,
+                        )
+                      }
+                      onKeyDown={(e) =>
+                        handleFieldKeyDown(
+                          e,
+                          ["notes"],
+                          section.data.notes as string,
+                          "Notes",
+                          false,
+                        )
+                      }
+                      type="button"
+                    >
+                      {section.data.notes as string}
+                    </button>
+                  </p>
+                </div>
+              )}
+            {section.type === "quote-footer" &&
+              (section.data.validityPeriod as string | undefined) && (
+                <div className="mt-4">
+                  <p className="text-sm" style={{ color: secondaryTextColor }}>
+                    <span className="font-semibold">Valid For: </span>
+                    <button
+                      className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left"
+                      onClick={(e) =>
+                        handleFieldClick(
+                          e,
+                          ["validityPeriod"],
+                          section.data.validityPeriod as string,
+                          "Validity Period",
+                          false,
+                        )
+                      }
+                      onKeyDown={(e) =>
+                        handleFieldKeyDown(
+                          e,
+                          ["validityPeriod"],
+                          section.data.validityPeriod as string,
+                          "Validity Period",
+                          false,
+                        )
+                      }
+                      type="button"
+                    >
+                      {section.data.validityPeriod as string}
+                    </button>
+                  </p>
+                </div>
+              )}
+            {section.type === "quote-footer" &&
+              (section.data.terms as string | undefined) && (
+                <div className="mt-4">
+                  <p className="text-sm" style={{ color: secondaryTextColor }}>
+                    <span className="font-semibold">Terms: </span>
+                  </p>
+                  {/* biome-ignore lint/a11y/useSemanticElements: Rich text content div needs to be clickable but cannot be a button element */}
+                  <div
+                    className="rich-text-content text-sm cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left block w-full"
+                    // biome-ignore lint/security/noDangerouslySetInnerHtml: Rich text content from editor needs to be rendered as HTML
+                    dangerouslySetInnerHTML={{
+                      __html: (section.data.terms as string) || "",
+                    }}
+                    data-testid={`rich-text-content-${section.id}-terms`}
+                    onClick={(e) =>
+                      handleFieldClick(
+                        e,
+                        ["terms"],
+                        section.data.terms as string,
+                        "Terms",
+                        true,
+                      )
+                    }
+                    onKeyDown={(e) =>
+                      handleFieldKeyDown(
+                        e,
+                        ["terms"],
+                        section.data.terms as string,
+                        "Terms",
+                        true,
+                      )
+                    }
+                    role="button"
+                    style={{ color: secondaryTextColor }}
+                    tabIndex={0}
+                  />
+                </div>
+              )}
+            {section.type === "estimate-footer" &&
+              (section.data.validityPeriod as string | undefined) && (
+                <div className="mt-4">
+                  <p className="text-sm" style={{ color: secondaryTextColor }}>
+                    <span className="font-semibold">Valid For: </span>
+                    <button
+                      className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left"
+                      onClick={(e) =>
+                        handleFieldClick(
+                          e,
+                          ["validityPeriod"],
+                          section.data.validityPeriod as string,
+                          "Validity Period",
+                          false,
+                        )
+                      }
+                      onKeyDown={(e) =>
+                        handleFieldKeyDown(
+                          e,
+                          ["validityPeriod"],
+                          section.data.validityPeriod as string,
+                          "Validity Period",
+                          false,
+                        )
+                      }
+                      type="button"
+                    >
+                      {section.data.validityPeriod as string}
+                    </button>
+                  </p>
+                </div>
+              )}
+            {section.type === "estimate-footer" &&
+              (section.data.notes as string | undefined) && (
+                <div className="mt-4">
+                  <p className="text-sm" style={{ color: secondaryTextColor }}>
+                    <span className="font-semibold">Notes: </span>
+                  </p>
+                  {/* biome-ignore lint/a11y/useSemanticElements: Rich text content div needs to be clickable but cannot be a button element */}
+                  <div
+                    className="rich-text-content text-sm cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left block w-full"
+                    // biome-ignore lint/security/noDangerouslySetInnerHtml: Rich text content from editor needs to be rendered as HTML
+                    dangerouslySetInnerHTML={{
+                      __html: (section.data.notes as string) || "",
+                    }}
+                    data-testid={`rich-text-content-${section.id}-notes`}
                     onClick={(e) =>
                       handleFieldClick(
                         e,
                         ["notes"],
                         section.data.notes as string,
                         "Notes",
-                        false,
+                        true,
                       )
                     }
                     onKeyDown={(e) =>
@@ -1703,26 +1890,750 @@ export function SectionRenderer({
                         ["notes"],
                         section.data.notes as string,
                         "Notes",
+                        true,
+                      )
+                    }
+                    role="button"
+                    style={{ color: secondaryTextColor }}
+                    tabIndex={0}
+                  />
+                </div>
+              )}
+          </div>
+        );
+      }
+
+      case "quote-header": {
+        const logoUrl = (section.data.companyLogo as string) || "";
+        const hasColorStyle = sectionStyles.color;
+        const textColorStyle = hasColorStyle
+          ? undefined
+          : { color: primaryTextColor };
+        const secondaryColorStyle = hasColorStyle
+          ? undefined
+          : { color: secondaryTextColor };
+        return (
+          <div
+            style={{
+              ...sectionStyles,
+              color: (sectionStyles.color as string) || primaryTextColor,
+            }}
+          >
+            <div className="flex justify-between mb-6">
+              <div>
+                {logoUrl && (
+                  <div className="mb-4">
+                    <button
+                      className="cursor-pointer hover:opacity-80 transition-opacity"
+                      onClick={(e) =>
+                        handleFieldClick(
+                          e,
+                          ["companyLogo"],
+                          logoUrl,
+                          "Company Logo URL",
+                          false,
+                        )
+                      }
+                      onKeyDown={(e) =>
+                        handleFieldKeyDown(
+                          e,
+                          ["companyLogo"],
+                          logoUrl,
+                          "Company Logo URL",
+                          false,
+                        )
+                      }
+                      type="button"
+                    >
+                      <img
+                        alt="Company Logo"
+                        className="h-12 object-contain"
+                        src={logoUrl}
+                      />
+                    </button>
+                  </div>
+                )}
+                <h2 className="text-xl font-bold mb-2" style={textColorStyle}>
+                  <button
+                    className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left"
+                    onClick={(e) =>
+                      handleFieldClick(
+                        e,
+                        ["companyName"],
+                        section.data.companyName as string,
+                        "Company Name",
+                        false,
+                      )
+                    }
+                    onKeyDown={(e) =>
+                      handleFieldKeyDown(
+                        e,
+                        ["companyName"],
+                        section.data.companyName as string,
+                        "Company Name",
                         false,
                       )
                     }
                     type="button"
                   >
-                    {section.data.notes as string}
+                    {(section.data.companyName as string) || "Company Name"}
                   </button>
-                </p>
+                </h2>
+                <div className="text-sm" style={secondaryColorStyle}>
+                  <button
+                    className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left"
+                    onClick={(e) =>
+                      handleFieldClick(
+                        e,
+                        ["companyAddress"],
+                        section.data.companyAddress as string,
+                        "Company Address",
+                        false,
+                      )
+                    }
+                    onKeyDown={(e) =>
+                      handleFieldKeyDown(
+                        e,
+                        ["companyAddress"],
+                        section.data.companyAddress as string,
+                        "Company Address",
+                        false,
+                      )
+                    }
+                    type="button"
+                  >
+                    {(section.data.companyAddress as string) ||
+                      "Company Address"}
+                  </button>
+                  {(section.data.companyEmail as string | undefined) && (
+                    <button
+                      className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left"
+                      onClick={(e) =>
+                        handleFieldClick(
+                          e,
+                          ["companyEmail"],
+                          section.data.companyEmail as string,
+                          "Company Email",
+                          false,
+                        )
+                      }
+                      onKeyDown={(e) =>
+                        handleFieldKeyDown(
+                          e,
+                          ["companyEmail"],
+                          section.data.companyEmail as string,
+                          "Company Email",
+                          false,
+                        )
+                      }
+                      type="button"
+                    >
+                      {section.data.companyEmail as string}
+                    </button>
+                  )}
+                  {(section.data.companyPhone as string | undefined) && (
+                    <button
+                      className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left"
+                      onClick={(e) =>
+                        handleFieldClick(
+                          e,
+                          ["companyPhone"],
+                          section.data.companyPhone as string,
+                          "Company Phone",
+                          false,
+                        )
+                      }
+                      onKeyDown={(e) =>
+                        handleFieldKeyDown(
+                          e,
+                          ["companyPhone"],
+                          section.data.companyPhone as string,
+                          "Company Phone",
+                          false,
+                        )
+                      }
+                      type="button"
+                    >
+                      {section.data.companyPhone as string}
+                    </button>
+                  )}
+                </div>
               </div>
-            )}
+              <div className="text-right">
+                <h1 className="text-2xl font-bold mb-4" style={textColorStyle}>
+                  QUOTE
+                </h1>
+                <div className="text-sm space-y-1" style={secondaryColorStyle}>
+                  <div>
+                    <span>Quote #: </span>
+                    <button
+                      className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left"
+                      onClick={(e) =>
+                        handleFieldClick(
+                          e,
+                          ["quoteNumber"],
+                          section.data.quoteNumber as string,
+                          "Quote Number",
+                          false,
+                        )
+                      }
+                      onKeyDown={(e) =>
+                        handleFieldKeyDown(
+                          e,
+                          ["quoteNumber"],
+                          section.data.quoteNumber as string,
+                          "Quote Number",
+                          false,
+                        )
+                      }
+                      type="button"
+                    >
+                      {(section.data.quoteNumber as string) || "QT-001"}
+                    </button>
+                  </div>
+                  <div>
+                    <span>Date: </span>
+                    <button
+                      className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left"
+                      onClick={(e) =>
+                        handleFieldClick(
+                          e,
+                          ["quoteDate"],
+                          section.data.quoteDate as string,
+                          "Quote Date",
+                          false,
+                        )
+                      }
+                      onKeyDown={(e) =>
+                        handleFieldKeyDown(
+                          e,
+                          ["quoteDate"],
+                          section.data.quoteDate as string,
+                          "Quote Date",
+                          false,
+                        )
+                      }
+                      type="button"
+                    >
+                      {(section.data.quoteDate as string) || "Date"}
+                    </button>
+                  </div>
+                  {(section.data.validityDate as string | undefined) && (
+                    <div>
+                      <span>Valid Until: </span>
+                      <button
+                        className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left"
+                        onClick={(e) =>
+                          handleFieldClick(
+                            e,
+                            ["validityDate"],
+                            section.data.validityDate as string,
+                            "Valid Until",
+                            false,
+                          )
+                        }
+                        onKeyDown={(e) =>
+                          handleFieldKeyDown(
+                            e,
+                            ["validityDate"],
+                            section.data.validityDate as string,
+                            "Valid Until",
+                            false,
+                          )
+                        }
+                        type="button"
+                      >
+                        {section.data.validityDate as string}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+            <div className="flex justify-between mt-6">
+              <div>
+                <h3 className="font-semibold mb-2">Bill To:</h3>
+                <div className="text-sm">
+                  <button
+                    className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left block w-full"
+                    onClick={(e) =>
+                      handleFieldClick(
+                        e,
+                        ["billToName"],
+                        section.data.billToName as string,
+                        "Bill To Name",
+                        false,
+                      )
+                    }
+                    onKeyDown={(e) =>
+                      handleFieldKeyDown(
+                        e,
+                        ["billToName"],
+                        section.data.billToName as string,
+                        "Bill To Name",
+                        false,
+                      )
+                    }
+                    type="button"
+                  >
+                    {(section.data.billToName as string) || "Client Name"}
+                  </button>
+                  <button
+                    className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left block w-full"
+                    onClick={(e) =>
+                      handleFieldClick(
+                        e,
+                        ["billToAddress"],
+                        section.data.billToAddress as string,
+                        "Bill To Address",
+                        false,
+                      )
+                    }
+                    onKeyDown={(e) =>
+                      handleFieldKeyDown(
+                        e,
+                        ["billToAddress"],
+                        section.data.billToAddress as string,
+                        "Bill To Address",
+                        false,
+                      )
+                    }
+                    type="button"
+                  >
+                    {(section.data.billToAddress as string) || "Client Address"}
+                  </button>
+                </div>
+              </div>
+              {(section.data.shipToName as string | undefined) && (
+                <div>
+                  <h3 className="font-semibold mb-2">Ship To:</h3>
+                  <div className="text-sm">
+                    <button
+                      className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left block w-full"
+                      onClick={(e) =>
+                        handleFieldClick(
+                          e,
+                          ["shipToName"],
+                          section.data.shipToName as string,
+                          "Ship To Name",
+                          false,
+                        )
+                      }
+                      onKeyDown={(e) =>
+                        handleFieldKeyDown(
+                          e,
+                          ["shipToName"],
+                          section.data.shipToName as string,
+                          "Ship To Name",
+                          false,
+                        )
+                      }
+                      type="button"
+                    >
+                      {section.data.shipToName as string}
+                    </button>
+                    <button
+                      className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left block w-full"
+                      onClick={(e) =>
+                        handleFieldClick(
+                          e,
+                          ["shipToAddress"],
+                          section.data.shipToAddress as string,
+                          "Ship To Address",
+                          false,
+                        )
+                      }
+                      onKeyDown={(e) =>
+                        handleFieldKeyDown(
+                          e,
+                          ["shipToAddress"],
+                          section.data.shipToAddress as string,
+                          "Ship To Address",
+                          false,
+                        )
+                      }
+                      type="button"
+                    >
+                      {section.data.shipToAddress as string}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      }
+
+      case "estimate-header": {
+        const logoUrl = (section.data.companyLogo as string) || "";
+        const hasColorStyle = sectionStyles.color;
+        const textColorStyle = hasColorStyle
+          ? undefined
+          : { color: primaryTextColor };
+        const secondaryColorStyle = hasColorStyle
+          ? undefined
+          : { color: secondaryTextColor };
+        return (
+          <div
+            style={{
+              ...sectionStyles,
+              color: (sectionStyles.color as string) || primaryTextColor,
+            }}
+          >
+            <div className="flex justify-between mb-6">
+              <div>
+                {logoUrl && (
+                  <div className="mb-4">
+                    <button
+                      className="cursor-pointer hover:opacity-80 transition-opacity"
+                      onClick={(e) =>
+                        handleFieldClick(
+                          e,
+                          ["companyLogo"],
+                          logoUrl,
+                          "Company Logo URL",
+                          false,
+                        )
+                      }
+                      onKeyDown={(e) =>
+                        handleFieldKeyDown(
+                          e,
+                          ["companyLogo"],
+                          logoUrl,
+                          "Company Logo URL",
+                          false,
+                        )
+                      }
+                      type="button"
+                    >
+                      <img
+                        alt="Company Logo"
+                        className="h-12 object-contain"
+                        src={logoUrl}
+                      />
+                    </button>
+                  </div>
+                )}
+                <h2 className="text-xl font-bold mb-2" style={textColorStyle}>
+                  <button
+                    className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left"
+                    onClick={(e) =>
+                      handleFieldClick(
+                        e,
+                        ["companyName"],
+                        section.data.companyName as string,
+                        "Company Name",
+                        false,
+                      )
+                    }
+                    onKeyDown={(e) =>
+                      handleFieldKeyDown(
+                        e,
+                        ["companyName"],
+                        section.data.companyName as string,
+                        "Company Name",
+                        false,
+                      )
+                    }
+                    type="button"
+                  >
+                    {(section.data.companyName as string) || "Company Name"}
+                  </button>
+                </h2>
+                <div className="text-sm" style={secondaryColorStyle}>
+                  <button
+                    className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left"
+                    onClick={(e) =>
+                      handleFieldClick(
+                        e,
+                        ["companyAddress"],
+                        section.data.companyAddress as string,
+                        "Company Address",
+                        false,
+                      )
+                    }
+                    onKeyDown={(e) =>
+                      handleFieldKeyDown(
+                        e,
+                        ["companyAddress"],
+                        section.data.companyAddress as string,
+                        "Company Address",
+                        false,
+                      )
+                    }
+                    type="button"
+                  >
+                    {(section.data.companyAddress as string) ||
+                      "Company Address"}
+                  </button>
+                  {(section.data.companyEmail as string | undefined) && (
+                    <button
+                      className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left"
+                      onClick={(e) =>
+                        handleFieldClick(
+                          e,
+                          ["companyEmail"],
+                          section.data.companyEmail as string,
+                          "Company Email",
+                          false,
+                        )
+                      }
+                      onKeyDown={(e) =>
+                        handleFieldKeyDown(
+                          e,
+                          ["companyEmail"],
+                          section.data.companyEmail as string,
+                          "Company Email",
+                          false,
+                        )
+                      }
+                      type="button"
+                    >
+                      {section.data.companyEmail as string}
+                    </button>
+                  )}
+                  {(section.data.companyPhone as string | undefined) && (
+                    <button
+                      className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left"
+                      onClick={(e) =>
+                        handleFieldClick(
+                          e,
+                          ["companyPhone"],
+                          section.data.companyPhone as string,
+                          "Company Phone",
+                          false,
+                        )
+                      }
+                      onKeyDown={(e) =>
+                        handleFieldKeyDown(
+                          e,
+                          ["companyPhone"],
+                          section.data.companyPhone as string,
+                          "Company Phone",
+                          false,
+                        )
+                      }
+                      type="button"
+                    >
+                      {section.data.companyPhone as string}
+                    </button>
+                  )}
+                </div>
+              </div>
+              <div className="text-right">
+                <h1 className="text-2xl font-bold mb-4" style={textColorStyle}>
+                  ESTIMATE
+                </h1>
+                <div className="text-sm space-y-1" style={secondaryColorStyle}>
+                  <div>
+                    <span>Estimate #: </span>
+                    <button
+                      className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left"
+                      onClick={(e) =>
+                        handleFieldClick(
+                          e,
+                          ["estimateNumber"],
+                          section.data.estimateNumber as string,
+                          "Estimate Number",
+                          false,
+                        )
+                      }
+                      onKeyDown={(e) =>
+                        handleFieldKeyDown(
+                          e,
+                          ["estimateNumber"],
+                          section.data.estimateNumber as string,
+                          "Estimate Number",
+                          false,
+                        )
+                      }
+                      type="button"
+                    >
+                      {(section.data.estimateNumber as string) || "EST-001"}
+                    </button>
+                  </div>
+                  <div>
+                    <span>Date: </span>
+                    <button
+                      className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left"
+                      onClick={(e) =>
+                        handleFieldClick(
+                          e,
+                          ["estimateDate"],
+                          section.data.estimateDate as string,
+                          "Estimate Date",
+                          false,
+                        )
+                      }
+                      onKeyDown={(e) =>
+                        handleFieldKeyDown(
+                          e,
+                          ["estimateDate"],
+                          section.data.estimateDate as string,
+                          "Estimate Date",
+                          false,
+                        )
+                      }
+                      type="button"
+                    >
+                      {(section.data.estimateDate as string) || "Date"}
+                    </button>
+                  </div>
+                  {(section.data.validityDate as string | undefined) && (
+                    <div>
+                      <span>Valid Until: </span>
+                      <button
+                        className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left"
+                        onClick={(e) =>
+                          handleFieldClick(
+                            e,
+                            ["validityDate"],
+                            section.data.validityDate as string,
+                            "Valid Until",
+                            false,
+                          )
+                        }
+                        onKeyDown={(e) =>
+                          handleFieldKeyDown(
+                            e,
+                            ["validityDate"],
+                            section.data.validityDate as string,
+                            "Valid Until",
+                            false,
+                          )
+                        }
+                        type="button"
+                      >
+                        {section.data.validityDate as string}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+            <div className="flex justify-between mt-6">
+              <div>
+                <h3 className="font-semibold mb-2">Bill To:</h3>
+                <div className="text-sm">
+                  <button
+                    className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left block w-full"
+                    onClick={(e) =>
+                      handleFieldClick(
+                        e,
+                        ["billToName"],
+                        section.data.billToName as string,
+                        "Bill To Name",
+                        false,
+                      )
+                    }
+                    onKeyDown={(e) =>
+                      handleFieldKeyDown(
+                        e,
+                        ["billToName"],
+                        section.data.billToName as string,
+                        "Bill To Name",
+                        false,
+                      )
+                    }
+                    type="button"
+                  >
+                    {(section.data.billToName as string) || "Client Name"}
+                  </button>
+                  <button
+                    className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left block w-full"
+                    onClick={(e) =>
+                      handleFieldClick(
+                        e,
+                        ["billToAddress"],
+                        section.data.billToAddress as string,
+                        "Bill To Address",
+                        false,
+                      )
+                    }
+                    onKeyDown={(e) =>
+                      handleFieldKeyDown(
+                        e,
+                        ["billToAddress"],
+                        section.data.billToAddress as string,
+                        "Bill To Address",
+                        false,
+                      )
+                    }
+                    type="button"
+                  >
+                    {(section.data.billToAddress as string) || "Client Address"}
+                  </button>
+                </div>
+              </div>
+              {(section.data.shipToName as string | undefined) && (
+                <div>
+                  <h3 className="font-semibold mb-2">Ship To:</h3>
+                  <div className="text-sm">
+                    <button
+                      className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left block w-full"
+                      onClick={(e) =>
+                        handleFieldClick(
+                          e,
+                          ["shipToName"],
+                          section.data.shipToName as string,
+                          "Ship To Name",
+                          false,
+                        )
+                      }
+                      onKeyDown={(e) =>
+                        handleFieldKeyDown(
+                          e,
+                          ["shipToName"],
+                          section.data.shipToName as string,
+                          "Ship To Name",
+                          false,
+                        )
+                      }
+                      type="button"
+                    >
+                      {section.data.shipToName as string}
+                    </button>
+                    <button
+                      className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left block w-full"
+                      onClick={(e) =>
+                        handleFieldClick(
+                          e,
+                          ["shipToAddress"],
+                          section.data.shipToAddress as string,
+                          "Ship To Address",
+                          false,
+                        )
+                      }
+                      onKeyDown={(e) =>
+                        handleFieldKeyDown(
+                          e,
+                          ["shipToAddress"],
+                          section.data.shipToAddress as string,
+                          "Ship To Address",
+                          false,
+                        )
+                      }
+                      type="button"
+                    >
+                      {section.data.shipToAddress as string}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         );
       }
 
       case "receipt-header": {
         const logoUrl = (section.data.storeLogo as string) || "";
-        // Check if section has a color style to determine if we should use white text
         const hasColorStyle = sectionStyles.color;
-        const textColorClass = hasColorStyle ? "" : "text-gray-900";
-        const secondaryTextColorClass = hasColorStyle ? "" : "text-gray-600";
+        const textColorStyle = hasColorStyle
+          ? undefined
+          : { color: primaryTextColor };
+        const secondaryColorStyle = hasColorStyle
+          ? undefined
+          : { color: secondaryTextColor };
         return (
           <div style={sectionStyles}>
             <div className="flex justify-between mb-6">
@@ -1759,7 +2670,7 @@ export function SectionRenderer({
                     </button>
                   </div>
                 )}
-                <h2 className={`${textColorClass} text-xl font-bold mb-2`}>
+                <h2 className="text-xl font-bold mb-2" style={textColorStyle}>
                   <button
                     className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left"
                     onClick={(e) =>
@@ -1785,7 +2696,7 @@ export function SectionRenderer({
                     {(section.data.storeName as string) || "Store Name"}
                   </button>
                 </h2>
-                <div className={`text-sm ${secondaryTextColorClass}`}>
+                <div className="text-sm" style={secondaryColorStyle}>
                   <button
                     className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left"
                     onClick={(e) =>
@@ -1865,12 +2776,12 @@ export function SectionRenderer({
                 </div>
               </div>
               <div className="text-right">
-                <h1 className={`${textColorClass} text-2xl font-bold mb-4`}>
+                <h1 className="text-2xl font-bold mb-4" style={textColorStyle}>
                   RECEIPT
                 </h1>
-                <div className="text-sm space-y-1">
+                <div className="text-sm space-y-1" style={secondaryColorStyle}>
                   <div>
-                    <span className={secondaryTextColorClass}>Receipt #: </span>
+                    <span>Receipt #: </span>
                     <button
                       className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left"
                       onClick={(e) =>
@@ -1897,7 +2808,7 @@ export function SectionRenderer({
                     </button>
                   </div>
                   <div>
-                    <span className={secondaryTextColorClass}>Date: </span>
+                    <span>Date: </span>
                     <button
                       className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left"
                       onClick={(e) =>
@@ -1925,9 +2836,7 @@ export function SectionRenderer({
                   </div>
                   {(section.data.transactionId as string | undefined) && (
                     <div>
-                      <span className={secondaryTextColorClass}>
-                        Transaction ID:{" "}
-                      </span>
+                      <span>Transaction ID: </span>
                       <button
                         className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left"
                         onClick={(e) =>
@@ -1965,10 +2874,13 @@ export function SectionRenderer({
         const items = Array.isArray(section.data.items)
           ? (section.data.items as InvoiceItem[])
           : [];
-        const hasColorStyle = sectionStyles.color;
-        const textColorClass = hasColorStyle ? "" : "text-gray-900";
         return (
-          <div className={textColorClass} style={sectionStyles}>
+          <div
+            style={{
+              ...sectionStyles,
+              color: (sectionStyles.color as string) || primaryTextColor,
+            }}
+          >
             <table className="w-full border-collapse">
               <thead>
                 <tr className="border-b-2 border-gray-300">
@@ -1981,7 +2893,11 @@ export function SectionRenderer({
               <tbody>
                 {items.length === 0 ? (
                   <tr>
-                    <td className="p-2 text-gray-500" colSpan={4}>
+                    <td
+                      className="p-2"
+                      colSpan={4}
+                      style={{ color: secondaryTextColor }}
+                    >
                       No items added. Click to add items in the properties
                       panel.
                     </td>
@@ -2083,17 +2999,20 @@ export function SectionRenderer({
       }
 
       case "receipt-footer": {
-        const hasColorStyle = sectionStyles.color;
-        const textColorClass = hasColorStyle ? "" : "text-gray-900";
         const taxMode = (section.data.taxMode as string) || "percentage";
         const discountMode =
           (section.data.discountMode as string) || "percentage";
         return (
-          <div className={textColorClass} style={sectionStyles}>
+          <div
+            style={{
+              ...sectionStyles,
+              color: (sectionStyles.color as string) || primaryTextColor,
+            }}
+          >
             <div className="flex justify-end">
               <div className="w-64 space-y-2">
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Subtotal:</span>
+                  <span style={{ color: secondaryTextColor }}>Subtotal:</span>
                   <span className="text-right">
                     {formatCurrency(
                       section.data.subtotal as
@@ -2109,7 +3028,7 @@ export function SectionRenderer({
                 {(section.data.taxAmount as string | number | undefined) &&
                   Number(section.data.taxAmount) > 0 && (
                     <div className="flex justify-between">
-                      <span className="text-gray-600">
+                      <span style={{ color: secondaryTextColor }}>
                         {section.data.showTaxRate !== false &&
                         section.data.taxRate &&
                         Number(section.data.taxRate) > 0 ? (
@@ -2202,7 +3121,7 @@ export function SectionRenderer({
                 {(section.data.discount as string | number | undefined) &&
                   Number(section.data.discount) > 0 && (
                     <div className="flex justify-between">
-                      <span className="text-gray-600">
+                      <span style={{ color: secondaryTextColor }}>
                         {section.data.showDiscountRate !== false &&
                         section.data.discountRate &&
                         Number(section.data.discountRate) > 0 ? (
@@ -2310,7 +3229,7 @@ export function SectionRenderer({
             </div>
             {(section.data.paymentMethod as string | undefined) && (
               <div className="mt-4">
-                <p className="text-sm text-gray-600">
+                <p className="text-sm" style={{ color: secondaryTextColor }}>
                   <span className="font-semibold">Payment Method: </span>
                   <button
                     className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5"
@@ -2341,7 +3260,7 @@ export function SectionRenderer({
             )}
             {(section.data.transactionId as string | undefined) && (
               <div className="mt-2">
-                <p className="text-sm text-gray-600">
+                <p className="text-sm" style={{ color: secondaryTextColor }}>
                   <span className="font-semibold">Transaction ID: </span>
                   <button
                     className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5"
@@ -2372,7 +3291,7 @@ export function SectionRenderer({
             )}
             {(section.data.thankYouMessage as string | undefined) && (
               <div className="mt-4">
-                <p className="text-sm text-gray-600">
+                <p className="text-sm" style={{ color: secondaryTextColor }}>
                   <button
                     className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left w-full"
                     onClick={(e) =>

@@ -8,16 +8,15 @@ This is a quick reference guide for adding new document types to the builder. Fo
 - ✅ resume
 - ✅ invoice
 - ✅ receipt
+- ✅ quote
+- ✅ estimate
 
 **In Type System + Prisma (need wiring + implementation):**
 - 📋 certificate
 - 📋 report-cards
-- 📋 quote
 - 📋 proposal
 - 📋 contract
 - 📋 purchase-order
-- 📋 receipt
-- 📋 estimate
 - 📋 statement
 - 📋 letter
 - 📋 form
@@ -108,9 +107,7 @@ enum TemplateType {
 These are commonly used across industries (services, retail, manufacturing, logistics, construction, agencies) and map well to the existing invoice/receipt architecture (header/items/footer, totals, rich text terms/notes).
 
 **High priority (already in `TemplateType`, not yet implemented end-to-end):**
-- 📌 quote
 - 📌 purchase-order
-- 📌 estimate
 - 📌 statement
 - 📌 proposal
 - 📌 contract
