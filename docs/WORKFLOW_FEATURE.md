@@ -8,14 +8,213 @@ The Workflow feature enables organizations to create automated document workflow
 
 ## Table of Contents
 
-1. [Architecture](#architecture)
-2. [Database Schema](#database-schema)
-3. [User Flows](#user-flows)
-4. [Workflow Components](#workflow-components)
-5. [Workflow Execution](#workflow-execution)
-6. [n8n Integration](#n8n-integration)
-7. [UI/UX Specifications](#uiux-specifications)
-8. [Implementation Phases](#implementation-phases)
+1. [Workflow Templates by Industry Model](#workflow-templates-by-industry-model)
+2. [Architecture](#architecture)
+3. [Database Schema](#database-schema)
+4. [User Flows](#user-flows)
+5. [Workflow Components](#workflow-components)
+6. [Workflow Execution](#workflow-execution)
+7. [n8n Integration](#n8n-integration)
+8. [UI/UX Specifications](#uiux-specifications)
+9. [Implementation Phases](#implementation-phases)
+
+---
+
+## Workflow Templates by Industry Model
+
+Different industries structure documents differently based on risk, trust level, cash flow needs, regulation, and operational complexity. When the workflow feature is implemented, customers will choose from **workflow templates** that match their business model. Each template defines the document sequence, who sends what, and when. This section describes the most common business document flows so that:
+
+- **Product and implementation** know which workflow templates to offer.
+- **Customers** can see what each workflow template entails before choosing one.
+- **Support and docs** can explain which template fits retail, B2B, services, SaaS, marketplace, or manufacturing.
+
+Below are the main workflow templates to support, with typical document flow and characteristics.
+
+---
+
+### 1. Retail / E-commerce (Prepaid Model)
+
+**Used by:** Amazon-style stores, Shopify stores, direct-to-consumer brands.
+
+**Document flow:**
+1. Customer places order
+2. Customer pays immediately
+3. Order Confirmation
+4. Shipment
+5. Invoice (sometimes auto-generated)
+6. Receipt
+
+**Characteristics:**
+- No Purchase Order
+- No Estimate or Quote
+- Payment upfront
+- Fast, highly automated
+
+**What this template entails:** Low trust risk because payment comes first. Minimal paperwork; focus on order confirmation, fulfillment, and receipt. Best for high-volume, low-touch sales.
+
+---
+
+### 2. Traditional B2B Wholesale (Credit Terms)
+
+**Used by:** Manufacturing, distribution, pharma wholesale, traditional wholesale.
+
+**Document flow:**
+1. Quote
+2. Purchase Order (Buyer → Seller)
+3. Order Confirmation
+4. Delivery
+5. Invoice (Net 15 / Net 30 / Net 60)
+6. Payment
+7. Receipt
+
+**Characteristics:**
+- Strong documentation trail
+- Credit terms
+- Legally binding PO
+- Higher risk; often requires contracts
+
+**What this template entails:** Closest to a B2B2B pharma marketplace or any business selling on credit to other businesses. Full trail from quote to PO to delivery to invoice to payment and receipt. Suited for regulated or high-value B2B.
+
+---
+
+### 3. Project-Based / Services (Agencies, Software Dev, Construction)
+
+**Used by:** Consulting firms, dev agencies, contractors, professional services.
+
+**Document flow:**
+1. Estimate
+2. Revised Quote (optional)
+3. Contract Signed
+4. Deposit Invoice (e.g. 30–50%)
+5. Work begins
+6. Milestone Invoices
+7. Final Invoice
+8. Receipt
+
+**Characteristics:**
+- Heavy use of Estimates
+- Multiple invoices (deposit + milestones + final)
+- Milestone-based payments
+- Scope changes can affect pricing
+
+**What this template entails:** Emphasis on estimates, quotes, and contracts before work; then phased invoicing and receipts. Fits project-based revenue and scope changes.
+
+---
+
+### 4. SaaS Subscription Model
+
+**Used by:** Stripe-billed products, Slack-style SaaS, subscription apps.
+
+**Document flow:**
+1. Customer subscribes
+2. Payment processed automatically
+3. Invoice auto-generated
+4. Receipt auto-generated
+5. Recurring billing (monthly/yearly)
+
+**Characteristics:**
+- No PO (unless enterprise)
+- Automated invoices and receipts
+- Recurring billing
+- Very light, repeatable paperwork
+
+**What this template entails:** Minimal manual steps. Focus on automated invoice and receipt generation and recurring billing. Best for self-serve, product-led SaaS.
+
+---
+
+### 5. Enterprise SaaS / Corporate Contracts
+
+**Used by:** Large enterprises buying SaaS or long-term contracts.
+
+**Document flow:**
+1. Quote
+2. Contract negotiation
+3. Purchase Order
+4. Order Confirmation
+5. Service activation
+6. Invoice (e.g. Net 30)
+7. Payment
+8. Receipt
+
+**Characteristics:**
+- Formal PO required
+- Legal and procurement involved
+- Often annual or multi-year billing
+
+**What this template entails:** Formal, audit-friendly path from quote and contract through PO, order confirmation, activation, and invoicing. For high-value or enterprise deals.
+
+---
+
+### 6. Marketplace Model (B2B2B / Multi-Party)
+
+**Used by:** B2B marketplaces (e.g. Alibaba-style), platforms connecting buyers and sellers.
+
+**Possible flows:**
+
+**A) Platform as Escrow (Prepaid)**  
+- Buyer orders  
+- Buyer pays platform  
+- Seller confirms order  
+- Delivery  
+- Platform releases funds  
+- Invoice + Receipt  
+
+**B) Platform as Connector (Credit-Based)**  
+- Buyer orders  
+- Seller confirms  
+- Delivery  
+- Seller invoices buyer directly  
+- Payment  
+- Receipt  
+
+**C) Hybrid (Credit Line via Platform)**  
+- Buyer orders  
+- Platform approves credit  
+- Seller delivers  
+- Platform invoices buyer  
+- Buyer repays platform  
+
+**What this template entails:** Choice of who holds payment (platform vs seller) and who invoices (platform vs seller). Templates should support escrow, connector, and hybrid variants so marketplace operators can pick the flow that matches their risk and cash flow model.
+
+---
+
+### 7. Manufacturing / Made-to-Order
+
+**Used by:** Custom manufacturing, made-to-order production, long lead-time goods.
+
+**Document flow:**
+1. RFQ (Request for Quote)
+2. Quote
+3. Purchase Order
+4. Order Confirmation
+5. Production
+6. Delivery
+7. Invoice
+8. Payment
+9. Receipt
+
+**Characteristics:**
+- Long lead times
+- Detailed quotes
+- Sometimes advance or milestone payment required
+
+**What this template entails:** Full B2B flow starting from RFQ and quote, through PO, production, delivery, and payment. Suited for custom or capital-intensive orders.
+
+---
+
+### Summary: Choosing a Workflow Template
+
+| Model              | Typical documents in flow                    | Best when |
+|--------------------|---------------------------------------------|-----------|
+| Retail / E-commerce| Order Confirmation → Invoice → Receipt      | Payment first, high volume |
+| B2B Wholesale      | Quote → PO → Order Confirmation → Invoice → Receipt | Selling on credit to businesses |
+| Project / Services | Estimate → Quote → Contract → Invoices → Receipt | Projects, milestones, deposits |
+| SaaS Subscription  | Invoice → Receipt (recurring)               | Recurring, automated billing |
+| Enterprise SaaS    | Quote → PO → Order Confirmation → Invoice → Receipt | Enterprise contracts, procurement |
+| Marketplace        | Varies (escrow, connector, or hybrid)       | Multi-party, platform-mediated |
+| Manufacturing      | RFQ → Quote → PO → Order Confirmation → Invoice → Receipt | Custom orders, long lead times |
+
+During implementation, these flows will be offered as **selectable workflow templates**. Each template will predefine the document types, sequence, and optional branching (e.g. approval steps, payment triggers). Customers will choose a template and then customize documents and automation within that flow so they know what each workflow entails before they start.
 
 ---
 
@@ -731,7 +930,8 @@ While the primary focus is export, the system could support importing n8n workfl
 
 ### Workflow Templates
 
-- Pre-built workflow templates for common use cases
+- Pre-built workflow templates based on [Workflow Templates by Industry Model](#workflow-templates-by-industry-model): Retail/E-commerce, B2B Wholesale, Project/Services, SaaS Subscription, Enterprise SaaS, Marketplace (escrow/connector/hybrid), Manufacturing
+- Each template predefines document sequence and optional branching so customers know what the workflow entails before choosing
 - Template marketplace
 - Community-contributed workflows
 
