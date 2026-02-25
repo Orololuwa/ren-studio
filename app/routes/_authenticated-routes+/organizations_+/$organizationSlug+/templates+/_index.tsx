@@ -232,11 +232,6 @@ const builderTypes = [
     value: "purchase-order",
   },
   {
-    icon: FileText,
-    label: "Sales Order",
-    value: "sales-order",
-  },
-  {
     icon: Receipt,
     label: "Invoice",
     value: "invoice",
@@ -245,6 +240,11 @@ const builderTypes = [
     icon: ShoppingBag,
     label: "Receipt",
     value: "receipt",
+  },
+  {
+    icon: FileText,
+    label: "Sales Order",
+    value: "sales-order",
   },
   {
     icon: FileText,

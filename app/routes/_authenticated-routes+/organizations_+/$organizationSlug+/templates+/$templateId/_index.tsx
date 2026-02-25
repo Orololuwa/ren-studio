@@ -603,15 +603,20 @@ export default function BuilderEditorRoute({
     const template = loaderData.template;
 
     if (template) {
-      // Determine currency for invoice/receipt types
+      // Determine currency for document types with monetary amounts
       let currencyToUse: string | undefined = template.globalStyles.currency as
         | string
         | undefined;
 
-      if (
-        (template.type === "invoice" || template.type === "receipt") &&
-        !currencyToUse
-      ) {
+      const currencyDocumentTypes = [
+        "invoice",
+        "receipt",
+        "quote",
+        "estimate",
+        "purchase-order",
+        "sales-order",
+      ];
+      if (currencyDocumentTypes.includes(template.type) && !currencyToUse) {
         currencyToUse = "USD";
       }
 
@@ -842,7 +847,11 @@ export default function BuilderEditorRoute({
                     <DropdownMenuLabel>Settings</DropdownMenuLabel>
                     <DropdownMenuSeparator />
                     {(currentTemplate?.type === "invoice" ||
-                      currentTemplate?.type === "receipt") && (
+                      currentTemplate?.type === "receipt" ||
+                      currentTemplate?.type === "quote" ||
+                      currentTemplate?.type === "estimate" ||
+                      currentTemplate?.type === "purchase-order" ||
+                      currentTemplate?.type === "sales-order") && (
                       <>
                         <DropdownMenuSub>
                           <DropdownMenuSubTrigger>
