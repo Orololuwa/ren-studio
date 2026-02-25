@@ -200,6 +200,10 @@ function generateExampleEntries(sectionType: string): unknown[] {
       ];
     case "invoice-items":
     case "receipt-items":
+    case "quote-items":
+    case "estimate-items":
+    case "purchase-order-items":
+    case "sales-order-items":
       return [
         {
           description: "Web Development Services",
@@ -263,6 +267,18 @@ export function getComponentTypesForTemplateType(
       return ["invoice-header", "invoice-items", "invoice-footer"];
     case "receipt":
       return ["receipt-header", "receipt-items", "receipt-footer"];
+    case "quote":
+      return ["quote-header", "quote-items", "quote-footer"];
+    case "estimate":
+      return ["estimate-header", "estimate-items", "estimate-footer"];
+    case "purchase-order":
+      return [
+        "purchase-order-header",
+        "purchase-order-items",
+        "purchase-order-footer",
+      ];
+    case "sales-order":
+      return ["sales-order-header", "sales-order-items", "sales-order-footer"];
     default:
       return [];
   }

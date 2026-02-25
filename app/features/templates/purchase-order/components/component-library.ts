@@ -1,0 +1,90 @@
+import type { ComponentDefinition } from "../../shared/types";
+
+export const purchaseOrderComponentLibrary: Record<
+  string,
+  ComponentDefinition
+> = {
+  "purchase-order-header": {
+    configurableProperties: [
+      "companyLogo",
+      "companyName",
+      "companyAddress",
+      "companyEmail",
+      "companyPhone",
+      "poNumber",
+      "orderDate",
+      "expectedDelivery",
+      "billToName",
+      "billToAddress",
+      "shipToName",
+      "shipToAddress",
+    ],
+    defaultData: {
+      companyLogo:
+        "https://iwvduhvsxhjpxapdochp.supabase.co/storage/v1/object/public/app-images/organization-logos/logoipsum-404.svg",
+      companyName: "",
+      companyAddress: "",
+      companyEmail: "",
+      companyPhone: "",
+      poNumber: "",
+      orderDate: "",
+      expectedDelivery: "",
+      billToName: "",
+      billToAddress: "",
+      shipToName: "",
+      shipToAddress: "",
+    },
+    defaultStyles: {
+      padding: "2rem",
+    },
+    icon: "FileText",
+    label: "Purchase Order Header",
+    type: "purchase-order-header",
+  },
+  "purchase-order-items": {
+    configurableProperties: ["items"],
+    defaultData: { items: [] },
+    defaultStyles: {
+      padding: "1rem",
+    },
+    icon: "List",
+    label: "Purchase Order Items",
+    type: "purchase-order-items",
+  },
+  "purchase-order-footer": {
+    configurableProperties: [
+      "subtotal",
+      "taxMode",
+      "taxRate",
+      "taxAmount",
+      "showTaxRate",
+      "discountMode",
+      "discountRate",
+      "discount",
+      "showDiscountRate",
+      "total",
+      "validityPeriod",
+      "terms",
+    ],
+    defaultData: {
+      subtotal: "",
+      taxMode: "percentage",
+      taxRate: "",
+      taxAmount: "",
+      showTaxRate: true,
+      discountMode: "percentage",
+      discountRate: "",
+      discount: "",
+      showDiscountRate: true,
+      total: "",
+      validityPeriod: "",
+      terms: "",
+    },
+    defaultStyles: {
+      padding: "1rem",
+    },
+    icon: "FileText",
+    label: "Purchase Order Footer",
+    type: "purchase-order-footer",
+  },
+};

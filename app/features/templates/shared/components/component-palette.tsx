@@ -40,6 +40,12 @@ const iconMap: Record<string, React.ReactNode> = {
   "estimate-header": <FileText className="w-5 h-5" />,
   "estimate-items": <List className="w-5 h-5" />,
   "estimate-footer": <FileText className="w-5 h-5" />,
+  "purchase-order-header": <FileText className="w-5 h-5" />,
+  "purchase-order-items": <List className="w-5 h-5" />,
+  "purchase-order-footer": <FileText className="w-5 h-5" />,
+  "sales-order-header": <FileText className="w-5 h-5" />,
+  "sales-order-items": <List className="w-5 h-5" />,
+  "sales-order-footer": <FileText className="w-5 h-5" />,
 };
 
 export function ComponentPalette({
@@ -73,6 +79,18 @@ export function ComponentPalette({
         return ["quote-header", "quote-items", "quote-footer"];
       case "estimate":
         return ["estimate-header", "estimate-items", "estimate-footer"];
+      case "purchase-order":
+        return [
+          "purchase-order-header",
+          "purchase-order-items",
+          "purchase-order-footer",
+        ];
+      case "sales-order":
+        return [
+          "sales-order-header",
+          "sales-order-items",
+          "sales-order-footer",
+        ];
       case "resume":
         return [
           "header",

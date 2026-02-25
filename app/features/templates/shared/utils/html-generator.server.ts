@@ -7,6 +7,10 @@ import {
   generateInvoicePreviewHTML,
 } from "../../invoice/utils/html-generator-invoice.server";
 import {
+  generatePurchaseOrderExportHTML,
+  generatePurchaseOrderPreviewHTML,
+} from "../../purchase-order/utils/html-generator-purchase-order.server";
+import {
   generateQuoteExportHTML,
   generateQuotePreviewHTML,
 } from "../../quote/utils/html-generator-quote.server";
@@ -18,6 +22,10 @@ import {
   generateResumeExportHTML,
   generateResumePreviewHTML,
 } from "../../resume/utils/html-generator-resume.server";
+import {
+  generateSalesOrderExportHTML,
+  generateSalesOrderPreviewHTML,
+} from "../../sales-order/utils/html-generator-sales-order.server";
 import type { TemplateSection, TemplateType } from "../types";
 
 /**
@@ -40,6 +48,18 @@ export function generatePreviewHTML(
       return generateQuotePreviewHTML(sections, globalStyles, colorPalette);
     case "estimate":
       return generateEstimatePreviewHTML(sections, globalStyles, colorPalette);
+    case "purchase-order":
+      return generatePurchaseOrderPreviewHTML(
+        sections,
+        globalStyles,
+        colorPalette,
+      );
+    case "sales-order":
+      return generateSalesOrderPreviewHTML(
+        sections,
+        globalStyles,
+        colorPalette,
+      );
     default:
       // Fallback for unsupported types - return basic HTML
       return `
@@ -80,6 +100,14 @@ export function generateExportHTML(
       return generateQuoteExportHTML(sections, globalStyles, colorPalette);
     case "estimate":
       return generateEstimateExportHTML(sections, globalStyles, colorPalette);
+    case "purchase-order":
+      return generatePurchaseOrderExportHTML(
+        sections,
+        globalStyles,
+        colorPalette,
+      );
+    case "sales-order":
+      return generateSalesOrderExportHTML(sections, globalStyles, colorPalette);
     default:
       // Fallback for unsupported types - return basic HTML
       return `

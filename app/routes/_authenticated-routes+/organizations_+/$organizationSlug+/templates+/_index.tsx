@@ -88,10 +88,12 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
   // Get all default templates for all types (for the modal)
   const allDefaultTemplates = {
     estimate: getTemplatesByType("estimate"),
-    quote: getTemplatesByType("quote"),
     invoice: getTemplatesByType("invoice"),
+    "purchase-order": getTemplatesByType("purchase-order"),
+    quote: getTemplatesByType("quote"),
     receipt: getTemplatesByType("receipt"),
     resume: getTemplatesByType("resume"),
+    "sales-order": getTemplatesByType("sales-order"),
   };
 
   return data(
@@ -225,6 +227,16 @@ const builderTypes = [
     value: "quote",
   },
   {
+    icon: FileText,
+    label: "Purchase Order",
+    value: "purchase-order",
+  },
+  {
+    icon: FileText,
+    label: "Sales Order",
+    value: "sales-order",
+  },
+  {
     icon: Receipt,
     label: "Invoice",
     value: "invoice",
@@ -251,6 +263,7 @@ const VALID_BUILDER_TYPES = [
   "contract",
   "purchase-order",
   "receipt",
+  "sales-order",
   "estimate",
   "statement",
   "letter",

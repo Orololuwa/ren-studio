@@ -12,6 +12,7 @@ function convertPrismaTemplateTypeToTS(prismaType: string): Template["type"] {
   const typeMap: Record<string, Template["type"]> = {
     [TemplateType.reportCards]: "report-cards",
     [TemplateType.purchaseOrder]: "purchase-order",
+    [TemplateType.salesOrder]: "sales-order",
   };
 
   if (typeMap[prismaType]) {
@@ -32,6 +33,7 @@ function convertTSTemplateTypeToPrisma(
   > = {
     "report-cards": TemplateType.reportCards,
     "purchase-order": TemplateType.purchaseOrder,
+    "sales-order": TemplateType.salesOrder,
     // Direct mappings (same name in both)
     resume: TemplateType.resume,
     invoice: TemplateType.invoice,

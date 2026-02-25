@@ -1,18 +1,22 @@
 import { estimateTemplates } from "../../estimate/templates/estimate-templates";
 import { invoiceTemplates } from "../../invoice/templates/invoice-templates";
+import { purchaseOrderTemplates } from "../../purchase-order/templates/purchase-order-templates";
 import { quoteTemplates } from "../../quote/templates/quote-templates";
 import { receiptTemplates } from "../../receipt/templates/receipt-templates";
 import { resumeTemplates } from "../../resume/templates/resume-templates";
+import { salesOrderTemplates } from "../../sales-order/templates/sales-order-templates";
 import type { Template } from "../types";
 
 export const predefinedTemplates: Record<string, Template[]> = {
   certificate: [],
   estimate: estimateTemplates,
   invoice: invoiceTemplates,
+  "purchase-order": purchaseOrderTemplates,
   quote: quoteTemplates,
   receipt: receiptTemplates,
   "report-cards": [],
   resume: resumeTemplates,
+  "sales-order": salesOrderTemplates,
 };
 
 // Helper to get template by ID

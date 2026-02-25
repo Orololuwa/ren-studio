@@ -10,13 +10,14 @@ This is a quick reference guide for adding new document types to the builder. Fo
 - ✅ receipt
 - ✅ quote
 - ✅ estimate
+- ✅ purchase-order
+- ✅ sales-order
 
 **In Type System + Prisma (need wiring + implementation):**
 - 📋 certificate
 - 📋 report-cards
 - 📋 proposal
 - 📋 contract
-- 📋 purchase-order
 - 📋 statement
 - 📋 letter
 - 📋 form
@@ -107,14 +108,13 @@ enum TemplateType {
 These are commonly used across industries (services, retail, manufacturing, logistics, construction, agencies) and map well to the existing invoice/receipt architecture (header/items/footer, totals, rich text terms/notes).
 
 **High priority (already in `TemplateType`, not yet implemented end-to-end):**
-- 📌 purchase-order
 - 📌 statement
 - 📌 proposal
 - 📌 contract
 
 **New recommended types to add next (not currently in `TemplateType`):**
 - 📌 credit-note (and debit-note): adjustments/refunds/overcharges
-- 📌 sales-order: internal/external order record before invoicing
+- ~~📌 sales-order~~ (implemented)
 - 📌 order-confirmation: seller confirmation sent to customer
 - 📌 packing-slip: shipments/fulfillment packing list
 - 📌 delivery-note: proof of delivery / goods delivered note
