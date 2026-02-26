@@ -15,6 +15,7 @@ function convertPrismaTemplateTypeToTS(prismaType: string): Template["type"] {
     [TemplateType.salesOrder]: "sales-order",
     [TemplateType.orderConfirmation]: "order-confirmation",
     [TemplateType.packingSlip]: "packing-slip",
+    [TemplateType.deliveryNote]: "delivery-note",
   };
 
   if (typeMap[prismaType]) {
@@ -38,6 +39,7 @@ function convertTSTemplateTypeToPrisma(
     "sales-order": TemplateType.salesOrder,
     "order-confirmation": TemplateType.orderConfirmation,
     "packing-slip": TemplateType.packingSlip,
+    "delivery-note": TemplateType.deliveryNote,
     // Direct mappings (same name in both)
     resume: TemplateType.resume,
     invoice: TemplateType.invoice,

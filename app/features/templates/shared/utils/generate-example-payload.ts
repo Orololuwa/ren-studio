@@ -78,6 +78,9 @@ function generateExampleValue(
     if (lowerName.includes("shipment")) {
       return "PS-2024-001";
     }
+    if (lowerName.includes("delivery") && lowerName.includes("note")) {
+      return "DN-2024-001";
+    }
     return "12345";
   }
   if (lowerName.includes("reference") && lowerName.includes("order")) {
@@ -218,6 +221,7 @@ function generateExampleEntries(sectionType: string): unknown[] {
     case "sales-order-items":
     case "order-confirmation-items":
     case "packing-slip-items":
+    case "delivery-note-items":
       return [
         {
           description: "Web Development Services",
@@ -304,6 +308,12 @@ export function getComponentTypesForTemplateType(
         "packing-slip-header",
         "packing-slip-items",
         "packing-slip-footer",
+      ];
+    case "delivery-note":
+      return [
+        "delivery-note-header",
+        "delivery-note-items",
+        "delivery-note-footer",
       ];
     case "contract":
       return ["contract-header", "contract-body", "contract-signature"];

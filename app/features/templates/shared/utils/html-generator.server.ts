@@ -3,6 +3,10 @@ import {
   generateContractPreviewHTML,
 } from "../../contract/utils/html-generator-contract.server";
 import {
+  generateDeliveryNoteExportHTML,
+  generateDeliveryNotePreviewHTML,
+} from "../../delivery-note/utils/html-generator-delivery-note.server";
+import {
   generateEstimateExportHTML,
   generateEstimatePreviewHTML,
 } from "../../estimate/utils/html-generator-estimate.server";
@@ -84,6 +88,12 @@ export function generatePreviewHTML(
         globalStyles,
         colorPalette,
       );
+    case "delivery-note":
+      return generateDeliveryNotePreviewHTML(
+        sections,
+        globalStyles,
+        colorPalette,
+      );
     case "contract":
       return generateContractPreviewHTML(sections, globalStyles, colorPalette);
     default:
@@ -142,6 +152,12 @@ export function generateExportHTML(
       );
     case "packing-slip":
       return generatePackingSlipExportHTML(
+        sections,
+        globalStyles,
+        colorPalette,
+      );
+    case "delivery-note":
+      return generateDeliveryNoteExportHTML(
         sections,
         globalStyles,
         colorPalette,

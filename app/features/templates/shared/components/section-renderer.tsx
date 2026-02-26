@@ -1338,6 +1338,103 @@ export function SectionRenderer({
         );
       }
 
+      case "delivery-note-items": {
+        const items = Array.isArray(section.data.items)
+          ? (section.data.items as InvoiceItem[])
+          : [];
+        return (
+          <div
+            style={{
+              ...sectionStyles,
+              color: (sectionStyles.color as string) || primaryTextColor,
+            }}
+          >
+            <table className="w-full border-collapse">
+              <thead>
+                <tr className="border-b-2 border-gray-300">
+                  <th className="text-left p-2 font-semibold">Description</th>
+                  <th className="text-right p-2 font-semibold">Quantity</th>
+                </tr>
+              </thead>
+              <tbody>
+                {items.length === 0 ? (
+                  <tr>
+                    <td
+                      className="p-2"
+                      colSpan={2}
+                      style={{ color: secondaryTextColor }}
+                    >
+                      No items added. Click to add items in the properties
+                      panel.
+                    </td>
+                  </tr>
+                ) : (
+                  items.map((item, idx) => (
+                    <tr
+                      className="border-b border-gray-200"
+                      key={`dn-item-${item.description}-${item.quantity}-${item.unitPrice ?? ""}-${idx}`}
+                    >
+                      <td className="p-2">
+                        <button
+                          className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left w-full"
+                          onClick={(e) =>
+                            handleFieldClick(
+                              e,
+                              ["items", String(idx), "description"],
+                              item.description,
+                              "Description",
+                              false,
+                            )
+                          }
+                          onKeyDown={(e) =>
+                            handleFieldKeyDown(
+                              e,
+                              ["items", String(idx), "description"],
+                              item.description,
+                              "Description",
+                              false,
+                            )
+                          }
+                          type="button"
+                        >
+                          {item.description || "Item Description"}
+                        </button>
+                      </td>
+                      <td className="p-2 text-right">
+                        <button
+                          className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-right"
+                          onClick={(e) =>
+                            handleFieldClick(
+                              e,
+                              ["items", String(idx), "quantity"],
+                              item.quantity,
+                              "Quantity",
+                              false,
+                            )
+                          }
+                          onKeyDown={(e) =>
+                            handleFieldKeyDown(
+                              e,
+                              ["items", String(idx), "quantity"],
+                              item.quantity,
+                              "Quantity",
+                              false,
+                            )
+                          }
+                          type="button"
+                        >
+                          {item.quantity || "0"}
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        );
+      }
+
       case "packing-slip-items": {
         const items = Array.isArray(section.data.items)
           ? (section.data.items as InvoiceItem[])
@@ -1635,30 +1732,247 @@ export function SectionRenderer({
               </div>
               <div>
                 <span style={{ color: secondaryTextColor }}>Notes: </span>
+                {(section.data.notes as string | undefined) ? (
+                  // biome-ignore lint/a11y/useSemanticElements: Rich text content div cannot be button
+                  <div
+                    className="rich-text-content text-sm cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left block w-full"
+                    // biome-ignore lint/security/noDangerouslySetInnerHtml: Rich text content from editor needs to be rendered as HTML
+                    dangerouslySetInnerHTML={{
+                      __html: (section.data.notes as string) || "",
+                    }}
+                    data-testid={`rich-text-content-${section.id}-notes`}
+                    onClick={(e) =>
+                      handleFieldClick(
+                        e,
+                        ["notes"],
+                        section.data.notes as string,
+                        "Notes",
+                        true,
+                      )
+                    }
+                    onKeyDown={(e) =>
+                      handleFieldKeyDown(
+                        e,
+                        ["notes"],
+                        section.data.notes as string,
+                        "Notes",
+                        true,
+                      )
+                    }
+                    role="button"
+                    style={{ color: secondaryTextColor }}
+                    tabIndex={0}
+                  />
+                ) : (
+                  <button
+                    className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5"
+                    onClick={(e) =>
+                      handleFieldClick(
+                        e,
+                        ["notes"],
+                        section.data.notes as string,
+                        "Notes",
+                        true,
+                      )
+                    }
+                    onKeyDown={(e) =>
+                      handleFieldKeyDown(
+                        e,
+                        ["notes"],
+                        section.data.notes as string,
+                        "Notes",
+                        true,
+                      )
+                    }
+                    type="button"
+                  >
+                    —
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      case "delivery-note-footer": {
+        return (
+          <div
+            style={{
+              ...sectionStyles,
+              color: (sectionStyles.color as string) || primaryTextColor,
+            }}
+          >
+            <div className="space-y-2 text-sm">
+              <div>
+                <span style={{ color: secondaryTextColor }}>Received By: </span>
                 <button
                   className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5"
                   onClick={(e) =>
                     handleFieldClick(
                       e,
-                      ["notes"],
-                      section.data.notes as string,
-                      "Notes",
+                      ["receivedByName"],
+                      section.data.receivedByName as string,
+                      "Received By Name",
                       false,
                     )
                   }
                   onKeyDown={(e) =>
                     handleFieldKeyDown(
                       e,
-                      ["notes"],
-                      section.data.notes as string,
-                      "Notes",
+                      ["receivedByName"],
+                      section.data.receivedByName as string,
+                      "Received By Name",
                       false,
                     )
                   }
                   type="button"
                 >
-                  {(section.data.notes as string) || "—"}
+                  {(section.data.receivedByName as string) || "—"}
                 </button>
+              </div>
+              <div>
+                <span style={{ color: secondaryTextColor }}>Title: </span>
+                <button
+                  className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5"
+                  onClick={(e) =>
+                    handleFieldClick(
+                      e,
+                      ["receivedByTitle"],
+                      section.data.receivedByTitle as string,
+                      "Received By Title",
+                      false,
+                    )
+                  }
+                  onKeyDown={(e) =>
+                    handleFieldKeyDown(
+                      e,
+                      ["receivedByTitle"],
+                      section.data.receivedByTitle as string,
+                      "Received By Title",
+                      false,
+                    )
+                  }
+                  type="button"
+                >
+                  {(section.data.receivedByTitle as string) || "—"}
+                </button>
+              </div>
+              <div>
+                <span style={{ color: secondaryTextColor }}>Date: </span>
+                <button
+                  className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5"
+                  onClick={(e) =>
+                    handleFieldClick(
+                      e,
+                      ["receivedDate"],
+                      section.data.receivedDate as string,
+                      "Received Date",
+                      false,
+                    )
+                  }
+                  onKeyDown={(e) =>
+                    handleFieldKeyDown(
+                      e,
+                      ["receivedDate"],
+                      section.data.receivedDate as string,
+                      "Received Date",
+                      false,
+                    )
+                  }
+                  type="button"
+                >
+                  {(section.data.receivedDate as string) || "—"}
+                </button>
+              </div>
+              <div>
+                <span style={{ color: secondaryTextColor }}>
+                  Condition Received:{" "}
+                </span>
+                <button
+                  className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5"
+                  onClick={(e) =>
+                    handleFieldClick(
+                      e,
+                      ["conditionReceived"],
+                      section.data.conditionReceived as string,
+                      "Condition Received",
+                      false,
+                    )
+                  }
+                  onKeyDown={(e) =>
+                    handleFieldKeyDown(
+                      e,
+                      ["conditionReceived"],
+                      section.data.conditionReceived as string,
+                      "Condition Received",
+                      false,
+                    )
+                  }
+                  type="button"
+                >
+                  {(section.data.conditionReceived as string) || "—"}
+                </button>
+              </div>
+              <div>
+                <span style={{ color: secondaryTextColor }}>Notes: </span>
+                {(section.data.notes as string | undefined) ? (
+                  // biome-ignore lint/a11y/useSemanticElements: Rich text content div cannot be button
+                  <div
+                    className="rich-text-content text-sm cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left block w-full"
+                    // biome-ignore lint/security/noDangerouslySetInnerHtml: Rich text content from editor needs to be rendered as HTML
+                    dangerouslySetInnerHTML={{
+                      __html: (section.data.notes as string) || "",
+                    }}
+                    data-testid={`rich-text-content-${section.id}-notes`}
+                    onClick={(e) =>
+                      handleFieldClick(
+                        e,
+                        ["notes"],
+                        section.data.notes as string,
+                        "Notes",
+                        true,
+                      )
+                    }
+                    onKeyDown={(e) =>
+                      handleFieldKeyDown(
+                        e,
+                        ["notes"],
+                        section.data.notes as string,
+                        "Notes",
+                        true,
+                      )
+                    }
+                    role="button"
+                    style={{ color: secondaryTextColor }}
+                    tabIndex={0}
+                  />
+                ) : (
+                  <button
+                    className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5"
+                    onClick={(e) =>
+                      handleFieldClick(
+                        e,
+                        ["notes"],
+                        section.data.notes as string,
+                        "Notes",
+                        true,
+                      )
+                    }
+                    onKeyDown={(e) =>
+                      handleFieldKeyDown(
+                        e,
+                        ["notes"],
+                        section.data.notes as string,
+                        "Notes",
+                        true,
+                      )
+                    }
+                    type="button"
+                  >
+                    —
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -4401,6 +4715,314 @@ export function SectionRenderer({
                   >
                     {(section.data.shipToAddress as string) ||
                       "Customer Address"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      case "delivery-note-header": {
+        const logoUrl = (section.data.companyLogo as string) || "";
+        const hasColorStyle = sectionStyles.color;
+        const textColorStyle = hasColorStyle
+          ? undefined
+          : { color: primaryTextColor };
+        const secondaryColorStyle = hasColorStyle
+          ? undefined
+          : { color: secondaryTextColor };
+        return (
+          <div
+            style={{
+              ...sectionStyles,
+              color: (sectionStyles.color as string) || primaryTextColor,
+            }}
+          >
+            <div className="flex justify-between mb-6">
+              <div>
+                {logoUrl && (
+                  <div className="mb-4">
+                    <button
+                      className="cursor-pointer hover:opacity-80 transition-opacity"
+                      onClick={(e) =>
+                        handleFieldClick(
+                          e,
+                          ["companyLogo"],
+                          logoUrl,
+                          "Company Logo URL",
+                          false,
+                        )
+                      }
+                      onKeyDown={(e) =>
+                        handleFieldKeyDown(
+                          e,
+                          ["companyLogo"],
+                          logoUrl,
+                          "Company Logo URL",
+                          false,
+                        )
+                      }
+                      type="button"
+                    >
+                      <img
+                        alt="Company Logo"
+                        className="h-12 object-contain"
+                        src={logoUrl}
+                      />
+                    </button>
+                  </div>
+                )}
+                <h2 className="text-xl font-bold mb-2" style={textColorStyle}>
+                  <button
+                    className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left"
+                    onClick={(e) =>
+                      handleFieldClick(
+                        e,
+                        ["companyName"],
+                        section.data.companyName as string,
+                        "Company Name",
+                        false,
+                      )
+                    }
+                    onKeyDown={(e) =>
+                      handleFieldKeyDown(
+                        e,
+                        ["companyName"],
+                        section.data.companyName as string,
+                        "Company Name",
+                        false,
+                      )
+                    }
+                    type="button"
+                  >
+                    {(section.data.companyName as string) || "Company Name"}
+                  </button>
+                </h2>
+                <div className="text-sm" style={secondaryColorStyle}>
+                  <button
+                    className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left"
+                    onClick={(e) =>
+                      handleFieldClick(
+                        e,
+                        ["companyAddress"],
+                        section.data.companyAddress as string,
+                        "Company Address",
+                        false,
+                      )
+                    }
+                    onKeyDown={(e) =>
+                      handleFieldKeyDown(
+                        e,
+                        ["companyAddress"],
+                        section.data.companyAddress as string,
+                        "Company Address",
+                        false,
+                      )
+                    }
+                    type="button"
+                  >
+                    {(section.data.companyAddress as string) ||
+                      "Company Address"}
+                  </button>
+                </div>
+              </div>
+              <div className="text-right">
+                <h1 className="text-2xl font-bold mb-4" style={textColorStyle}>
+                  DELIVERY NOTE
+                </h1>
+                <div className="text-sm space-y-1" style={secondaryColorStyle}>
+                  <div>
+                    <span>Delivery #: </span>
+                    <button
+                      className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left"
+                      onClick={(e) =>
+                        handleFieldClick(
+                          e,
+                          ["deliveryNoteNumber"],
+                          section.data.deliveryNoteNumber as string,
+                          "Delivery Note Number",
+                          false,
+                        )
+                      }
+                      onKeyDown={(e) =>
+                        handleFieldKeyDown(
+                          e,
+                          ["deliveryNoteNumber"],
+                          section.data.deliveryNoteNumber as string,
+                          "Delivery Note Number",
+                          false,
+                        )
+                      }
+                      type="button"
+                    >
+                      {(section.data.deliveryNoteNumber as string) || "DN-001"}
+                    </button>
+                  </div>
+                  <div>
+                    <span>Order Ref: </span>
+                    <button
+                      className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left"
+                      onClick={(e) =>
+                        handleFieldClick(
+                          e,
+                          ["orderReference"],
+                          section.data.orderReference as string,
+                          "Order Reference",
+                          false,
+                        )
+                      }
+                      onKeyDown={(e) =>
+                        handleFieldKeyDown(
+                          e,
+                          ["orderReference"],
+                          section.data.orderReference as string,
+                          "Order Reference",
+                          false,
+                        )
+                      }
+                      type="button"
+                    >
+                      {(section.data.orderReference as string) || "ORD-001"}
+                    </button>
+                  </div>
+                  <div>
+                    <span>Delivery Date: </span>
+                    <button
+                      className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left"
+                      onClick={(e) =>
+                        handleFieldClick(
+                          e,
+                          ["deliveryDate"],
+                          section.data.deliveryDate as string,
+                          "Delivery Date",
+                          false,
+                        )
+                      }
+                      onKeyDown={(e) =>
+                        handleFieldKeyDown(
+                          e,
+                          ["deliveryDate"],
+                          section.data.deliveryDate as string,
+                          "Delivery Date",
+                          false,
+                        )
+                      }
+                      type="button"
+                    >
+                      {(section.data.deliveryDate as string) || "Date"}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="flex justify-between mt-6">
+              <div>
+                <h3 className="font-semibold mb-2">Delivered By:</h3>
+                <div className="text-sm">
+                  <button
+                    className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left block w-full"
+                    onClick={(e) =>
+                      handleFieldClick(
+                        e,
+                        ["deliveredByName"],
+                        section.data.deliveredByName as string,
+                        "Delivered By Name",
+                        false,
+                      )
+                    }
+                    onKeyDown={(e) =>
+                      handleFieldKeyDown(
+                        e,
+                        ["deliveredByName"],
+                        section.data.deliveredByName as string,
+                        "Delivered By Name",
+                        false,
+                      )
+                    }
+                    type="button"
+                  >
+                    {(section.data.deliveredByName as string) || "Driver Name"}
+                  </button>
+                  <button
+                    className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left block w-full"
+                    onClick={(e) =>
+                      handleFieldClick(
+                        e,
+                        ["deliveredByCompany"],
+                        section.data.deliveredByCompany as string,
+                        "Delivered By Company",
+                        false,
+                      )
+                    }
+                    onKeyDown={(e) =>
+                      handleFieldKeyDown(
+                        e,
+                        ["deliveredByCompany"],
+                        section.data.deliveredByCompany as string,
+                        "Delivered By Company",
+                        false,
+                      )
+                    }
+                    type="button"
+                  >
+                    {(section.data.deliveredByCompany as string) ||
+                      "Carrier / Company"}
+                  </button>
+                </div>
+              </div>
+              <div>
+                <h3 className="font-semibold mb-2">Delivered To:</h3>
+                <div className="text-sm">
+                  <button
+                    className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left block w-full"
+                    onClick={(e) =>
+                      handleFieldClick(
+                        e,
+                        ["deliveredToName"],
+                        section.data.deliveredToName as string,
+                        "Delivered To Name",
+                        false,
+                      )
+                    }
+                    onKeyDown={(e) =>
+                      handleFieldKeyDown(
+                        e,
+                        ["deliveredToName"],
+                        section.data.deliveredToName as string,
+                        "Delivered To Name",
+                        false,
+                      )
+                    }
+                    type="button"
+                  >
+                    {(section.data.deliveredToName as string) ||
+                      "Recipient Name"}
+                  </button>
+                  <button
+                    className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left block w-full"
+                    onClick={(e) =>
+                      handleFieldClick(
+                        e,
+                        ["deliveredToAddress"],
+                        section.data.deliveredToAddress as string,
+                        "Delivered To Address",
+                        false,
+                      )
+                    }
+                    onKeyDown={(e) =>
+                      handleFieldKeyDown(
+                        e,
+                        ["deliveredToAddress"],
+                        section.data.deliveredToAddress as string,
+                        "Delivered To Address",
+                        false,
+                      )
+                    }
+                    type="button"
+                  >
+                    {(section.data.deliveredToAddress as string) ||
+                      "Recipient Address"}
                   </button>
                 </div>
               </div>

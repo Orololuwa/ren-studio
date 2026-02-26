@@ -1,4 +1,5 @@
 import { contractComponentLibrary } from "../../contract/components/component-library";
+import { deliveryNoteComponentLibrary } from "../../delivery-note/components/component-library";
 import { estimateComponentLibrary } from "../../estimate/components/component-library";
 import { invoiceComponentLibrary } from "../../invoice/components/component-library";
 import { orderConfirmationComponentLibrary } from "../../order-confirmation/components/component-library";
@@ -20,6 +21,7 @@ export const componentLibrary: Record<string, ComponentDefinition> = {
   ...estimateComponentLibrary,
   ...orderConfirmationComponentLibrary,
   ...packingSlipComponentLibrary,
+  ...deliveryNoteComponentLibrary,
   ...purchaseOrderComponentLibrary,
   ...salesOrderComponentLibrary,
 };

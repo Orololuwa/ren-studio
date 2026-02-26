@@ -35,6 +35,7 @@ const previewSchema = z.object({
     "sales-order",
     "order-confirmation",
     "packing-slip",
+    "delivery-note",
     "estimate",
     "statement",
     "letter",

@@ -1,4 +1,5 @@
 import { contractTemplates } from "../../contract/templates/contract-templates";
+import { deliveryNoteTemplates } from "../../delivery-note/templates/delivery-note-templates";
 import { estimateTemplates } from "../../estimate/templates/estimate-templates";
 import { invoiceTemplates } from "../../invoice/templates/invoice-templates";
 import { orderConfirmationTemplates } from "../../order-confirmation/templates/order-confirmation-templates";
@@ -17,6 +18,7 @@ export const predefinedTemplates: Record<string, Template[]> = {
   invoice: invoiceTemplates,
   "order-confirmation": orderConfirmationTemplates,
   "packing-slip": packingSlipTemplates,
+  "delivery-note": deliveryNoteTemplates,
   "purchase-order": purchaseOrderTemplates,
   quote: quoteTemplates,
   receipt: receiptTemplates,

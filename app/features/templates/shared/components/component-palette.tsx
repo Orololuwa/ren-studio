@@ -52,6 +52,9 @@ const iconMap: Record<string, React.ReactNode> = {
   "packing-slip-header": <FileText className="w-5 h-5" />,
   "packing-slip-items": <List className="w-5 h-5" />,
   "packing-slip-footer": <FileText className="w-5 h-5" />,
+  "delivery-note-header": <FileText className="w-5 h-5" />,
+  "delivery-note-items": <List className="w-5 h-5" />,
+  "delivery-note-footer": <FileText className="w-5 h-5" />,
   "contract-header": <FileText className="w-5 h-5" />,
   "contract-body": <FileText className="w-5 h-5" />,
   "contract-signature": <FileText className="w-5 h-5" />,
@@ -111,6 +114,12 @@ export function ComponentPalette({
           "packing-slip-header",
           "packing-slip-items",
           "packing-slip-footer",
+        ];
+      case "delivery-note":
+        return [
+          "delivery-note-header",
+          "delivery-note-items",
+          "delivery-note-footer",
         ];
       case "contract":
         return ["contract-header", "contract-body", "contract-signature"];

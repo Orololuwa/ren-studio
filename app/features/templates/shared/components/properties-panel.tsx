@@ -1311,7 +1311,8 @@ export function PropertiesPanel() {
       case "purchase-order-items":
       case "sales-order-items":
       case "order-confirmation-items":
-      case "packing-slip-items": {
+      case "packing-slip-items":
+      case "delivery-note-items": {
         const items = (
           Array.isArray(section.data.items) ? section.data.items : []
         ) as InvoiceItem[];
@@ -1372,7 +1373,9 @@ export function PropertiesPanel() {
                           ? "Order Confirmation Items"
                           : section.type === "packing-slip-items"
                             ? "Packing Slip Items"
-                            : "Invoice Items"}
+                            : section.type === "delivery-note-items"
+                              ? "Delivery Note Items"
+                              : "Invoice Items"}
               </Label>
               <Button
                 onClick={addItem}
@@ -1469,6 +1472,68 @@ export function PropertiesPanel() {
         );
       }
 
+      case "delivery-note-footer": {
+        return (
+          <div className="space-y-4">
+            <div>
+              <Label className="text-xs" htmlFor="receivedByName">
+                Received By Name
+              </Label>
+              <Input
+                className="mt-1"
+                id="receivedByName"
+                onChange={(e) => updateData("receivedByName", e.target.value)}
+                placeholder="Recipient name who received goods"
+                value={String(section.data.receivedByName || "")}
+              />
+            </div>
+            <div>
+              <Label className="text-xs" htmlFor="receivedByTitle">
+                Received By Title
+              </Label>
+              <Input
+                className="mt-1"
+                id="receivedByTitle"
+                onChange={(e) => updateData("receivedByTitle", e.target.value)}
+                placeholder="Receiving Manager, etc."
+                value={String(section.data.receivedByTitle || "")}
+              />
+            </div>
+            <div>
+              <Label className="text-xs" htmlFor="receivedDate">
+                Received Date
+              </Label>
+              <Input
+                className="mt-1"
+                id="receivedDate"
+                onChange={(e) => updateData("receivedDate", e.target.value)}
+                placeholder="01/15/2024"
+                value={String(section.data.receivedDate || "")}
+              />
+            </div>
+            <div>
+              <Label className="text-xs" htmlFor="conditionReceived">
+                Condition Received
+              </Label>
+              <Input
+                className="mt-1"
+                id="conditionReceived"
+                onChange={(e) =>
+                  updateData("conditionReceived", e.target.value)
+                }
+                placeholder="Good condition, Damaged, etc."
+                value={String(section.data.conditionReceived || "")}
+              />
+            </div>
+            <RichTextEditor
+              label="Notes"
+              onChange={(value) => updateData("notes", value)}
+              value={String(section.data.notes || "")}
+            />
+          </div>
+        );
+      }
+
       case "packing-slip-footer": {
         return (
           <div className="space-y-4">
@@ -1496,18 +1561,11 @@ export function PropertiesPanel() {
                 value={String(section.data.trackingNumber || "")}
               />
             </div>
-            <div>
-              <Label className="text-xs" htmlFor="notes">
-                Notes
-              </Label>
-              <textarea
-                className="mt-1 flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                id="notes"
-                onChange={(e) => updateData("notes", e.target.value)}
-                placeholder="Special handling, delivery instructions..."
-                value={String(section.data.notes || "")}
-              />
-            </div>
+            <RichTextEditor
+              label="Notes"
+              onChange={(value) => updateData("notes", value)}
+              value={String(section.data.notes || "")}
+            />
           </div>
         );
       }
@@ -2606,6 +2664,149 @@ export function PropertiesPanel() {
                 onChange={(e) => updateData("shipToAddress", e.target.value)}
                 placeholder="789 Shipping St&#10;City, State 54321"
                 value={String(section.data.shipToAddress || "")}
+              />
+            </div>
+          </div>
+        );
+      }
+
+      case "delivery-note-header": {
+        return (
+          <div className="space-y-4">
+            <div>
+              <Label className="text-xs" htmlFor="companyLogo">
+                Company Logo URL
+              </Label>
+              <Input
+                className="mt-1"
+                id="companyLogo"
+                onChange={(e) => updateData("companyLogo", e.target.value)}
+                placeholder="https://example.com/logo.png"
+                type="url"
+                value={String(section.data.companyLogo || "")}
+              />
+              {Boolean(section.data.companyLogo) && (
+                <div className="mt-2">
+                  <img
+                    alt="Logo Preview"
+                    className="h-12 object-contain border rounded"
+                    src={String(section.data.companyLogo)}
+                  />
+                </div>
+              )}
+            </div>
+            <div>
+              <Label className="text-xs" htmlFor="companyName">
+                Company Name
+              </Label>
+              <Input
+                className="mt-1"
+                id="companyName"
+                onChange={(e) => updateData("companyName", e.target.value)}
+                placeholder="Your Company Name"
+                value={String(section.data.companyName || "")}
+              />
+            </div>
+            <div>
+              <Label className="text-xs" htmlFor="companyAddress">
+                Company Address
+              </Label>
+              <textarea
+                className="mt-1 flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                id="companyAddress"
+                onChange={(e) => updateData("companyAddress", e.target.value)}
+                placeholder="123 Business St&#10;City, State 12345"
+                value={String(section.data.companyAddress || "")}
+              />
+            </div>
+            <div>
+              <Label className="text-xs" htmlFor="deliveryNoteNumber">
+                Delivery Note Number
+              </Label>
+              <Input
+                className="mt-1"
+                id="deliveryNoteNumber"
+                onChange={(e) =>
+                  updateData("deliveryNoteNumber", e.target.value)
+                }
+                placeholder="DN-001"
+                value={String(section.data.deliveryNoteNumber || "")}
+              />
+            </div>
+            <div>
+              <Label className="text-xs" htmlFor="orderReference">
+                Order Reference
+              </Label>
+              <Input
+                className="mt-1"
+                id="orderReference"
+                onChange={(e) => updateData("orderReference", e.target.value)}
+                placeholder="ORD-001"
+                value={String(section.data.orderReference || "")}
+              />
+            </div>
+            <div>
+              <Label className="text-xs" htmlFor="deliveryDate">
+                Delivery Date
+              </Label>
+              <Input
+                className="mt-1"
+                id="deliveryDate"
+                onChange={(e) => updateData("deliveryDate", e.target.value)}
+                placeholder="01/15/2024"
+                value={String(section.data.deliveryDate || "")}
+              />
+            </div>
+            <div>
+              <Label className="text-xs" htmlFor="deliveredByName">
+                Delivered By Name
+              </Label>
+              <Input
+                className="mt-1"
+                id="deliveredByName"
+                onChange={(e) => updateData("deliveredByName", e.target.value)}
+                placeholder="Driver name"
+                value={String(section.data.deliveredByName || "")}
+              />
+            </div>
+            <div>
+              <Label className="text-xs" htmlFor="deliveredByCompany">
+                Delivered By Company
+              </Label>
+              <Input
+                className="mt-1"
+                id="deliveredByCompany"
+                onChange={(e) =>
+                  updateData("deliveredByCompany", e.target.value)
+                }
+                placeholder="Carrier / logistics company"
+                value={String(section.data.deliveredByCompany || "")}
+              />
+            </div>
+            <div>
+              <Label className="text-xs" htmlFor="deliveredToName">
+                Delivered To Name
+              </Label>
+              <Input
+                className="mt-1"
+                id="deliveredToName"
+                onChange={(e) => updateData("deliveredToName", e.target.value)}
+                placeholder="Recipient name"
+                value={String(section.data.deliveredToName || "")}
+              />
+            </div>
+            <div>
+              <Label className="text-xs" htmlFor="deliveredToAddress">
+                Delivered To Address
+              </Label>
+              <textarea
+                className="mt-1 flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                id="deliveredToAddress"
+                onChange={(e) =>
+                  updateData("deliveredToAddress", e.target.value)
+                }
+                placeholder="456 Customer Ave&#10;City, State 67890"
+                value={String(section.data.deliveredToAddress || "")}
               />
             </div>
           </div>
