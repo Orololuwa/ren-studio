@@ -89,6 +89,7 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
   const allDefaultTemplates = {
     estimate: getTemplatesByType("estimate"),
     invoice: getTemplatesByType("invoice"),
+    "order-confirmation": getTemplatesByType("order-confirmation"),
     "purchase-order": getTemplatesByType("purchase-order"),
     quote: getTemplatesByType("quote"),
     receipt: getTemplatesByType("receipt"),
@@ -237,14 +238,19 @@ const builderTypes = [
     value: "invoice",
   },
   {
-    icon: ShoppingBag,
-    label: "Receipt",
-    value: "receipt",
-  },
-  {
     icon: FileText,
     label: "Sales Order",
     value: "sales-order",
+  },
+  {
+    icon: FileText,
+    label: "Order Confirmation",
+    value: "order-confirmation",
+  },
+  {
+    icon: ShoppingBag,
+    label: "Receipt",
+    value: "receipt",
   },
   {
     icon: FileText,
@@ -264,6 +270,7 @@ const VALID_BUILDER_TYPES = [
   "purchase-order",
   "receipt",
   "sales-order",
+  "order-confirmation",
   "estimate",
   "statement",
   "letter",

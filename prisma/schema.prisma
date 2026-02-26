@@ -329,6 +329,7 @@ enum TemplateType {
   contract
   purchaseOrder
   salesOrder
+  orderConfirmation
   estimate
   statement
   letter

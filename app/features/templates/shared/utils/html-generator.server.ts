@@ -7,6 +7,10 @@ import {
   generateInvoicePreviewHTML,
 } from "../../invoice/utils/html-generator-invoice.server";
 import {
+  generateOrderConfirmationExportHTML,
+  generateOrderConfirmationPreviewHTML,
+} from "../../order-confirmation/utils/html-generator-order-confirmation.server";
+import {
   generatePurchaseOrderExportHTML,
   generatePurchaseOrderPreviewHTML,
 } from "../../purchase-order/utils/html-generator-purchase-order.server";
@@ -60,6 +64,12 @@ export function generatePreviewHTML(
         globalStyles,
         colorPalette,
       );
+    case "order-confirmation":
+      return generateOrderConfirmationPreviewHTML(
+        sections,
+        globalStyles,
+        colorPalette,
+      );
     default:
       // Fallback for unsupported types - return basic HTML
       return `
@@ -108,6 +118,12 @@ export function generateExportHTML(
       );
     case "sales-order":
       return generateSalesOrderExportHTML(sections, globalStyles, colorPalette);
+    case "order-confirmation":
+      return generateOrderConfirmationExportHTML(
+        sections,
+        globalStyles,
+        colorPalette,
+      );
     default:
       // Fallback for unsupported types - return basic HTML
       return `

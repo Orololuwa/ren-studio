@@ -108,6 +108,7 @@ const saveTemplateSchema = z.object({
     "purchase-order",
     "receipt",
     "sales-order",
+    "order-confirmation",
     "estimate",
     "statement",
     "letter",
@@ -615,6 +616,7 @@ export default function BuilderEditorRoute({
         "estimate",
         "purchase-order",
         "sales-order",
+        "order-confirmation",
       ];
       if (currencyDocumentTypes.includes(template.type) && !currencyToUse) {
         currencyToUse = "USD";
@@ -851,7 +853,8 @@ export default function BuilderEditorRoute({
                       currentTemplate?.type === "quote" ||
                       currentTemplate?.type === "estimate" ||
                       currentTemplate?.type === "purchase-order" ||
-                      currentTemplate?.type === "sales-order") && (
+                      currentTemplate?.type === "sales-order" ||
+                      currentTemplate?.type === "order-confirmation") && (
                       <>
                         <DropdownMenuSub>
                           <DropdownMenuSubTrigger>

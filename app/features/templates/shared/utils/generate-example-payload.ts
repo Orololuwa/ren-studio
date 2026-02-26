@@ -72,7 +72,13 @@ function generateExampleValue(
     if (lowerName.includes("transaction")) {
       return "TXN-2024-001";
     }
+    if (lowerName.includes("confirmation")) {
+      return "OC-2024-001";
+    }
     return "12345";
+  }
+  if (lowerName.includes("reference") && lowerName.includes("order")) {
+    return "ORD-2024-001";
   }
   if (lowerName.includes("date")) {
     return "2024-01-15";
@@ -204,6 +210,7 @@ function generateExampleEntries(sectionType: string): unknown[] {
     case "estimate-items":
     case "purchase-order-items":
     case "sales-order-items":
+    case "order-confirmation-items":
       return [
         {
           description: "Web Development Services",
@@ -279,6 +286,12 @@ export function getComponentTypesForTemplateType(
       ];
     case "sales-order":
       return ["sales-order-header", "sales-order-items", "sales-order-footer"];
+    case "order-confirmation":
+      return [
+        "order-confirmation-header",
+        "order-confirmation-items",
+        "order-confirmation-footer",
+      ];
     default:
       return [];
   }

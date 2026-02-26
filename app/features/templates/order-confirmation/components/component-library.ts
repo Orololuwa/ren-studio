@@ -1,0 +1,90 @@
+import type { ComponentDefinition } from "../../shared/types";
+
+export const orderConfirmationComponentLibrary: Record<
+  string,
+  ComponentDefinition
+> = {
+  "order-confirmation-header": {
+    configurableProperties: [
+      "companyLogo",
+      "companyName",
+      "companyAddress",
+      "companyEmail",
+      "companyPhone",
+      "confirmationNumber",
+      "orderReference",
+      "orderDate",
+      "expectedShipDate",
+      "billToName",
+      "billToAddress",
+      "shipToName",
+      "shipToAddress",
+    ],
+    defaultData: {
+      companyLogo:
+        "https://iwvduhvsxhjpxapdochp.supabase.co/storage/v1/object/public/app-images/organization-logos/logoipsum-404.svg",
+      companyName: "",
+      companyAddress: "",
+      companyEmail: "",
+      companyPhone: "",
+      confirmationNumber: "",
+      orderReference: "",
+      orderDate: "",
+      expectedShipDate: "",
+      billToName: "",
+      billToAddress: "",
+      shipToName: "",
+      shipToAddress: "",
+    },
+    defaultStyles: {
+      padding: "2rem",
+    },
+    icon: "FileText",
+    label: "Order Confirmation Header",
+    type: "order-confirmation-header",
+  },
+  "order-confirmation-items": {
+    configurableProperties: ["items"],
+    defaultData: { items: [] },
+    defaultStyles: {
+      padding: "1rem",
+    },
+    icon: "List",
+    label: "Order Confirmation Items",
+    type: "order-confirmation-items",
+  },
+  "order-confirmation-footer": {
+    configurableProperties: [
+      "subtotal",
+      "taxMode",
+      "taxRate",
+      "taxAmount",
+      "showTaxRate",
+      "discountMode",
+      "discountRate",
+      "discount",
+      "showDiscountRate",
+      "total",
+      "notes",
+    ],
+    defaultData: {
+      subtotal: "",
+      taxMode: "percentage",
+      taxRate: "",
+      taxAmount: "",
+      showTaxRate: true,
+      discountMode: "percentage",
+      discountRate: "",
+      discount: "",
+      showDiscountRate: true,
+      total: "",
+      notes: "",
+    },
+    defaultStyles: {
+      padding: "1rem",
+    },
+    icon: "FileText",
+    label: "Order Confirmation Footer",
+    type: "order-confirmation-footer",
+  },
+};

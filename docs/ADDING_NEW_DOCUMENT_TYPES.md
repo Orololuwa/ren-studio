@@ -12,6 +12,7 @@ This is a quick reference guide for adding new document types to the builder. Fo
 - ✅ estimate
 - ✅ purchase-order
 - ✅ sales-order
+- ✅ order-confirmation
 
 **In Type System + Prisma (need wiring + implementation):**
 - 📋 certificate
@@ -115,7 +116,7 @@ These are commonly used across industries (services, retail, manufacturing, logi
 **New recommended types to add next (not currently in `TemplateType`):**
 - 📌 credit-note (and debit-note): adjustments/refunds/overcharges
 - ~~📌 sales-order~~ (implemented)
-- 📌 order-confirmation: seller confirmation sent to customer
+- ~~📌 order-confirmation~~ (implemented): seller confirmation sent to customer
 - 📌 packing-slip: shipments/fulfillment packing list
 - 📌 delivery-note: proof of delivery / goods delivered note
 - 📌 proforma-invoice: pre-invoice for customs/advance payment
@@ -123,6 +124,43 @@ These are commonly used across industries (services, retail, manufacturing, logi
 - 📌 work-order: service/job instruction sheet (often with line items)
 - 📌 timesheet: billable hours tracking (great fit for agencies/contractors)
 - 📌 expense-report: employee reimbursement
+
+---
+
+## Workflow Flows vs Document Types (Gap Analysis)
+
+Based on the workflow templates in `WORKFLOW_FEATURE.md` and the document types above:
+
+**Document types required by workflow flows:**
+
+| Flow | Documents in flow |
+|------|-------------------|
+| Retail / E-commerce | Order Confirmation, Shipment*, Invoice, Receipt |
+| B2B Wholesale | Quote, Purchase Order, Order Confirmation, Delivery*, Invoice, Receipt |
+| Project / Services | Estimate, Quote, Contract, Invoice, Receipt |
+| SaaS Subscription | Invoice, Receipt |
+| Enterprise SaaS | Quote, Contract, Purchase Order, Order Confirmation, Invoice, Receipt |
+| Marketplace | Order Confirmation, Invoice, Receipt (+ Sales Order for “order”) |
+| Manufacturing | RFQ*, Quote, Purchase Order, Order Confirmation, Invoice, Receipt |
+
+\*Shipment/Delivery = packing-slip and/or delivery-note. RFQ = request-for-quote (could be a quote subtype or separate type.)
+
+**Already implemented (no gap):**  
+Invoice, Receipt, Quote, Estimate, Purchase Order, Sales Order.
+
+**Left to implement for workflow flows:**
+
+| Document type | In TypeScript / Prisma? | Used in flows | Priority for workflows |
+|---------------|-------------------------|---------------|-------------------------|
+| ~~**order-confirmation**~~ | Yes (implemented) | Retail, B2B, Enterprise, Marketplace, Manufacturing (5) | Done |
+| **contract** | Yes (not implemented) | Project/Services, Enterprise (2) | **High** |
+| **packing-slip** | No | Retail, B2B, Marketplace (shipment/delivery) | Medium |
+| **delivery-note** | No | B2B, Marketplace (delivery proof) | Medium |
+| **RFQ** (request-for-quote) | No | Manufacturing (1) | Low (or treat as quote variant) |
+
+**Summary:** To support the documented workflow templates end-to-end, the main gaps are **order-confirmation** and **contract**. Packing-slip and delivery-note cover shipment/delivery steps. RFQ can be a separate type or a quote subtype (e.g. “Request for Quote” template).
+
+---
 
 ## Testing
 
