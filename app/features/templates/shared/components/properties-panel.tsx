@@ -1310,7 +1310,8 @@ export function PropertiesPanel() {
       case "invoice-items":
       case "purchase-order-items":
       case "sales-order-items":
-      case "order-confirmation-items": {
+      case "order-confirmation-items":
+      case "packing-slip-items": {
         const items = (
           Array.isArray(section.data.items) ? section.data.items : []
         ) as InvoiceItem[];
@@ -1369,7 +1370,9 @@ export function PropertiesPanel() {
                         ? "Sales Order Items"
                         : section.type === "order-confirmation-items"
                           ? "Order Confirmation Items"
-                          : "Invoice Items"}
+                          : section.type === "packing-slip-items"
+                            ? "Packing Slip Items"
+                            : "Invoice Items"}
               </Label>
               <Button
                 onClick={addItem}
@@ -1461,6 +1464,49 @@ export function PropertiesPanel() {
                   No items added. Click "Add Item" to add line items.
                 </div>
               )}
+            </div>
+          </div>
+        );
+      }
+
+      case "packing-slip-footer": {
+        return (
+          <div className="space-y-4">
+            <div>
+              <Label className="text-xs" htmlFor="shippingMethod">
+                Shipping Method
+              </Label>
+              <Input
+                className="mt-1"
+                id="shippingMethod"
+                onChange={(e) => updateData("shippingMethod", e.target.value)}
+                placeholder="FedEx Ground, UPS 2-Day, etc."
+                value={String(section.data.shippingMethod || "")}
+              />
+            </div>
+            <div>
+              <Label className="text-xs" htmlFor="trackingNumber">
+                Tracking Number
+              </Label>
+              <Input
+                className="mt-1"
+                id="trackingNumber"
+                onChange={(e) => updateData("trackingNumber", e.target.value)}
+                placeholder="1Z999AA10123456784"
+                value={String(section.data.trackingNumber || "")}
+              />
+            </div>
+            <div>
+              <Label className="text-xs" htmlFor="notes">
+                Notes
+              </Label>
+              <textarea
+                className="mt-1 flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                id="notes"
+                onChange={(e) => updateData("notes", e.target.value)}
+                placeholder="Special handling, delivery instructions..."
+                value={String(section.data.notes || "")}
+              />
             </div>
           </div>
         );
@@ -2559,6 +2605,143 @@ export function PropertiesPanel() {
                 id="shipToAddress"
                 onChange={(e) => updateData("shipToAddress", e.target.value)}
                 placeholder="789 Shipping St&#10;City, State 54321"
+                value={String(section.data.shipToAddress || "")}
+              />
+            </div>
+          </div>
+        );
+      }
+
+      case "packing-slip-header": {
+        return (
+          <div className="space-y-4">
+            <div>
+              <Label className="text-xs" htmlFor="companyLogo">
+                Company Logo URL
+              </Label>
+              <Input
+                className="mt-1"
+                id="companyLogo"
+                onChange={(e) => updateData("companyLogo", e.target.value)}
+                placeholder="https://example.com/logo.png"
+                type="url"
+                value={String(section.data.companyLogo || "")}
+              />
+              {Boolean(section.data.companyLogo) && (
+                <div className="mt-2">
+                  <img
+                    alt="Logo Preview"
+                    className="h-12 object-contain border rounded"
+                    src={String(section.data.companyLogo)}
+                  />
+                </div>
+              )}
+            </div>
+            <div>
+              <Label className="text-xs" htmlFor="companyName">
+                Company Name
+              </Label>
+              <Input
+                className="mt-1"
+                id="companyName"
+                onChange={(e) => updateData("companyName", e.target.value)}
+                placeholder="Your Company Name"
+                value={String(section.data.companyName || "")}
+              />
+            </div>
+            <div>
+              <Label className="text-xs" htmlFor="companyAddress">
+                Company Address
+              </Label>
+              <textarea
+                className="mt-1 flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                id="companyAddress"
+                onChange={(e) => updateData("companyAddress", e.target.value)}
+                placeholder="123 Business St&#10;City, State 12345"
+                value={String(section.data.companyAddress || "")}
+              />
+            </div>
+            <div>
+              <Label className="text-xs" htmlFor="shipmentNumber">
+                Shipment Number
+              </Label>
+              <Input
+                className="mt-1"
+                id="shipmentNumber"
+                onChange={(e) => updateData("shipmentNumber", e.target.value)}
+                placeholder="PS-001"
+                value={String(section.data.shipmentNumber || "")}
+              />
+            </div>
+            <div>
+              <Label className="text-xs" htmlFor="orderReference">
+                Order Reference
+              </Label>
+              <Input
+                className="mt-1"
+                id="orderReference"
+                onChange={(e) => updateData("orderReference", e.target.value)}
+                placeholder="ORD-001"
+                value={String(section.data.orderReference || "")}
+              />
+            </div>
+            <div>
+              <Label className="text-xs" htmlFor="shipDate">
+                Ship Date
+              </Label>
+              <Input
+                className="mt-1"
+                id="shipDate"
+                onChange={(e) => updateData("shipDate", e.target.value)}
+                placeholder="01/15/2024"
+                value={String(section.data.shipDate || "")}
+              />
+            </div>
+            <div>
+              <Label className="text-xs" htmlFor="shipFromName">
+                Ship From Name
+              </Label>
+              <Input
+                className="mt-1"
+                id="shipFromName"
+                onChange={(e) => updateData("shipFromName", e.target.value)}
+                placeholder="Warehouse Name"
+                value={String(section.data.shipFromName || "")}
+              />
+            </div>
+            <div>
+              <Label className="text-xs" htmlFor="shipFromAddress">
+                Ship From Address
+              </Label>
+              <textarea
+                className="mt-1 flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                id="shipFromAddress"
+                onChange={(e) => updateData("shipFromAddress", e.target.value)}
+                placeholder="100 Warehouse Rd&#10;City, State 12345"
+                value={String(section.data.shipFromAddress || "")}
+              />
+            </div>
+            <div>
+              <Label className="text-xs" htmlFor="shipToName">
+                Ship To Name
+              </Label>
+              <Input
+                className="mt-1"
+                id="shipToName"
+                onChange={(e) => updateData("shipToName", e.target.value)}
+                placeholder="Customer Name"
+                value={String(section.data.shipToName || "")}
+              />
+            </div>
+            <div>
+              <Label className="text-xs" htmlFor="shipToAddress">
+                Ship To Address
+              </Label>
+              <textarea
+                className="mt-1 flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                id="shipToAddress"
+                onChange={(e) => updateData("shipToAddress", e.target.value)}
+                placeholder="456 Customer Ave&#10;City, State 67890"
                 value={String(section.data.shipToAddress || "")}
               />
             </div>

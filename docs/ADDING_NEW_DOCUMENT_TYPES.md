@@ -13,6 +13,7 @@ This is a quick reference guide for adding new document types to the builder. Fo
 - ✅ purchase-order
 - ✅ sales-order
 - ✅ order-confirmation
+- ✅ packing-slip
 - ✅ contract
 
 **In Type System + Prisma (need wiring + implementation):**
@@ -116,7 +117,7 @@ These are commonly used across industries (services, retail, manufacturing, logi
 - 📌 credit-note (and debit-note): adjustments/refunds/overcharges
 - ~~📌 sales-order~~ (implemented)
 - ~~📌 order-confirmation~~ (implemented): seller confirmation sent to customer
-- 📌 packing-slip: shipments/fulfillment packing list
+- ~~📌 packing-slip~~ (implemented): shipments/fulfillment packing list
 - 📌 delivery-note: proof of delivery / goods delivered note
 - 📌 proforma-invoice: pre-invoice for customs/advance payment
 - 📌 remittance-advice: payment details sent with bank transfers
@@ -153,11 +154,11 @@ Invoice, Receipt, Quote, Estimate, Purchase Order, Sales Order.
 |---------------|-------------------------|---------------|-------------------------|
 | ~~**order-confirmation**~~ | Yes (implemented) | Retail, B2B, Enterprise, Marketplace, Manufacturing (5) | Done |
 | ~~**contract**~~ | Yes (implemented) | Project/Services, Enterprise (2) | Done |
-| **packing-slip** | No | Retail, B2B, Marketplace (shipment/delivery) | Medium |
+| ~~**packing-slip**~~ | Yes (implemented) | Retail, B2B, Marketplace (shipment/delivery) | Done |
 | **delivery-note** | No | B2B, Marketplace (delivery proof) | Medium |
 | **RFQ** (request-for-quote) | No | Manufacturing (1) | Low (or treat as quote variant) |
 
-**Summary:** To support the documented workflow templates end-to-end, the main gaps remaining are **packing-slip** and **delivery-note**. Order-confirmation and contract are now implemented. Packing-slip and delivery-note cover shipment/delivery steps. RFQ can be a separate type or a quote subtype (e.g. “Request for Quote” template).
+**Summary:** To support the documented workflow templates end-to-end, the main gap remaining is **delivery-note**. Order-confirmation, contract, and packing-slip are now implemented. Packing-slip covers shipment lists; delivery-note would cover proof-of-delivery. RFQ can be a separate type or a quote subtype (e.g. “Request for Quote” template).
 
 ---
 

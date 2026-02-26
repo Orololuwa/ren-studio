@@ -15,6 +15,10 @@ import {
   generateOrderConfirmationPreviewHTML,
 } from "../../order-confirmation/utils/html-generator-order-confirmation.server";
 import {
+  generatePackingSlipExportHTML,
+  generatePackingSlipPreviewHTML,
+} from "../../packing-slip/utils/html-generator-packing-slip.server";
+import {
   generatePurchaseOrderExportHTML,
   generatePurchaseOrderPreviewHTML,
 } from "../../purchase-order/utils/html-generator-purchase-order.server";
@@ -74,6 +78,12 @@ export function generatePreviewHTML(
         globalStyles,
         colorPalette,
       );
+    case "packing-slip":
+      return generatePackingSlipPreviewHTML(
+        sections,
+        globalStyles,
+        colorPalette,
+      );
     case "contract":
       return generateContractPreviewHTML(sections, globalStyles, colorPalette);
     default:
@@ -126,6 +136,12 @@ export function generateExportHTML(
       return generateSalesOrderExportHTML(sections, globalStyles, colorPalette);
     case "order-confirmation":
       return generateOrderConfirmationExportHTML(
+        sections,
+        globalStyles,
+        colorPalette,
+      );
+    case "packing-slip":
+      return generatePackingSlipExportHTML(
         sections,
         globalStyles,
         colorPalette,

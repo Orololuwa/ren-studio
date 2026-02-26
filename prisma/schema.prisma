@@ -330,6 +330,7 @@ enum TemplateType {
   purchaseOrder
   salesOrder
   orderConfirmation
+  packingSlip
   estimate
   statement
   letter
