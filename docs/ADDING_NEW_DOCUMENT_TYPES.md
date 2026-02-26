@@ -13,12 +13,12 @@ This is a quick reference guide for adding new document types to the builder. Fo
 - ✅ purchase-order
 - ✅ sales-order
 - ✅ order-confirmation
+- ✅ contract
 
 **In Type System + Prisma (need wiring + implementation):**
 - 📋 certificate
 - 📋 report-cards
 - 📋 proposal
-- 📋 contract
 - 📋 statement
 - 📋 letter
 - 📋 form
@@ -111,7 +111,6 @@ These are commonly used across industries (services, retail, manufacturing, logi
 **High priority (already in `TemplateType`, not yet implemented end-to-end):**
 - 📌 statement
 - 📌 proposal
-- 📌 contract
 
 **New recommended types to add next (not currently in `TemplateType`):**
 - 📌 credit-note (and debit-note): adjustments/refunds/overcharges
@@ -153,12 +152,12 @@ Invoice, Receipt, Quote, Estimate, Purchase Order, Sales Order.
 | Document type | In TypeScript / Prisma? | Used in flows | Priority for workflows |
 |---------------|-------------------------|---------------|-------------------------|
 | ~~**order-confirmation**~~ | Yes (implemented) | Retail, B2B, Enterprise, Marketplace, Manufacturing (5) | Done |
-| **contract** | Yes (not implemented) | Project/Services, Enterprise (2) | **High** |
+| ~~**contract**~~ | Yes (implemented) | Project/Services, Enterprise (2) | Done |
 | **packing-slip** | No | Retail, B2B, Marketplace (shipment/delivery) | Medium |
 | **delivery-note** | No | B2B, Marketplace (delivery proof) | Medium |
 | **RFQ** (request-for-quote) | No | Manufacturing (1) | Low (or treat as quote variant) |
 
-**Summary:** To support the documented workflow templates end-to-end, the main gaps are **order-confirmation** and **contract**. Packing-slip and delivery-note cover shipment/delivery steps. RFQ can be a separate type or a quote subtype (e.g. “Request for Quote” template).
+**Summary:** To support the documented workflow templates end-to-end, the main gaps remaining are **packing-slip** and **delivery-note**. Order-confirmation and contract are now implemented. Packing-slip and delivery-note cover shipment/delivery steps. RFQ can be a separate type or a quote subtype (e.g. “Request for Quote” template).
 
 ---
 

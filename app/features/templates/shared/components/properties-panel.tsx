@@ -2742,6 +2742,196 @@ export function PropertiesPanel() {
         );
       }
 
+      case "contract-header": {
+        return (
+          <div className="space-y-4">
+            <div>
+              <Label className="text-xs" htmlFor="contractTitle">
+                Contract Title
+              </Label>
+              <Input
+                className="mt-1"
+                id="contractTitle"
+                onChange={(e) => updateData("contractTitle", e.target.value)}
+                placeholder="Service Agreement"
+                value={String(section.data.contractTitle || "")}
+              />
+            </div>
+            <div>
+              <Label className="text-xs" htmlFor="contractRef">
+                Contract Ref
+              </Label>
+              <Input
+                className="mt-1"
+                id="contractRef"
+                onChange={(e) => updateData("contractRef", e.target.value)}
+                placeholder="AGR-2024-001"
+                value={String(section.data.contractRef || "")}
+              />
+            </div>
+            <div>
+              <Label className="text-xs" htmlFor="effectiveDate">
+                Effective Date
+              </Label>
+              <Input
+                className="mt-1"
+                id="effectiveDate"
+                onChange={(e) => updateData("effectiveDate", e.target.value)}
+                placeholder="01/15/2024"
+                value={String(section.data.effectiveDate || "")}
+              />
+            </div>
+            <div>
+              <Label className="text-xs" htmlFor="partyAName">
+                Party A Name
+              </Label>
+              <Input
+                className="mt-1"
+                id="partyAName"
+                onChange={(e) => updateData("partyAName", e.target.value)}
+                placeholder="Provider / Company"
+                value={String(section.data.partyAName || "")}
+              />
+            </div>
+            <div>
+              <Label className="text-xs" htmlFor="partyAAddress">
+                Party A Address
+              </Label>
+              <textarea
+                className="mt-1 flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                id="partyAAddress"
+                onChange={(e) => updateData("partyAAddress", e.target.value)}
+                placeholder="123 Business St&#10;City, State 12345"
+                value={String(section.data.partyAAddress || "")}
+              />
+            </div>
+            <div>
+              <Label className="text-xs" htmlFor="partyBName">
+                Party B Name
+              </Label>
+              <Input
+                className="mt-1"
+                id="partyBName"
+                onChange={(e) => updateData("partyBName", e.target.value)}
+                placeholder="Client / Counterparty"
+                value={String(section.data.partyBName || "")}
+              />
+            </div>
+            <div>
+              <Label className="text-xs" htmlFor="partyBAddress">
+                Party B Address
+              </Label>
+              <textarea
+                className="mt-1 flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                id="partyBAddress"
+                onChange={(e) => updateData("partyBAddress", e.target.value)}
+                placeholder="456 Customer Ave&#10;City, State 67890"
+                value={String(section.data.partyBAddress || "")}
+              />
+            </div>
+          </div>
+        );
+      }
+
+      case "contract-body": {
+        return (
+          <div className="space-y-4">
+            <RichTextEditor
+              label="Contract Terms and Clauses"
+              onChange={(value) => updateData("content", value)}
+              value={String(section.data.content || "")}
+            />
+          </div>
+        );
+      }
+
+      case "contract-signature": {
+        return (
+          <div className="space-y-4">
+            <div>
+              <Label className="text-xs" htmlFor="partyASignatureName">
+                Party A Signature Name
+              </Label>
+              <Input
+                className="mt-1"
+                id="partyASignatureName"
+                onChange={(e) =>
+                  updateData("partyASignatureName", e.target.value)
+                }
+                placeholder="John Doe"
+                value={String(section.data.partyASignatureName || "")}
+              />
+            </div>
+            <div>
+              <Label className="text-xs" htmlFor="partyASignatureTitle">
+                Party A Title
+              </Label>
+              <Input
+                className="mt-1"
+                id="partyASignatureTitle"
+                onChange={(e) =>
+                  updateData("partyASignatureTitle", e.target.value)
+                }
+                placeholder="Authorized Signatory"
+                value={String(section.data.partyASignatureTitle || "")}
+              />
+            </div>
+            <div>
+              <Label className="text-xs" htmlFor="partyADate">
+                Party A Date
+              </Label>
+              <Input
+                className="mt-1"
+                id="partyADate"
+                onChange={(e) => updateData("partyADate", e.target.value)}
+                placeholder="01/15/2024"
+                value={String(section.data.partyADate || "")}
+              />
+            </div>
+            <div>
+              <Label className="text-xs" htmlFor="partyBSignatureName">
+                Party B Signature Name
+              </Label>
+              <Input
+                className="mt-1"
+                id="partyBSignatureName"
+                onChange={(e) =>
+                  updateData("partyBSignatureName", e.target.value)
+                }
+                placeholder="Jane Smith"
+                value={String(section.data.partyBSignatureName || "")}
+              />
+            </div>
+            <div>
+              <Label className="text-xs" htmlFor="partyBSignatureTitle">
+                Party B Title
+              </Label>
+              <Input
+                className="mt-1"
+                id="partyBSignatureTitle"
+                onChange={(e) =>
+                  updateData("partyBSignatureTitle", e.target.value)
+                }
+                placeholder="Authorized Signatory"
+                value={String(section.data.partyBSignatureTitle || "")}
+              />
+            </div>
+            <div>
+              <Label className="text-xs" htmlFor="partyBDate">
+                Party B Date
+              </Label>
+              <Input
+                className="mt-1"
+                id="partyBDate"
+                onChange={(e) => updateData("partyBDate", e.target.value)}
+                placeholder="01/15/2024"
+                value={String(section.data.partyBDate || "")}
+              />
+            </div>
+          </div>
+        );
+      }
+
       case "receipt-header": {
         return (
           <div className="space-y-4">

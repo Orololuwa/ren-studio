@@ -1,3 +1,4 @@
+import { contractTemplates } from "../../contract/templates/contract-templates";
 import { estimateTemplates } from "../../estimate/templates/estimate-templates";
 import { invoiceTemplates } from "../../invoice/templates/invoice-templates";
 import { orderConfirmationTemplates } from "../../order-confirmation/templates/order-confirmation-templates";
@@ -10,6 +11,7 @@ import type { Template } from "../types";
 
 export const predefinedTemplates: Record<string, Template[]> = {
   certificate: [],
+  contract: contractTemplates,
   estimate: estimateTemplates,
   invoice: invoiceTemplates,
   "order-confirmation": orderConfirmationTemplates,

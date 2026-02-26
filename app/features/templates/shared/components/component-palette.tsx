@@ -49,6 +49,9 @@ const iconMap: Record<string, React.ReactNode> = {
   "order-confirmation-header": <FileText className="w-5 h-5" />,
   "order-confirmation-items": <List className="w-5 h-5" />,
   "order-confirmation-footer": <FileText className="w-5 h-5" />,
+  "contract-header": <FileText className="w-5 h-5" />,
+  "contract-body": <FileText className="w-5 h-5" />,
+  "contract-signature": <FileText className="w-5 h-5" />,
 };
 
 export function ComponentPalette({
@@ -100,6 +103,8 @@ export function ComponentPalette({
           "order-confirmation-items",
           "order-confirmation-footer",
         ];
+      case "contract":
+        return ["contract-header", "contract-body", "contract-signature"];
       case "resume":
         return [
           "header",

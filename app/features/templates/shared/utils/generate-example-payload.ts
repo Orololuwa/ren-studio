@@ -80,6 +80,9 @@ function generateExampleValue(
   if (lowerName.includes("reference") && lowerName.includes("order")) {
     return "ORD-2024-001";
   }
+  if (lowerName.includes("contract") && lowerName.includes("ref")) {
+    return "AGR-2024-001";
+  }
   if (lowerName.includes("date")) {
     return "2024-01-15";
   }
@@ -292,6 +295,8 @@ export function getComponentTypesForTemplateType(
         "order-confirmation-items",
         "order-confirmation-footer",
       ];
+    case "contract":
+      return ["contract-header", "contract-body", "contract-signature"];
     default:
       return [];
   }

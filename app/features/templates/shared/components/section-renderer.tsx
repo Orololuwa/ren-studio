@@ -3908,6 +3908,444 @@ export function SectionRenderer({
         );
       }
 
+      case "contract-header": {
+        const hasColorStyle = sectionStyles.color;
+        const textColorStyle = hasColorStyle
+          ? undefined
+          : { color: primaryTextColor };
+        const secondaryColorStyle = hasColorStyle
+          ? undefined
+          : { color: secondaryTextColor };
+        return (
+          <div
+            style={{
+              ...sectionStyles,
+              color: (sectionStyles.color as string) || primaryTextColor,
+            }}
+          >
+            <h1 className="text-2xl font-bold mb-4" style={textColorStyle}>
+              <button
+                className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left"
+                onClick={(e) =>
+                  handleFieldClick(
+                    e,
+                    ["contractTitle"],
+                    section.data.contractTitle as string,
+                    "Contract Title",
+                    false,
+                  )
+                }
+                onKeyDown={(e) =>
+                  handleFieldKeyDown(
+                    e,
+                    ["contractTitle"],
+                    section.data.contractTitle as string,
+                    "Contract Title",
+                    false,
+                  )
+                }
+                type="button"
+              >
+                {(section.data.contractTitle as string) || "Contract Title"}
+              </button>
+            </h1>
+            <div className="text-sm space-y-1 mb-4" style={secondaryColorStyle}>
+              <div>
+                <span>Contract Ref: </span>
+                <button
+                  className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left"
+                  onClick={(e) =>
+                    handleFieldClick(
+                      e,
+                      ["contractRef"],
+                      section.data.contractRef as string,
+                      "Contract Ref",
+                      false,
+                    )
+                  }
+                  onKeyDown={(e) =>
+                    handleFieldKeyDown(
+                      e,
+                      ["contractRef"],
+                      section.data.contractRef as string,
+                      "Contract Ref",
+                      false,
+                    )
+                  }
+                  type="button"
+                >
+                  {(section.data.contractRef as string) || "REF-001"}
+                </button>
+              </div>
+              <div>
+                <span>Effective Date: </span>
+                <button
+                  className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left"
+                  onClick={(e) =>
+                    handleFieldClick(
+                      e,
+                      ["effectiveDate"],
+                      section.data.effectiveDate as string,
+                      "Effective Date",
+                      false,
+                    )
+                  }
+                  onKeyDown={(e) =>
+                    handleFieldKeyDown(
+                      e,
+                      ["effectiveDate"],
+                      section.data.effectiveDate as string,
+                      "Effective Date",
+                      false,
+                    )
+                  }
+                  type="button"
+                >
+                  {(section.data.effectiveDate as string) || "Date"}
+                </button>
+              </div>
+            </div>
+            <div className="flex justify-between mt-6 gap-6">
+              <div>
+                <h3 className="font-semibold mb-2">Party A</h3>
+                <div className="text-sm">
+                  <button
+                    className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left block w-full"
+                    onClick={(e) =>
+                      handleFieldClick(
+                        e,
+                        ["partyAName"],
+                        section.data.partyAName as string,
+                        "Party A Name",
+                        false,
+                      )
+                    }
+                    onKeyDown={(e) =>
+                      handleFieldKeyDown(
+                        e,
+                        ["partyAName"],
+                        section.data.partyAName as string,
+                        "Party A Name",
+                        false,
+                      )
+                    }
+                    type="button"
+                  >
+                    {(section.data.partyAName as string) || "Party A Name"}
+                  </button>
+                  <button
+                    className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left block w-full"
+                    onClick={(e) =>
+                      handleFieldClick(
+                        e,
+                        ["partyAAddress"],
+                        section.data.partyAAddress as string,
+                        "Party A Address",
+                        false,
+                      )
+                    }
+                    onKeyDown={(e) =>
+                      handleFieldKeyDown(
+                        e,
+                        ["partyAAddress"],
+                        section.data.partyAAddress as string,
+                        "Party A Address",
+                        false,
+                      )
+                    }
+                    type="button"
+                  >
+                    {(section.data.partyAAddress as string) ||
+                      "Party A Address"}
+                  </button>
+                </div>
+              </div>
+              <div>
+                <h3 className="font-semibold mb-2">Party B</h3>
+                <div className="text-sm">
+                  <button
+                    className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left block w-full"
+                    onClick={(e) =>
+                      handleFieldClick(
+                        e,
+                        ["partyBName"],
+                        section.data.partyBName as string,
+                        "Party B Name",
+                        false,
+                      )
+                    }
+                    onKeyDown={(e) =>
+                      handleFieldKeyDown(
+                        e,
+                        ["partyBName"],
+                        section.data.partyBName as string,
+                        "Party B Name",
+                        false,
+                      )
+                    }
+                    type="button"
+                  >
+                    {(section.data.partyBName as string) || "Party B Name"}
+                  </button>
+                  <button
+                    className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left block w-full"
+                    onClick={(e) =>
+                      handleFieldClick(
+                        e,
+                        ["partyBAddress"],
+                        section.data.partyBAddress as string,
+                        "Party B Address",
+                        false,
+                      )
+                    }
+                    onKeyDown={(e) =>
+                      handleFieldKeyDown(
+                        e,
+                        ["partyBAddress"],
+                        section.data.partyBAddress as string,
+                        "Party B Address",
+                        false,
+                      )
+                    }
+                    type="button"
+                  >
+                    {(section.data.partyBAddress as string) ||
+                      "Party B Address"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      case "contract-body": {
+        return (
+          <div
+            style={{
+              ...sectionStyles,
+              color: (sectionStyles.color as string) || primaryTextColor,
+            }}
+          >
+            {/* biome-ignore lint/a11y/useSemanticElements: Rich text content div needs to be clickable but cannot be a button element */}
+            <div
+              className="rich-text-content cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left block w-full"
+              // biome-ignore lint/security/noDangerouslySetInnerHtml: Rich text content from editor needs to be rendered as HTML
+              dangerouslySetInnerHTML={{
+                __html: (section.data.content as string) || "",
+              }}
+              data-testid={`rich-text-content-${section.id}-content`}
+              onClick={(e) =>
+                handleFieldClick(
+                  e,
+                  ["content"],
+                  section.data.content as string,
+                  "Contract Terms",
+                  true,
+                )
+              }
+              onKeyDown={(e) =>
+                handleFieldKeyDown(
+                  e,
+                  ["content"],
+                  section.data.content as string,
+                  "Contract Terms",
+                  true,
+                )
+              }
+              role="button"
+              style={{ color: primaryTextColor }}
+              tabIndex={0}
+            />
+          </div>
+        );
+      }
+
+      case "contract-signature": {
+        const hasColorStyle = sectionStyles.color;
+        const textColorStyle = hasColorStyle
+          ? undefined
+          : { color: primaryTextColor };
+        const secondaryColorStyle = hasColorStyle
+          ? undefined
+          : { color: secondaryTextColor };
+        return (
+          <div
+            style={{
+              ...sectionStyles,
+              color: (sectionStyles.color as string) || primaryTextColor,
+            }}
+          >
+            <div className="flex justify-between gap-12 mt-8">
+              <div className="flex-1">
+                <div
+                  className="border-b border-gray-300 mb-1 min-h-[1.5em]"
+                  style={textColorStyle}
+                >
+                  <button
+                    className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left w-full"
+                    onClick={(e) =>
+                      handleFieldClick(
+                        e,
+                        ["partyASignatureName"],
+                        section.data.partyASignatureName as string,
+                        "Party A Signature",
+                        false,
+                      )
+                    }
+                    onKeyDown={(e) =>
+                      handleFieldKeyDown(
+                        e,
+                        ["partyASignatureName"],
+                        section.data.partyASignatureName as string,
+                        "Party A Signature",
+                        false,
+                      )
+                    }
+                    type="button"
+                  >
+                    {(section.data.partyASignatureName as string) ||
+                      "Signature"}
+                  </button>
+                </div>
+                <div className="text-sm" style={secondaryColorStyle}>
+                  <button
+                    className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left"
+                    onClick={(e) =>
+                      handleFieldClick(
+                        e,
+                        ["partyASignatureTitle"],
+                        section.data.partyASignatureTitle as string,
+                        "Party A Title",
+                        false,
+                      )
+                    }
+                    onKeyDown={(e) =>
+                      handleFieldKeyDown(
+                        e,
+                        ["partyASignatureTitle"],
+                        section.data.partyASignatureTitle as string,
+                        "Party A Title",
+                        false,
+                      )
+                    }
+                    type="button"
+                  >
+                    {(section.data.partyASignatureTitle as string) || "Title"}
+                  </button>
+                  <button
+                    className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left block"
+                    onClick={(e) =>
+                      handleFieldClick(
+                        e,
+                        ["partyADate"],
+                        section.data.partyADate as string,
+                        "Party A Date",
+                        false,
+                      )
+                    }
+                    onKeyDown={(e) =>
+                      handleFieldKeyDown(
+                        e,
+                        ["partyADate"],
+                        section.data.partyADate as string,
+                        "Party A Date",
+                        false,
+                      )
+                    }
+                    type="button"
+                  >
+                    {(section.data.partyADate as string) || "Date"}
+                  </button>
+                </div>
+              </div>
+              <div className="flex-1">
+                <div
+                  className="border-b border-gray-300 mb-1 min-h-[1.5em]"
+                  style={textColorStyle}
+                >
+                  <button
+                    className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left w-full"
+                    onClick={(e) =>
+                      handleFieldClick(
+                        e,
+                        ["partyBSignatureName"],
+                        section.data.partyBSignatureName as string,
+                        "Party B Signature",
+                        false,
+                      )
+                    }
+                    onKeyDown={(e) =>
+                      handleFieldKeyDown(
+                        e,
+                        ["partyBSignatureName"],
+                        section.data.partyBSignatureName as string,
+                        "Party B Signature",
+                        false,
+                      )
+                    }
+                    type="button"
+                  >
+                    {(section.data.partyBSignatureName as string) ||
+                      "Signature"}
+                  </button>
+                </div>
+                <div className="text-sm" style={secondaryColorStyle}>
+                  <button
+                    className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left"
+                    onClick={(e) =>
+                      handleFieldClick(
+                        e,
+                        ["partyBSignatureTitle"],
+                        section.data.partyBSignatureTitle as string,
+                        "Party B Title",
+                        false,
+                      )
+                    }
+                    onKeyDown={(e) =>
+                      handleFieldKeyDown(
+                        e,
+                        ["partyBSignatureTitle"],
+                        section.data.partyBSignatureTitle as string,
+                        "Party B Title",
+                        false,
+                      )
+                    }
+                    type="button"
+                  >
+                    {(section.data.partyBSignatureTitle as string) || "Title"}
+                  </button>
+                  <button
+                    className="cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 -mx-1 -my-0.5 text-left block"
+                    onClick={(e) =>
+                      handleFieldClick(
+                        e,
+                        ["partyBDate"],
+                        section.data.partyBDate as string,
+                        "Party B Date",
+                        false,
+                      )
+                    }
+                    onKeyDown={(e) =>
+                      handleFieldKeyDown(
+                        e,
+                        ["partyBDate"],
+                        section.data.partyBDate as string,
+                        "Party B Date",
+                        false,
+                      )
+                    }
+                    type="button"
+                  >
+                    {(section.data.partyBDate as string) || "Date"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      }
+
       case "receipt-header": {
         const logoUrl = (section.data.storeLogo as string) || "";
         const hasColorStyle = sectionStyles.color;

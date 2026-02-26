@@ -87,6 +87,7 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
 
   // Get all default templates for all types (for the modal)
   const allDefaultTemplates = {
+    contract: getTemplatesByType("contract"),
     estimate: getTemplatesByType("estimate"),
     invoice: getTemplatesByType("invoice"),
     "order-confirmation": getTemplatesByType("order-confirmation"),
@@ -246,6 +247,11 @@ const builderTypes = [
     icon: FileText,
     label: "Order Confirmation",
     value: "order-confirmation",
+  },
+  {
+    icon: FileText,
+    label: "Contract",
+    value: "contract",
   },
   {
     icon: ShoppingBag,

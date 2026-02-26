@@ -1,4 +1,8 @@
 import {
+  generateContractExportHTML,
+  generateContractPreviewHTML,
+} from "../../contract/utils/html-generator-contract.server";
+import {
   generateEstimateExportHTML,
   generateEstimatePreviewHTML,
 } from "../../estimate/utils/html-generator-estimate.server";
@@ -70,6 +74,8 @@ export function generatePreviewHTML(
         globalStyles,
         colorPalette,
       );
+    case "contract":
+      return generateContractPreviewHTML(sections, globalStyles, colorPalette);
     default:
       // Fallback for unsupported types - return basic HTML
       return `
@@ -124,6 +130,8 @@ export function generateExportHTML(
         globalStyles,
         colorPalette,
       );
+    case "contract":
+      return generateContractExportHTML(sections, globalStyles, colorPalette);
     default:
       // Fallback for unsupported types - return basic HTML
       return `
