@@ -3,6 +3,7 @@ import {
   HammerIcon,
   LayoutDashboardIcon,
   SettingsIcon,
+  ShoppingCartIcon,
 } from "lucide-react";
 import type { ComponentProps } from "react";
 import { useTranslation } from "react-i18next";
@@ -63,6 +64,13 @@ export function AppSidebar({
               icon: HammerIcon,
               title: t("app.templates"),
               url: href("/organizations/:organizationSlug/templates", {
+                organizationSlug,
+              }),
+            },
+            {
+              icon: ShoppingCartIcon,
+              title: "Checkout",
+              url: href("/organizations/:organizationSlug/checkout-pages", {
                 organizationSlug,
               }),
             },
