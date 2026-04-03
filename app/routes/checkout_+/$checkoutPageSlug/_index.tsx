@@ -203,6 +203,7 @@ export default function PublicCheckoutRoute({
           setName(v.name);
           setCurrency(v.currency);
         }}
+        orderTotals={parsed.totals}
         pageName={checkoutPage.name}
         paymentForm={parsed.paymentForm}
         paymentFormValues={{ email, name, currency }}

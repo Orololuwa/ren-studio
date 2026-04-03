@@ -1,6 +1,6 @@
 import { init } from "@paralleldrive/cuid2";
 import bcrypt from "bcryptjs";
-import { ArrowLeft, ArrowRight, Check } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Loader2 } from "lucide-react";
 import * as React from "react";
 import {
   data,
@@ -32,10 +32,23 @@ import {
   SelectValue,
 } from "~/components/ui/select";
 import { Textarea } from "~/components/ui/textarea";
+import { checkoutItemsAndTotalsFromInvoiceTemplateSections } from "~/features/checkout/checkout-from-invoice-template";
 import { createCheckoutPageToDatabase } from "~/features/checkout/checkout-pages-model.server";
-import type { CheckoutLineItem } from "~/features/checkout/checkout-sections";
+import type {
+  CheckoutLineItem,
+  CheckoutTotalsData,
+} from "~/features/checkout/checkout-sections";
+import {
+  defaultCheckoutTotals,
+  parseManualCheckoutItemsJson,
+  recalculateCheckoutTotals,
+} from "~/features/checkout/checkout-sections";
 import { CheckoutPageRenderer } from "~/features/checkout/components/checkout-page-renderer";
-import { isCurrencySupportedByPaystack } from "~/features/checkout/payment-provider-currencies";
+import { CheckoutTotalsFields } from "~/features/checkout/components/checkout-totals-fields";
+import {
+  isCurrencySupportedByPaystack,
+  isCurrencySupportedByStripe,
+} from "~/features/checkout/payment-provider-currencies";
 import { resolveInvoiceTemplateCurrency } from "~/features/checkout/resolve-invoice-template-currency";
 import { organizationMembershipContext } from "~/features/organizations/organizations-middleware.server";
 import { getCommonCurrencyLabel } from "~/features/templates/shared/common-currencies";
@@ -44,12 +57,37 @@ import {
   retrieveTemplateFromDatabaseById,
   retrieveTemplatesByOrganizationIdAndType,
 } from "~/features/templates/shared/templates-model.server";
-import type { TemplateSection } from "~/features/templates/shared/types";
+import type {
+  Template,
+  TemplateSection,
+} from "~/features/templates/shared/types";
 import type { Prisma } from "~/generated/client";
+import { cn } from "~/lib/utils";
 import { getErrorMessage } from "~/utils/get-error-message";
-import { slugify } from "~/utils/slugify.server";
+import { slugify } from "~/utils/slugify";
 
 const cuid = init({ length: 6 });
+
+function initialCurrencyForNewCheckoutPage(templates: Template[]): string {
+  const first = templates[0];
+  return first ? resolveInvoiceTemplateCurrency(first.id, templates) : "USD";
+}
+
+/** Short debounce keeps checks snappy while avoiding a request per keystroke. */
+const SLUG_AVAILABILITY_DEBOUNCE_MS = 120;
+
+type SlugAvailabilityUiState =
+  | { kind: "unused" }
+  | { kind: "available"; normalized: string }
+  | { kind: "taken"; normalized: string }
+  | { kind: "error" };
+
+/** Loader JSON from `new+/slug-availability` (useFetcher decodes RR single-fetch). */
+type SlugAvailabilityLoaderData = {
+  checked: boolean;
+  available: boolean;
+  normalized: string | null;
+};
 
 const createSchema = z.object({
   intent: z.literal("create"),
@@ -62,8 +100,10 @@ const createSchema = z.object({
   layout: z
     .enum(["centered-card", "split", "minimal"])
     .optional()
-    .default("centered-card"),
-  itemsSource: z.enum(["manual", "invoice-template"]).default("manual"),
+    .default("split"),
+  itemsSource: z
+    .enum(["manual", "invoice-template"])
+    .default("invoice-template"),
   invoiceTemplateId: z.string().optional().default(""),
   itemsJson: z.string().optional().default("[]"),
   receiptTemplateId: z.string().optional().default(""),
@@ -124,12 +164,6 @@ export async function loader({ params, context }: Route.LoaderArgs) {
   );
 }
 
-function getInvoiceItemsFromTemplateSections(sections: TemplateSection[]) {
-  const invoiceItemsSection = sections.find((s) => s.type === "invoice-items");
-  const items = invoiceItemsSection?.data?.items;
-  return Array.isArray(items) ? items : [];
-}
-
 export async function action({ request, params, context }: Route.ActionArgs) {
   const { organization, headers } = context.get(organizationMembershipContext);
   const formData = await request.formData();
@@ -186,8 +220,8 @@ export async function action({ request, params, context }: Route.ActionArgs) {
     slug,
   } = parsed.data;
 
-  const baseSlug = slugify(slug || name);
-  const finalSlug = baseSlug ? baseSlug : `checkout-${cuid()}`;
+  const customSlug = slugify(slug.trim());
+  const finalSlug = customSlug.length > 0 ? customSlug : cuid();
 
   const passwordHash =
     isPasswordProtected && password ? await bcrypt.hash(password, 10) : null;
@@ -197,8 +231,18 @@ export async function action({ request, params, context }: Route.ActionArgs) {
     expiresAt && expiresAt.length > 0 ? new Date(expiresAt) : null;
 
   let checkoutItems: unknown[] = [];
+  let checkoutTotals: CheckoutTotalsData | null = null;
+
   if (itemsSource === "manual") {
-    checkoutItems = JSON.parse(itemsJson) as unknown[];
+    const parsedManual = parseManualCheckoutItemsJson(itemsJson);
+    if (!parsedManual) {
+      return data(
+        { error: "Invalid manual products data" },
+        { status: 400, headers },
+      );
+    }
+    checkoutItems = parsedManual.items;
+    checkoutTotals = parsedManual.totals;
   }
 
   if (itemsSource === "invoice-template") {
@@ -218,9 +262,11 @@ export async function action({ request, params, context }: Route.ActionArgs) {
         { status: 400, headers },
       );
     }
-    checkoutItems = getInvoiceItemsFromTemplateSections(
+    const fromInvoice = checkoutItemsAndTotalsFromInvoiceTemplateSections(
       sourceTemplate.sections as TemplateSection[],
     );
+    checkoutItems = fromInvoice.items;
+    checkoutTotals = fromInvoice.totals;
   }
 
   const sections = [
@@ -251,6 +297,7 @@ export async function action({ request, params, context }: Route.ActionArgs) {
       styles: {},
       data: {
         items: checkoutItems,
+        totals: checkoutTotals ?? defaultCheckoutTotals(),
         source: {
           type: itemsSource,
           invoiceTemplateId:
@@ -342,6 +389,9 @@ export default function NewCheckoutPageRoute({
   const navigate = useNavigate();
   const actionData = useActionData<typeof action>();
   const fetcher = useFetcher<typeof action>();
+  const slugCheckFetcher = useFetcher<SlugAvailabilityLoaderData>({
+    key: "checkout-new-slug",
+  });
   const [stepIndex, setStepIndex] = React.useState(0);
   const firstStep = steps[0];
   if (!firstStep) {
@@ -353,15 +403,17 @@ export default function NewCheckoutPageRoute({
   const [description, setDescription] = React.useState("");
   const [layout, setLayout] = React.useState<
     "centered-card" | "split" | "minimal"
-  >("centered-card");
+  >("split");
   const [headerLogoUrl, setHeaderLogoUrl] = React.useState("");
   const [headerBackgroundColor, setHeaderBackgroundColor] =
     React.useState("#ffffff");
   const [headerTextColor, setHeaderTextColor] = React.useState("#000000");
   const [itemsSource, setItemsSource] = React.useState<
     "manual" | "invoice-template"
-  >("manual");
-  const [invoiceTemplateId, setInvoiceTemplateId] = React.useState<string>("");
+  >("invoice-template");
+  const [invoiceTemplateId, setInvoiceTemplateId] = React.useState(
+    () => loaderData.invoiceTemplates[0]?.id ?? "",
+  );
   const [invoiceProducts, setInvoiceProducts] = React.useState<unknown[]>([]);
   const [manualItems, setManualItems] = React.useState<
     Array<{
@@ -380,6 +432,9 @@ export default function NewCheckoutPageRoute({
       total: "0.00",
     },
   ]);
+  const [manualTotals, setManualTotals] = React.useState<CheckoutTotalsData>(
+    () => defaultCheckoutTotals(),
+  );
   const [receiptTemplateId, setReceiptTemplateId] = React.useState<string>("");
   const [receiptPreviewOpen, setReceiptPreviewOpen] = React.useState(false);
   const [receiptPreviewUrl, setReceiptPreviewUrl] = React.useState<
@@ -394,20 +449,150 @@ export default function NewCheckoutPageRoute({
   const [invoicePreviewGenerating, setInvoicePreviewGenerating] =
     React.useState(false);
 
-  const [providerStripe, setProviderStripe] = React.useState(true);
-  const [providerPaystack, setProviderPaystack] = React.useState(true);
-  const [defaultCurrency, setDefaultCurrency] = React.useState("USD");
+  const [defaultCurrency, setDefaultCurrency] = React.useState(() =>
+    initialCurrencyForNewCheckoutPage(loaderData.invoiceTemplates),
+  );
+  const [providerStripe, setProviderStripe] = React.useState(() =>
+    isCurrencySupportedByStripe(
+      initialCurrencyForNewCheckoutPage(loaderData.invoiceTemplates),
+    ),
+  );
+  const [providerPaystack, setProviderPaystack] = React.useState(() =>
+    isCurrencySupportedByPaystack(
+      initialCurrencyForNewCheckoutPage(loaderData.invoiceTemplates),
+    ),
+  );
 
   const [isPasswordProtected, setIsPasswordProtected] = React.useState(false);
   const [password, setPassword] = React.useState("");
   const [passwordHint, setPasswordHint] = React.useState("");
   const [expiresAt, setExpiresAt] = React.useState("");
+  const [slugAvailability, setSlugAvailability] =
+    React.useState<SlugAvailabilityUiState>({ kind: "unused" });
+  const [slugCheckPending, setSlugCheckPending] = React.useState(false);
+  const prevSlugFetcherState = React.useRef(slugCheckFetcher.state);
 
   const step = steps.at(stepIndex) ?? firstStep;
   const canGoBack = stepIndex > 0;
+  const normalizedCustomSlug = slugify(slug.trim());
+  const slugTakenBlocksProgress =
+    normalizedCustomSlug.length > 0 &&
+    slugAvailability.kind === "taken" &&
+    !slugCheckPending;
   const canGoNext = stepIndex < steps.length - 1;
+  const designNextDisabled = step.id === "design" && slugTakenBlocksProgress;
 
-  function getPreviewProducts(): CheckoutLineItem[] {
+  const paymentProviders = [
+    providerStripe && isCurrencySupportedByStripe(defaultCurrency)
+      ? "stripe"
+      : null,
+    providerPaystack && isCurrencySupportedByPaystack(defaultCurrency)
+      ? "paystack"
+      : null,
+  ].filter(Boolean) as string[];
+
+  React.useEffect(() => {
+    setProviderStripe(isCurrencySupportedByStripe(defaultCurrency));
+    setProviderPaystack(isCurrencySupportedByPaystack(defaultCurrency));
+  }, [defaultCurrency]);
+
+  React.useEffect(() => {
+    const normalized = slugify(slug.trim());
+    if (!normalized) {
+      setSlugCheckPending(false);
+      setSlugAvailability({ kind: "unused" });
+      return;
+    }
+
+    setSlugAvailability({ kind: "unused" });
+    setSlugCheckPending(true);
+    const timer = window.setTimeout(() => {
+      const qs = new URLSearchParams({ slug: slug.trim() });
+      slugCheckFetcher.load(
+        `/organizations/${loaderData.organizationSlug}/checkout-pages/new/slug-availability?${qs.toString()}`,
+      );
+    }, SLUG_AVAILABILITY_DEBOUNCE_MS);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [slug, loaderData.organizationSlug, slugCheckFetcher.load]);
+
+  React.useEffect(() => {
+    const state = slugCheckFetcher.state;
+    const prev = prevSlugFetcherState.current;
+    prevSlugFetcherState.current = state;
+
+    if (state !== "idle") {
+      return;
+    }
+
+    const finishedLoad = prev === "loading";
+
+    if (finishedLoad) {
+      setSlugCheckPending(false);
+    }
+
+    const payload = slugCheckFetcher.data;
+    if (
+      finishedLoad &&
+      (payload == null ||
+        typeof payload !== "object" ||
+        !("checked" in payload))
+    ) {
+      setSlugAvailability({ kind: "error" });
+      return;
+    }
+
+    if (
+      payload == null ||
+      typeof payload !== "object" ||
+      !("checked" in payload)
+    ) {
+      return;
+    }
+
+    const now = slugify(slug.trim());
+    if (!now) {
+      setSlugAvailability({ kind: "unused" });
+      return;
+    }
+
+    if (!payload.checked || !payload.normalized || payload.normalized !== now) {
+      return;
+    }
+
+    setSlugAvailability(
+      payload.available
+        ? { kind: "available", normalized: payload.normalized }
+        : { kind: "taken", normalized: payload.normalized },
+    );
+  }, [slug, slugCheckFetcher.state, slugCheckFetcher.data]);
+
+  React.useEffect(() => {
+    const lines: CheckoutLineItem[] = manualItems.map((i) => ({
+      description: i.description,
+      quantity: i.quantity,
+      unitPrice: i.unitPrice,
+      total: i.total,
+    }));
+    setManualTotals((prev) => recalculateCheckoutTotals(lines, prev));
+  }, [manualItems]);
+
+  const invoiceTemplatePayload = React.useMemo(() => {
+    if (itemsSource !== "invoice-template" || !invoiceTemplateId) {
+      return null;
+    }
+    const tpl =
+      loaderData.invoiceTemplates.find((t) => t.id === invoiceTemplateId) ??
+      getTemplateById(invoiceTemplateId);
+    if (!tpl) return null;
+    return checkoutItemsAndTotalsFromInvoiceTemplateSections(
+      tpl.sections as TemplateSection[],
+    );
+  }, [itemsSource, invoiceTemplateId, loaderData.invoiceTemplates]);
+
+  const previewLineItems = React.useMemo((): CheckoutLineItem[] => {
     if (itemsSource === "invoice-template" && invoiceProducts.length > 0) {
       return invoiceProducts.map((raw) => {
         const p =
@@ -438,20 +623,14 @@ export default function NewCheckoutPageRoute({
         total: "99.00",
       },
     ];
-  }
+  }, [itemsSource, invoiceProducts, manualItems]);
 
-  const paymentProviders = [
-    providerStripe ? "stripe" : null,
-    providerPaystack && isCurrencySupportedByPaystack(defaultCurrency)
-      ? "paystack"
-      : null,
-  ].filter(Boolean) as string[];
-
-  React.useEffect(() => {
-    if (!isCurrencySupportedByPaystack(defaultCurrency)) {
-      setProviderPaystack(false);
+  const previewOrderTotals = React.useMemo((): CheckoutTotalsData | null => {
+    if (itemsSource === "invoice-template") {
+      return invoiceTemplatePayload?.totals ?? null;
     }
-  }, [defaultCurrency]);
+    return recalculateCheckoutTotals(previewLineItems, manualTotals);
+  }, [itemsSource, invoiceTemplatePayload, previewLineItems, manualTotals]);
 
   const extractInvoiceProducts = React.useCallback(
     (templateId: string) => {
@@ -723,6 +902,10 @@ export default function NewCheckoutPageRoute({
                   placeholder="Product Launch Checkout"
                   value={name}
                 />
+                <p className="text-muted-foreground text-xs">
+                  This is the title shown on the checkout page; it is separate
+                  from the public URL slug.
+                </p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="layout">Layout</Label>
@@ -779,16 +962,71 @@ export default function NewCheckoutPageRoute({
               </div>
               <div className="space-y-2">
                 <Label htmlFor="slug">Slug (optional)</Label>
-                <Input
-                  id="slug"
-                  onChange={(e) => setSlug(e.target.value)}
-                  placeholder="product-launch-2026"
-                  value={slug}
-                />
+                <div className="relative">
+                  <Input
+                    aria-busy={slugCheckPending}
+                    aria-invalid={
+                      slugAvailability.kind === "taken" && !slugCheckPending
+                    }
+                    className={cn(
+                      slugCheckPending &&
+                        normalizedCustomSlug.length > 0 &&
+                        "pr-10",
+                      slugAvailability.kind === "taken" &&
+                        !slugCheckPending &&
+                        "border-destructive focus-visible:ring-destructive/30",
+                    )}
+                    id="slug"
+                    onChange={(e) => setSlug(e.target.value)}
+                    placeholder="product-launch-2026"
+                    value={slug}
+                  />
+                  {slugCheckPending && normalizedCustomSlug.length > 0 ? (
+                    <div
+                      aria-hidden
+                      className="pointer-events-none absolute inset-y-0 right-2 flex items-center"
+                    >
+                      <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                    </div>
+                  ) : null}
+                </div>
                 <p className="text-muted-foreground text-xs">
-                  Public URL will be `/checkout/&lt;slug&gt;`. If left blank,
-                  we’ll generate one from the name.
+                  Public URL will be `/checkout/&lt;slug&gt;`. If you leave this
+                  blank, we assign a short random slug when you create the page.
                 </p>
+                {normalizedCustomSlug.length > 0 ? (
+                  <div className="text-xs space-y-1">
+                    <p className="text-muted-foreground">
+                      Resolved URL slug:{" "}
+                      <span className="font-mono text-foreground">
+                        {normalizedCustomSlug}
+                      </span>
+                    </p>
+                    {!slugCheckPending &&
+                    slugAvailability.kind === "available" ? (
+                      <p className="text-emerald-700 dark:text-emerald-400">
+                        This URL is available.
+                      </p>
+                    ) : null}
+                    {!slugCheckPending && slugAvailability.kind === "taken" ? (
+                      <p className="text-destructive">
+                        This URL is already in use. Choose a different slug
+                        before continuing.
+                      </p>
+                    ) : null}
+                    {!slugCheckPending && slugAvailability.kind === "error" ? (
+                      <p className="text-destructive">
+                        Could not verify slug. Try again or continue and fix if
+                        create fails.
+                      </p>
+                    ) : null}
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground text-xs">
+                    A unique slug will be assigned automatically when you create
+                    the page.
+                  </p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="description">Description (optional)</Label>
@@ -814,6 +1052,7 @@ export default function NewCheckoutPageRoute({
                     textColor: headerTextColor || null,
                   }}
                   layout={layout}
+                  orderTotals={previewOrderTotals}
                   pageName={name || "Checkout"}
                   paymentForm={{
                     allowedCurrencies: [defaultCurrency],
@@ -822,7 +1061,7 @@ export default function NewCheckoutPageRoute({
                   }}
                   paymentProviders={paymentProviders}
                   previewMode
-                  products={getPreviewProducts()}
+                  products={previewLineItems}
                 />
               </div>
             </div>
@@ -959,6 +1198,14 @@ export default function NewCheckoutPageRoute({
                     Note: This checkout will be attached to the selected invoice
                     template.
                   </div>
+                  {invoiceTemplatePayload ? (
+                    <CheckoutTotalsFields
+                      disabled
+                      lineItems={invoiceTemplatePayload.items}
+                      onChange={() => {}}
+                      totals={invoiceTemplatePayload.totals}
+                    />
+                  ) : null}
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -1050,6 +1297,16 @@ export default function NewCheckoutPageRoute({
                       Remove last
                     </Button>
                   </div>
+                  <CheckoutTotalsFields
+                    lineItems={manualItems.map((i) => ({
+                      description: i.description,
+                      quantity: i.quantity,
+                      unitPrice: i.unitPrice,
+                      total: i.total,
+                    }))}
+                    onChange={setManualTotals}
+                    totals={manualTotals}
+                  />
                 </div>
               )}
             </div>
@@ -1123,14 +1380,29 @@ export default function NewCheckoutPageRoute({
                 <div className="flex flex-col gap-1">
                   <div className="flex items-center gap-2">
                     <Checkbox
-                      checked={providerStripe}
+                      checked={
+                        isCurrencySupportedByStripe(defaultCurrency) &&
+                        providerStripe
+                      }
+                      disabled={!isCurrencySupportedByStripe(defaultCurrency)}
                       id="providerStripe"
                       onCheckedChange={(v) => setProviderStripe(Boolean(v))}
                     />
-                    <Label htmlFor="providerStripe">Stripe</Label>
+                    <Label
+                      className={
+                        !isCurrencySupportedByStripe(defaultCurrency)
+                          ? "text-muted-foreground"
+                          : undefined
+                      }
+                      htmlFor="providerStripe"
+                    >
+                      Stripe
+                    </Label>
                   </div>
                   <p className="text-muted-foreground text-xs pl-6">
-                    Available for your selected currency.
+                    {isCurrencySupportedByStripe(defaultCurrency)
+                      ? "Available for your selected currency."
+                      : "Use a 3-letter currency code (e.g. USD) for Stripe."}
                   </p>
                 </div>
                 <div className="flex flex-col gap-1">
@@ -1292,8 +1564,14 @@ export default function NewCheckoutPageRoute({
 
         {canGoNext ? (
           <Button
+            disabled={designNextDisabled}
             onClick={() =>
               setStepIndex((s) => Math.min(steps.length - 1, s + 1))
+            }
+            title={
+              designNextDisabled
+                ? "Choose an available slug before continuing."
+                : undefined
             }
           >
             Next
@@ -1326,7 +1604,10 @@ export default function NewCheckoutPageRoute({
             <input
               name="itemsJson"
               type="hidden"
-              value={JSON.stringify(manualItems)}
+              value={JSON.stringify({
+                items: manualItems,
+                totals: manualTotals,
+              })}
             />
             <input
               name="receiptTemplateId"
@@ -1361,6 +1642,7 @@ export default function NewCheckoutPageRoute({
                 fetcher.state !== "idle" ||
                 name.trim().length === 0 ||
                 paymentProviders.length === 0 ||
+                slugTakenBlocksProgress ||
                 (itemsSource === "invoice-template" &&
                   invoiceTemplateId.trim().length === 0)
               }

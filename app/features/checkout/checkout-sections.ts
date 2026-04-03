@@ -3,6 +3,9 @@
  * Extracts typed data from unknown JSON with graceful fallbacks.
  */
 
+import type { InvoiceItem } from "~/features/templates/shared/types";
+import { recalculateFooterFromItems } from "~/features/templates/shared/utils/calculations";
+
 export type CheckoutLayout = "centered-card" | "split" | "minimal";
 
 export interface CheckoutHeaderData {
@@ -35,6 +38,151 @@ export function computeCheckoutOrderTotalMajorFromLineItems(
   return total.toFixed(2);
 }
 
+/** Mirrors invoice-footer totals: tax, discount, subtotal, grand total, terms, notes. */
+export interface CheckoutTotalsData {
+  taxMode: "percentage" | "amount";
+  taxRate: string;
+  taxAmount: string;
+  showTaxRate: boolean;
+  discountMode: "percentage" | "amount";
+  discountRate: string;
+  discount: string;
+  showDiscountRate: boolean;
+  subtotal: string;
+  total: string;
+  paymentTerms: string;
+  notes: string;
+}
+
+export function defaultCheckoutTotals(): CheckoutTotalsData {
+  return {
+    taxMode: "percentage",
+    taxRate: "0",
+    taxAmount: "0.00",
+    showTaxRate: true,
+    discountMode: "percentage",
+    discountRate: "0",
+    discount: "0.00",
+    showDiscountRate: true,
+    subtotal: "0.00",
+    total: "0.00",
+    paymentTerms: "",
+    notes: "",
+  };
+}
+
+function parseTaxDiscountMode(
+  raw: unknown,
+  fallback: "percentage" | "amount",
+): "percentage" | "amount" {
+  return raw === "amount" ? "amount" : fallback;
+}
+
+/**
+ * Normalizes persisted / invoice-footer-shaped data into {@link CheckoutTotalsData}.
+ */
+export function normalizeCheckoutTotalsInput(
+  raw: Record<string, unknown>,
+): CheckoutTotalsData {
+  const d = defaultCheckoutTotals();
+  return {
+    ...d,
+    taxMode: parseTaxDiscountMode(raw.taxMode, d.taxMode),
+    taxRate: asString(raw.taxRate) || d.taxRate,
+    taxAmount: asString(raw.taxAmount) || d.taxAmount,
+    showTaxRate: raw.showTaxRate !== false,
+    discountMode: parseTaxDiscountMode(raw.discountMode, d.discountMode),
+    discountRate: asString(raw.discountRate) || d.discountRate,
+    discount: asString(raw.discount) || d.discount,
+    showDiscountRate: raw.showDiscountRate !== false,
+    subtotal: asString(raw.subtotal) || d.subtotal,
+    total: asString(raw.total) || d.total,
+    paymentTerms: asString(raw.paymentTerms),
+    notes: asString(raw.notes),
+  };
+}
+
+/**
+ * Recomputes subtotal, tax, discount, and total from line items using the same rules as invoice templates.
+ */
+export function recalculateCheckoutTotals(
+  items: CheckoutLineItem[],
+  base: CheckoutTotalsData,
+): CheckoutTotalsData {
+  const out = recalculateFooterFromItems(items as InvoiceItem[], {
+    ...base,
+  });
+  return normalizeCheckoutTotalsInput(out);
+}
+
+/**
+ * Amount to charge: line-sum only when no totals block exists (legacy checkouts); otherwise subtotal + tax − discount.
+ */
+export function computeCheckoutPayableTotalMajor(
+  products: CheckoutLineItem[],
+  totals: CheckoutTotalsData | null,
+): string {
+  if (!totals) {
+    return computeCheckoutOrderTotalMajorFromLineItems(products);
+  }
+  return recalculateCheckoutTotals(products, totals).total;
+}
+
+function calcLineTotalFromQtyPrice(
+  quantity: string,
+  unitPrice: string,
+): string {
+  const q = Number(quantity);
+  const p = Number(unitPrice);
+  const total = (Number.isFinite(q) ? q : 0) * (Number.isFinite(p) ? p : 0);
+  return total.toFixed(2);
+}
+
+export function withComputedLineTotals(
+  items: CheckoutLineItem[],
+): CheckoutLineItem[] {
+  return items.map((item) => ({
+    ...item,
+    total: calcLineTotalFromQtyPrice(item.quantity, item.unitPrice),
+  }));
+}
+
+/**
+ * Parses manual wizard payload: legacy `[line, …]` or `{ items, totals }`.
+ */
+export function parseManualCheckoutItemsJson(itemsJson: string): {
+  items: CheckoutLineItem[];
+  totals: CheckoutTotalsData;
+} | null {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(itemsJson);
+  } catch {
+    return null;
+  }
+
+  let rawItems: unknown[] = [];
+  let totalsRaw: Record<string, unknown> | undefined;
+
+  if (Array.isArray(parsed)) {
+    rawItems = parsed;
+  } else if (isRecord(parsed) && Array.isArray(parsed.items)) {
+    rawItems = parsed.items;
+    if (isRecord(parsed.totals)) {
+      totalsRaw = parsed.totals;
+    }
+  } else {
+    return null;
+  }
+
+  const items = withComputedLineTotals(rawItems.map(parseLineItem));
+  const base = totalsRaw
+    ? normalizeCheckoutTotalsInput(totalsRaw)
+    : defaultCheckoutTotals();
+  const totals = recalculateCheckoutTotals(items, base);
+  return { items, totals };
+}
+
 export interface CheckoutPaymentFormData {
   providers: string[];
   defaultCurrency: string;
@@ -44,6 +192,8 @@ export interface CheckoutPaymentFormData {
 export interface ParsedCheckoutSections {
   header: CheckoutHeaderData & { backgroundColor: string | null };
   items: CheckoutLineItem[];
+  /** When null, payable total is the sum of line items only (legacy pages). */
+  totals: CheckoutTotalsData | null;
   paymentForm: CheckoutPaymentFormData;
 }
 
@@ -66,7 +216,7 @@ function asArray(x: unknown): unknown[] {
   return Array.isArray(x) ? x : [];
 }
 
-function parseLineItem(raw: unknown): CheckoutLineItem {
+export function parseLineItem(raw: unknown): CheckoutLineItem {
   if (!isRecord(raw)) {
     return { description: "", quantity: "1", unitPrice: "0", total: "0" };
   }
@@ -123,6 +273,24 @@ export function extractCheckoutItems(sections: unknown): CheckoutLineItem[] {
   const data = isRecord(itemsSection.data) ? itemsSection.data : {};
   const items = asArray(data.items);
   return items.map(parseLineItem);
+}
+
+/**
+ * Extract checkout totals (tax / discount / footer) from checkout-items section.
+ */
+export function extractCheckoutTotals(
+  sections: unknown,
+): CheckoutTotalsData | null {
+  const arr = Array.isArray(sections) ? sections : [];
+  const itemsSection = arr.find(
+    (s) =>
+      isRecord(s) && (s.type === "checkout-items" || s.id === "checkout-items"),
+  );
+  if (!isRecord(itemsSection)) return null;
+  const data = isRecord(itemsSection.data) ? itemsSection.data : {};
+  const totals = data.totals;
+  if (!isRecord(totals)) return null;
+  return normalizeCheckoutTotalsInput(totals);
 }
 
 /**
@@ -208,6 +376,7 @@ export function parseCheckoutSections(
       storeLogo: fallback.storeLogo,
     }),
     items: extractCheckoutItems(sections),
+    totals: extractCheckoutTotals(sections),
     paymentForm: extractCheckoutPaymentForm(sections, {
       defaultCurrency: fallback.defaultCurrency,
       allowedCurrencies: fallback.allowedCurrencies,

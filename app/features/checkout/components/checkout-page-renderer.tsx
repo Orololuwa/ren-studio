@@ -4,8 +4,12 @@ import type {
   CheckoutLayout,
   CheckoutLineItem,
   CheckoutPaymentFormData,
+  CheckoutTotalsData,
 } from "../checkout-sections";
-import { computeCheckoutOrderTotalMajorFromLineItems } from "../checkout-sections";
+import {
+  computeCheckoutOrderTotalMajorFromLineItems,
+  recalculateCheckoutTotals,
+} from "../checkout-sections";
 import { CheckoutPaymentSection } from "./checkout-payment-section";
 
 export interface CheckoutPageRendererHeader {
@@ -19,6 +23,11 @@ export interface CheckoutPageRendererProps {
   layout: CheckoutLayout;
   header: CheckoutPageRendererHeader;
   products: CheckoutLineItem[];
+  /**
+   * When set, subtotal / tax / discount / total follow invoice-style rules.
+   * When null (legacy), the order total is the sum of line items only.
+   */
+  orderTotals?: CheckoutTotalsData | null;
   description?: string;
   paymentForm: CheckoutPaymentFormData;
   /** Public checkout slug for payment API routes. */
@@ -67,7 +76,20 @@ function CheckoutHeader({
   );
 }
 
-function ProductsSummary({ products }: { products: CheckoutLineItem[] }) {
+function stripHtmlTags(html: string): string {
+  return html
+    .replace(/<[^>]*>/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function ProductsSummary({
+  products,
+  orderTotals,
+}: {
+  products: CheckoutLineItem[];
+  orderTotals: CheckoutTotalsData | null;
+}) {
   if (products.length === 0) {
     return (
       <div className="rounded-md border border-dashed bg-muted/20 p-4 text-center text-sm text-muted-foreground">
@@ -75,9 +97,16 @@ function ProductsSummary({ products }: { products: CheckoutLineItem[] }) {
       </div>
     );
   }
-  const overallTotal = Number(
-    computeCheckoutOrderTotalMajorFromLineItems(products),
-  );
+
+  const totalsRow =
+    orderTotals !== null && orderTotals !== undefined
+      ? recalculateCheckoutTotals(products, orderTotals)
+      : null;
+
+  const lineSum = computeCheckoutOrderTotalMajorFromLineItems(products);
+  const displayTotal =
+    totalsRow !== null ? totalsRow.total : Number(lineSum).toFixed(2);
+
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
@@ -98,9 +127,55 @@ function ProductsSummary({ products }: { products: CheckoutLineItem[] }) {
           ))}
         </tbody>
       </table>
-      <div className="mt-2 flex justify-end border-t pt-2 text-sm font-medium">
-        Total: {overallTotal.toFixed(2)}
+      <div className="mt-3 space-y-1 text-sm border-t pt-2 max-w-xs ml-auto text-right">
+        {totalsRow ? (
+          <>
+            <div className="flex justify-between gap-4 text-muted-foreground">
+              <span>Subtotal</span>
+              <span>{totalsRow.subtotal}</span>
+            </div>
+            {Number(totalsRow.taxAmount) > 0 ? (
+              <div className="flex justify-between gap-4 text-muted-foreground">
+                <span>
+                  {totalsRow.showTaxRate && Number(totalsRow.taxRate) > 0
+                    ? `Tax (${totalsRow.taxRate}%)`
+                    : "Tax"}
+                </span>
+                <span>{totalsRow.taxAmount}</span>
+              </div>
+            ) : null}
+            {Number(totalsRow.discount) > 0 ? (
+              <div className="flex justify-between gap-4 text-muted-foreground">
+                <span>
+                  {totalsRow.showDiscountRate &&
+                  Number(totalsRow.discountRate) > 0
+                    ? `Discount (${totalsRow.discountRate}%)`
+                    : "Discount"}
+                </span>
+                <span>−{totalsRow.discount}</span>
+              </div>
+            ) : null}
+          </>
+        ) : null}
+        <div className="flex justify-between gap-4 font-medium pt-1 border-t">
+          <span>Total</span>
+          <span>{displayTotal}</span>
+        </div>
       </div>
+      {totalsRow && totalsRow.paymentTerms.trim().length > 0 ? (
+        <div className="mt-3 text-xs text-muted-foreground space-y-1">
+          <div className="font-medium text-foreground">Payment terms</div>
+          <div className="whitespace-pre-wrap">
+            {stripHtmlTags(totalsRow.paymentTerms)}
+          </div>
+        </div>
+      ) : null}
+      {totalsRow && totalsRow.notes.trim().length > 0 ? (
+        <div className="mt-3 text-xs text-muted-foreground space-y-1">
+          <div className="font-medium text-foreground">Notes</div>
+          <div className="whitespace-pre-wrap">{totalsRow.notes}</div>
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -117,6 +192,7 @@ export function CheckoutPageRenderer({
   layout,
   header,
   products,
+  orderTotals = null,
   description,
   paymentForm,
   checkoutPageSlug,
@@ -143,7 +219,7 @@ export function CheckoutPageRenderer({
         ) : null}
         <div>
           <h2 className="text-sm font-medium mb-2">Products</h2>
-          <ProductsSummary products={products} />
+          <ProductsSummary orderTotals={orderTotals} products={products} />
         </div>
         <div>
           <h2 className="text-sm font-medium mb-2">Payment</h2>
@@ -153,6 +229,7 @@ export function CheckoutPageRenderer({
             <CheckoutPaymentSection
               checkoutPageSlug={checkoutPageSlug}
               onChange={setValues}
+              orderTotals={orderTotals}
               paymentForm={paymentForm}
               paymentProviders={paymentProviders}
               products={products}
@@ -192,7 +269,10 @@ export function CheckoutPageRenderer({
               <div className="mt-4">
                 <h2 className="text-sm font-medium mb-2">Products</h2>
                 <div className="rounded-xl bg-background p-4 shadow-sm">
-                  <ProductsSummary products={products} />
+                  <ProductsSummary
+                    orderTotals={orderTotals}
+                    products={products}
+                  />
                 </div>
               </div>
             </div>
@@ -205,6 +285,7 @@ export function CheckoutPageRenderer({
                   checkoutPageSlug={checkoutPageSlug}
                   fieldsSingleColumn
                   onChange={setValues}
+                  orderTotals={orderTotals}
                   paymentForm={paymentForm}
                   paymentProviders={paymentProviders}
                   products={products}

@@ -34,6 +34,19 @@ export async function retrieveCheckoutPageFromDatabaseBySlug({
   return await prisma.checkoutPage.findUnique({ where: { slug } });
 }
 
+/** Lightweight existence check for slug availability (minimal DB payload). */
+export async function isCheckoutSlugTakenInDatabase({
+  slug,
+}: {
+  slug: string;
+}): Promise<boolean> {
+  const row = await prisma.checkoutPage.findUnique({
+    where: { slug },
+    select: { id: true },
+  });
+  return row !== null;
+}
+
 export async function createCheckoutPageToDatabase(
   input: CreateCheckoutPageInput,
 ) {

@@ -4,8 +4,9 @@ import { z } from "zod";
 import type {
   CheckoutLineItem,
   CheckoutPaymentFormData,
+  CheckoutTotalsData,
 } from "../checkout-sections";
-import { computeCheckoutOrderTotalMajorFromLineItems } from "../checkout-sections";
+import { computeCheckoutPayableTotalMajor } from "../checkout-sections";
 import { formatMinorUnits, toMinorUnits } from "../money";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
@@ -38,6 +39,8 @@ export type CheckoutPaymentSectionComponentProps = {
   /** Used by the page config; the payment UI only displays `values.currency`. */
   paymentForm: CheckoutPaymentFormData;
   products: CheckoutLineItem[];
+  /** When null, amount is the sum of line items (legacy). */
+  orderTotals: CheckoutTotalsData | null;
   values: {
     email: string;
     name: string;
@@ -257,6 +260,7 @@ export function CheckoutPaymentSection({
   paymentProviders,
   paymentForm: _paymentForm,
   products,
+  orderTotals,
   values,
   onChange,
   fieldsSingleColumn = false,
@@ -264,8 +268,8 @@ export function CheckoutPaymentSection({
   const items = React.useMemo(() => buildPaymentItems(products), [products]);
 
   const orderTotalMajor = React.useMemo(
-    () => computeCheckoutOrderTotalMajorFromLineItems(products),
-    [products],
+    () => computeCheckoutPayableTotalMajor(products, orderTotals),
+    [products, orderTotals],
   );
 
   const orderTotalLabel = React.useMemo(
@@ -341,7 +345,9 @@ export function CheckoutPaymentSection({
             {orderTotalLabel}
           </p>
           <p className="text-muted-foreground text-xs">
-            From your line items (quantity × unit price).
+            {orderTotals
+              ? "Includes tax and discounts configured for this checkout."
+              : "From your line items (quantity × unit price)."}
           </p>
         </div>
         <div className="space-y-2">

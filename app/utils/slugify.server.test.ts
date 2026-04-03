@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 
-import { slugify } from "./slugify.server";
+import { slugify } from "./slugify";
 
 describe("slugify", () => {
   test("given: undefined input, should: return empty string", () => {

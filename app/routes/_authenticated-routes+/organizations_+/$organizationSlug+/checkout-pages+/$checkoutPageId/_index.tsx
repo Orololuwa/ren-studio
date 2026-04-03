@@ -24,12 +24,22 @@ import {
   SelectValue,
 } from "~/components/ui/select";
 import { Textarea } from "~/components/ui/textarea";
+import { checkoutItemsAndTotalsFromInvoiceTemplateSections } from "~/features/checkout/checkout-from-invoice-template";
 import {
   retrieveCheckoutPageFromDatabaseById,
   updateCheckoutPageInDatabase,
 } from "~/features/checkout/checkout-pages-model.server";
-import { parseCheckoutSections } from "~/features/checkout/checkout-sections";
+import type { CheckoutTotalsData } from "~/features/checkout/checkout-sections";
+import {
+  computeCheckoutPayableTotalMajor,
+  defaultCheckoutTotals,
+  extractCheckoutTotals,
+  parseCheckoutSections,
+  parseManualCheckoutItemsJson,
+  recalculateCheckoutTotals,
+} from "~/features/checkout/checkout-sections";
 import { CheckoutPageRenderer } from "~/features/checkout/components/checkout-page-renderer";
+import { CheckoutTotalsFields } from "~/features/checkout/components/checkout-totals-fields";
 import { formatMinorUnits } from "~/features/checkout/money";
 import { isCurrencySupportedByPaystack } from "~/features/checkout/payment-provider-currencies";
 import { resolveInvoiceTemplateCurrency } from "~/features/checkout/resolve-invoice-template-currency";
@@ -93,12 +103,6 @@ const updateSchema = z.object({
 
 function isRecord(x: unknown): x is Record<string, unknown> {
   return typeof x === "object" && x !== null && !Array.isArray(x);
-}
-
-function getInvoiceItemsFromTemplateSections(sections: TemplateSection[]) {
-  const invoiceItemsSection = sections.find((s) => s.type === "invoice-items");
-  const items = invoiceItemsSection?.data?.items;
-  return Array.isArray(items) ? items : [];
 }
 
 function calcLineTotal({
@@ -228,6 +232,7 @@ export async function action({ request, params, context }: Route.ActionArgs) {
   };
 
   let nextItems: unknown[] | null = null;
+  let nextTotals: CheckoutTotalsData | undefined;
   if (result.data.itemsSource === "invoice-template") {
     const invoiceTemplateId = result.data.invoiceTemplateId;
     if (!invoiceTemplateId) {
@@ -248,29 +253,19 @@ export async function action({ request, params, context }: Route.ActionArgs) {
         { status: 400, headers },
       );
     }
-    nextItems = getInvoiceItemsFromTemplateSections(
+    const fromInvoice = checkoutItemsAndTotalsFromInvoiceTemplateSections(
       sourceTemplate.sections as TemplateSection[],
     );
+    nextItems = fromInvoice.items;
+    nextTotals = fromInvoice.totals;
   }
   if (result.data.itemsSource === "manual") {
-    try {
-      const parsedItems = JSON.parse(result.data.itemsJson) as unknown;
-      nextItems = Array.isArray(parsedItems)
-        ? parsedItems.map((raw) => {
-            if (!isRecord(raw)) return raw;
-            const quantity =
-              typeof raw.quantity === "string" ? raw.quantity : "";
-            const unitPrice =
-              typeof raw.unitPrice === "string" ? raw.unitPrice : "";
-            return {
-              ...raw,
-              total: calcLineTotal({ quantity, unitPrice }),
-            };
-          })
-        : [];
-    } catch {
+    const parsedManual = parseManualCheckoutItemsJson(result.data.itemsJson);
+    if (!parsedManual) {
       return data({ error: "Invalid manual items" }, { status: 400, headers });
     }
+    nextItems = parsedManual.items;
+    nextTotals = parsedManual.totals;
   }
 
   const itemsSectionIndex = currentSections.findIndex(
@@ -291,6 +286,7 @@ export async function action({ request, params, context }: Route.ActionArgs) {
     items:
       nextItems ??
       (Array.isArray(prevItemsData.items) ? prevItemsData.items : []),
+    ...(nextTotals !== undefined ? { totals: nextTotals } : {}),
     source: {
       type: result.data.itemsSource,
       invoiceTemplateId:
@@ -512,6 +508,27 @@ export default function CheckoutPageEditRoute({
     }));
   });
 
+  const [manualTotals, setManualTotals] = React.useState<CheckoutTotalsData>(
+    () => {
+      const stored = extractCheckoutTotals(checkoutPage.sections);
+      const items = parsed.items;
+      if (stored) {
+        return recalculateCheckoutTotals(items, stored);
+      }
+      return recalculateCheckoutTotals(items, defaultCheckoutTotals());
+    },
+  );
+
+  React.useEffect(() => {
+    const lines = manualItems.map((i) => ({
+      description: i.description,
+      quantity: i.quantity,
+      unitPrice: i.unitPrice,
+      total: i.total,
+    }));
+    setManualTotals((prev) => recalculateCheckoutTotals(lines, prev));
+  }, [manualItems]);
+
   const removeManualItem = React.useCallback((id: string) => {
     setManualItems((prev) =>
       prev.length <= 1 ? prev : prev.filter((p) => p.id !== id),
@@ -643,6 +660,26 @@ export default function CheckoutPageEditRoute({
       setInvoiceTemplateId("");
     }
   }, [itemsSource]);
+
+  const invoiceEditPayload = React.useMemo(() => {
+    if (itemsSource !== "invoice-template" || !invoiceTemplateId) {
+      return null;
+    }
+    const tpl =
+      invoiceTemplates.find((t) => t.id === invoiceTemplateId) ??
+      getTemplateById(invoiceTemplateId);
+    if (!tpl) return null;
+    return checkoutItemsAndTotalsFromInvoiceTemplateSections(
+      tpl.sections as TemplateSection[],
+    );
+  }, [itemsSource, invoiceTemplateId, invoiceTemplates]);
+
+  React.useEffect(() => {
+    if (itemsSource !== "invoice-template" || !invoiceTemplateId) return;
+    setDefaultCurrency(
+      resolveInvoiceTemplateCurrency(invoiceTemplateId, invoiceTemplates),
+    );
+  }, [invoiceTemplateId, itemsSource, invoiceTemplates]);
 
   React.useEffect(() => {
     if (!isCurrencySupportedByPaystack(defaultCurrency)) {
@@ -834,13 +871,15 @@ export default function CheckoutPageEditRoute({
             <div className="mt-3 space-y-2">
               <Label htmlFor="checkout-edit-currency">Currency</Label>
               <CurrencyPicker
+                disabled={itemsSource === "invoice-template"}
                 id="checkout-edit-currency"
                 onValueChange={setDefaultCurrency}
                 value={defaultCurrency}
               />
               <p className="text-muted-foreground text-xs">
-                Pricing currency for this checkout. Invoice templates can
-                suggest a currency when selected.
+                {itemsSource === "invoice-template"
+                  ? "Currency follows the selected invoice template."
+                  : "Pricing currency for this checkout. Invoice templates can suggest a currency when selected."}
               </p>
             </div>
             <div className="mt-3 grid gap-3">
@@ -903,6 +942,14 @@ export default function CheckoutPageEditRoute({
                     type="hidden"
                     value={invoiceTemplateId}
                   />
+                  {invoiceEditPayload ? (
+                    <CheckoutTotalsFields
+                      disabled
+                      lineItems={invoiceEditPayload.items}
+                      onChange={() => {}}
+                      totals={invoiceEditPayload.totals}
+                    />
+                  ) : null}
                 </div>
               ) : (
                 <>
@@ -910,7 +957,10 @@ export default function CheckoutPageEditRoute({
                   <input
                     name="itemsJson"
                     type="hidden"
-                    value={JSON.stringify(manualItems)}
+                    value={JSON.stringify({
+                      items: manualItems,
+                      totals: manualTotals,
+                    })}
                   />
 
                   <div className="space-y-3">
@@ -975,18 +1025,28 @@ export default function CheckoutPageEditRoute({
                         </div>
                       ))}
                     </div>
+                    <CheckoutTotalsFields
+                      lineItems={manualItems.map((i) => ({
+                        description: i.description,
+                        quantity: i.quantity,
+                        unitPrice: i.unitPrice,
+                        total: i.total,
+                      }))}
+                      onChange={setManualTotals}
+                      totals={manualTotals}
+                    />
                     <div className="mt-2 flex items-center justify-between gap-4 border-t pt-3">
                       <div className="text-sm font-medium">
                         Overall total:{" "}
-                        {manualItems
-                          .reduce(
-                            (sum, i) =>
-                              sum +
-                              (Number(i.quantity) || 0) *
-                                (Number(i.unitPrice) || 0),
-                            0,
-                          )
-                          .toFixed(2)}
+                        {computeCheckoutPayableTotalMajor(
+                          manualItems.map((i) => ({
+                            description: i.description,
+                            quantity: i.quantity,
+                            unitPrice: i.unitPrice,
+                            total: i.total,
+                          })),
+                          manualTotals,
+                        )}
                       </div>
                       <div className="flex items-center gap-2">
                         <Button
@@ -1221,6 +1281,23 @@ export default function CheckoutPageEditRoute({
                 textColor: headerTextColor,
               }}
               layout={layout}
+              orderTotals={
+                itemsSource === "manual"
+                  ? recalculateCheckoutTotals(
+                      manualItems.map((item) => ({
+                        description: item.description,
+                        quantity: item.quantity,
+                        unitPrice: item.unitPrice,
+                        total: item.total,
+                      })),
+                      manualTotals,
+                    )
+                  : invoiceEditPayload
+                    ? invoiceEditPayload.totals
+                    : parsed.totals
+                      ? recalculateCheckoutTotals(parsed.items, parsed.totals)
+                      : null
+              }
               pageName={checkoutPage.name}
               paymentForm={{
                 ...parsed.paymentForm,
@@ -1237,7 +1314,9 @@ export default function CheckoutPageEditRoute({
                       unitPrice: item.unitPrice,
                       total: item.total,
                     }))
-                  : parsed.items
+                  : invoiceEditPayload
+                    ? invoiceEditPayload.items
+                    : parsed.items
               }
             />
           </div>
