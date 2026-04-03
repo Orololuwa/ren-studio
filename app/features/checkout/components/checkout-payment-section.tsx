@@ -9,13 +9,7 @@ import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "~/components/ui/radio-group";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "~/components/ui/select";
+import { getCommonCurrencyLabel } from "~/features/templates/shared/common-currencies";
 
 const paymentStartSchema = z.object({
   email: z.string().email(),
@@ -28,6 +22,7 @@ const paymentStartSchema = z.object({
 export type CheckoutPaymentSectionComponentProps = {
   checkoutPageSlug: string;
   paymentProviders: string[];
+  /** Used by the page config; the payment UI only displays `values.currency`. */
   paymentForm: CheckoutPaymentFormData;
   products: CheckoutLineItem[];
   values: {
@@ -218,7 +213,7 @@ function PaystackCheckoutButton({
 export function CheckoutPaymentSection({
   checkoutPageSlug,
   paymentProviders,
-  paymentForm,
+  paymentForm: _paymentForm,
   products,
   values,
   onChange,
@@ -293,21 +288,9 @@ export function CheckoutPaymentSection({
         </div>
         <div className="space-y-2">
           <Label>Currency</Label>
-          <Select
-            onValueChange={(c) => onChange({ ...values, currency: c })}
-            value={values.currency}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select currency" />
-            </SelectTrigger>
-            <SelectContent>
-              {paymentForm.allowedCurrencies.map((c) => (
-                <SelectItem key={c} value={c}>
-                  {c}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <p className="text-sm font-medium rounded-md border border-input bg-muted/30 px-3 py-2">
+            {getCommonCurrencyLabel(values.currency)}
+          </p>
         </div>
       </div>
 

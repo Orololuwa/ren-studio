@@ -5,6 +5,7 @@ import { data, href, useNavigate } from "react-router";
 import { z } from "zod";
 
 import type { Route } from "./+types/_index";
+import { CurrencyPicker } from "~/components/currency-picker";
 import { Button } from "~/components/ui/button";
 import { Checkbox } from "~/components/ui/checkbox";
 import {
@@ -30,7 +31,10 @@ import {
 import { parseCheckoutSections } from "~/features/checkout/checkout-sections";
 import { CheckoutPageRenderer } from "~/features/checkout/components/checkout-page-renderer";
 import { formatMinorUnits } from "~/features/checkout/money";
+import { isCurrencySupportedByPaystack } from "~/features/checkout/payment-provider-currencies";
+import { resolveInvoiceTemplateCurrency } from "~/features/checkout/resolve-invoice-template-currency";
 import { organizationMembershipContext } from "~/features/organizations/organizations-middleware.server";
+import { getCommonCurrencyLabel } from "~/features/templates/shared/common-currencies";
 import { getTemplateById } from "~/features/templates/shared/templates";
 import {
   retrieveTemplateFromDatabaseById,
@@ -312,10 +316,43 @@ export async function action({ request, params, context }: Route.ActionArgs) {
     nextSections[itemsSectionIndex] = nextItemsSection;
   else nextSections.push(nextItemsSection);
 
+  const paymentSectionIndex = currentSections.findIndex(
+    (s) =>
+      isRecord(s) &&
+      (s.type === "checkout-payment-form" || s.id === "checkout-payment-form"),
+  );
+  const paymentSection =
+    paymentSectionIndex >= 0 && isRecord(currentSections[paymentSectionIndex])
+      ? (currentSections[paymentSectionIndex] as Record<string, unknown>)
+      : null;
+
+  const prevPaymentData = isRecord(paymentSection?.data)
+    ? (paymentSection?.data as Record<string, unknown>)
+    : {};
+
+  const nextPaymentData: Record<string, unknown> = {
+    ...prevPaymentData,
+    defaultCurrency: result.data.defaultCurrency,
+    allowedCurrencies: result.data.allowedCurrencies,
+    providers: result.data.paymentProviders,
+  };
+
+  const nextPaymentSection: Record<string, unknown> = {
+    ...(paymentSection ?? {}),
+    id: "checkout-payment-form",
+    type: "checkout-payment-form",
+    data: nextPaymentData,
+  };
+
+  if (paymentSectionIndex >= 0)
+    nextSections[paymentSectionIndex] = nextPaymentSection;
+  else nextSections.push(nextPaymentSection);
+
   const nextGlobalStyles = isRecord(checkoutPage.globalStyles)
     ? { ...(checkoutPage.globalStyles as Record<string, unknown>) }
     : {};
   nextGlobalStyles.layout = result.data.layout;
+  nextGlobalStyles.currency = result.data.defaultCurrency;
 
   const updated = await updateCheckoutPageInDatabase({
     checkoutPageId: params.checkoutPageId,
@@ -368,14 +405,16 @@ export default function CheckoutPageEditRoute({
     checkoutPage.receiptTemplateId ?? "__none__",
   );
 
+  const [defaultCurrency, setDefaultCurrency] = React.useState(
+    checkoutPage.defaultCurrency,
+  );
+
   const paymentProviders = [
     providerStripe ? "stripe" : null,
-    providerPaystack ? "paystack" : null,
+    providerPaystack && isCurrencySupportedByPaystack(defaultCurrency)
+      ? "paystack"
+      : null,
   ].filter(Boolean) as string[];
-
-  const allowedCurrencies = Array.isArray(checkoutPage.allowedCurrencies)
-    ? checkoutPage.allowedCurrencies.join(",")
-    : "USD";
 
   const parsed = parseCheckoutSections(
     checkoutPage.sections,
@@ -606,6 +645,12 @@ export default function CheckoutPageEditRoute({
   }, [itemsSource]);
 
   React.useEffect(() => {
+    if (!isCurrencySupportedByPaystack(defaultCurrency)) {
+      setProviderPaystack(false);
+    }
+  }, [defaultCurrency]);
+
+  React.useEffect(() => {
     if (
       receiptPreviewOpen &&
       receiptTemplateId &&
@@ -719,6 +764,8 @@ export default function CheckoutPageEditRoute({
 
       <form className="grid gap-6 lg:grid-cols-2" method="post">
         <input name="intent" type="hidden" value="update" />
+        <input name="defaultCurrency" type="hidden" value={defaultCurrency} />
+        <input name="allowedCurrencies" type="hidden" value={defaultCurrency} />
         <div className="space-y-4">
           <div className="rounded-lg border bg-background p-4">
             <div className="flex items-start justify-between gap-3">
@@ -784,6 +831,18 @@ export default function CheckoutPageEditRoute({
 
           <div className="rounded-lg border bg-background p-4">
             <h2 className="text-sm font-medium">Products</h2>
+            <div className="mt-3 space-y-2">
+              <Label htmlFor="checkout-edit-currency">Currency</Label>
+              <CurrencyPicker
+                id="checkout-edit-currency"
+                onValueChange={setDefaultCurrency}
+                value={defaultCurrency}
+              />
+              <p className="text-muted-foreground text-xs">
+                Pricing currency for this checkout. Invoice templates can
+                suggest a currency when selected.
+              </p>
+            </div>
             <div className="mt-3 grid gap-3">
               <div className="flex items-center justify-between gap-3">
                 <div>
@@ -820,7 +879,12 @@ export default function CheckoutPageEditRoute({
                 <div className="space-y-2">
                   <Label>Invoice template</Label>
                   <Select
-                    onValueChange={setInvoiceTemplateId}
+                    onValueChange={(id) => {
+                      setInvoiceTemplateId(id);
+                      setDefaultCurrency(
+                        resolveInvoiceTemplateCurrency(id, invoiceTemplates),
+                      );
+                    }}
                     value={invoiceTemplateId}
                   >
                     <SelectTrigger>
@@ -1012,22 +1076,63 @@ export default function CheckoutPageEditRoute({
 
             <div className="space-y-2">
               <Label>Providers</Label>
+              <div className="rounded-md border bg-muted/20 px-3 py-2 text-sm">
+                <span className="text-muted-foreground">Currency: </span>
+                <span className="font-medium">
+                  {getCommonCurrencyLabel(defaultCurrency)}
+                </span>
+              </div>
+              <p className="text-muted-foreground text-xs">
+                Currency is configured under Products. This section only selects
+                payment methods.
+              </p>
               <div className="flex flex-col gap-3">
-                <div className="flex items-center gap-2">
-                  <Checkbox
-                    checked={providerStripe}
-                    id="providerStripe"
-                    onCheckedChange={(v) => setProviderStripe(Boolean(v))}
-                  />
-                  <Label htmlFor="providerStripe">Stripe</Label>
+                <div className="flex flex-col gap-1">
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      checked={providerStripe}
+                      id="providerStripe"
+                      onCheckedChange={(v) => setProviderStripe(Boolean(v))}
+                    />
+                    <Label htmlFor="providerStripe">Stripe</Label>
+                  </div>
+                  <p className="text-muted-foreground text-xs pl-6">
+                    Available for your selected currency.
+                  </p>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Checkbox
-                    checked={providerPaystack}
-                    id="providerPaystack"
-                    onCheckedChange={(v) => setProviderPaystack(Boolean(v))}
-                  />
-                  <Label htmlFor="providerPaystack">Paystack</Label>
+                <div className="flex flex-col gap-1">
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      checked={
+                        isCurrencySupportedByPaystack(defaultCurrency) &&
+                        providerPaystack
+                      }
+                      disabled={!isCurrencySupportedByPaystack(defaultCurrency)}
+                      id="providerPaystack"
+                      onCheckedChange={(v) => setProviderPaystack(Boolean(v))}
+                    />
+                    <Label
+                      className={
+                        !isCurrencySupportedByPaystack(defaultCurrency)
+                          ? "text-muted-foreground"
+                          : undefined
+                      }
+                      htmlFor="providerPaystack"
+                    >
+                      Paystack
+                    </Label>
+                  </div>
+                  {!isCurrencySupportedByPaystack(defaultCurrency) ? (
+                    <p className="text-muted-foreground text-xs pl-6">
+                      Paystack does not support {defaultCurrency.toUpperCase()}{" "}
+                      for charges. Choose Stripe or change currency under
+                      Products.
+                    </p>
+                  ) : (
+                    <p className="text-muted-foreground text-xs pl-6">
+                      Available when your currency is supported by Paystack.
+                    </p>
+                  )}
                 </div>
               </div>
               <input
@@ -1035,25 +1140,6 @@ export default function CheckoutPageEditRoute({
                 type="hidden"
                 value={paymentProviders.join(",")}
               />
-            </div>
-
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="defaultCurrency">Default currency</Label>
-                <Input
-                  defaultValue={checkoutPage.defaultCurrency}
-                  id="defaultCurrency"
-                  name="defaultCurrency"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="allowedCurrencies">Allowed currencies</Label>
-                <Input
-                  defaultValue={allowedCurrencies}
-                  id="allowedCurrencies"
-                  name="allowedCurrencies"
-                />
-              </div>
             </div>
 
             <div className="space-y-2">
@@ -1136,7 +1222,11 @@ export default function CheckoutPageEditRoute({
               }}
               layout={layout}
               pageName={checkoutPage.name}
-              paymentForm={parsed.paymentForm}
+              paymentForm={{
+                ...parsed.paymentForm,
+                allowedCurrencies: [defaultCurrency],
+                defaultCurrency,
+              }}
               paymentProviders={checkoutPage.paymentProviders}
               previewMode
               products={

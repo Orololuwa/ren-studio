@@ -13,6 +13,7 @@ import {
 import { z } from "zod";
 
 import type { Route } from "./+types/_index";
+import { CurrencyPicker } from "~/components/currency-picker";
 import { Button } from "~/components/ui/button";
 import { Checkbox } from "~/components/ui/checkbox";
 import {
@@ -34,11 +35,11 @@ import { Textarea } from "~/components/ui/textarea";
 import { createCheckoutPageToDatabase } from "~/features/checkout/checkout-pages-model.server";
 import type { CheckoutLineItem } from "~/features/checkout/checkout-sections";
 import { CheckoutPageRenderer } from "~/features/checkout/components/checkout-page-renderer";
+import { isCurrencySupportedByPaystack } from "~/features/checkout/payment-provider-currencies";
+import { resolveInvoiceTemplateCurrency } from "~/features/checkout/resolve-invoice-template-currency";
 import { organizationMembershipContext } from "~/features/organizations/organizations-middleware.server";
-import {
-  getTemplateById,
-  getTemplatesByType,
-} from "~/features/templates/shared/templates";
+import { getCommonCurrencyLabel } from "~/features/templates/shared/common-currencies";
+import { getTemplateById } from "~/features/templates/shared/templates";
 import {
   retrieveTemplateFromDatabaseById,
   retrieveTemplatesByOrganizationIdAndType,
@@ -114,7 +115,7 @@ export async function loader({ params, context }: Route.LoaderArgs) {
           organizationSlug: params.organizationSlug,
         }),
       },
-      invoiceTemplates: [...getTemplatesByType("invoice"), ...invoiceTemplates],
+      invoiceTemplates,
       organizationName: organization.name,
       organizationSlug: params.organizationSlug,
       receiptTemplates,
@@ -396,7 +397,6 @@ export default function NewCheckoutPageRoute({
   const [providerStripe, setProviderStripe] = React.useState(true);
   const [providerPaystack, setProviderPaystack] = React.useState(true);
   const [defaultCurrency, setDefaultCurrency] = React.useState("USD");
-  const [allowedCurrencies, setAllowedCurrencies] = React.useState("USD,NGN");
 
   const [isPasswordProtected, setIsPasswordProtected] = React.useState(false);
   const [password, setPassword] = React.useState("");
@@ -442,14 +442,22 @@ export default function NewCheckoutPageRoute({
 
   const paymentProviders = [
     providerStripe ? "stripe" : null,
-    providerPaystack ? "paystack" : null,
+    providerPaystack && isCurrencySupportedByPaystack(defaultCurrency)
+      ? "paystack"
+      : null,
   ].filter(Boolean) as string[];
+
+  React.useEffect(() => {
+    if (!isCurrencySupportedByPaystack(defaultCurrency)) {
+      setProviderPaystack(false);
+    }
+  }, [defaultCurrency]);
 
   const extractInvoiceProducts = React.useCallback(
     (templateId: string) => {
-      const template = loaderData.invoiceTemplates.find(
-        (t) => t.id === templateId,
-      );
+      const template =
+        loaderData.invoiceTemplates.find((t) => t.id === templateId) ??
+        getTemplateById(templateId);
       if (!template) return [];
       const sections = template.sections as unknown as TemplateSection[];
       const invoiceItems = sections.find((s) => s.type === "invoice-items");
@@ -470,6 +478,16 @@ export default function NewCheckoutPageRoute({
     }
     setInvoiceProducts(extractInvoiceProducts(invoiceTemplateId));
   }, [extractInvoiceProducts, invoiceTemplateId, itemsSource]);
+
+  React.useEffect(() => {
+    if (itemsSource !== "invoice-template" || !invoiceTemplateId) return;
+    setDefaultCurrency(
+      resolveInvoiceTemplateCurrency(
+        invoiceTemplateId,
+        loaderData.invoiceTemplates,
+      ),
+    );
+  }, [invoiceTemplateId, itemsSource, loaderData.invoiceTemplates]);
 
   const generateReceiptPreview = React.useCallback(async () => {
     if (!receiptTemplateId) return;
@@ -689,7 +707,7 @@ export default function NewCheckoutPageRoute({
 
       <div
         className={
-          step.id === "design"
+          ["design", "products"].includes(step.id)
             ? "w-full max-w-6xl space-y-6"
             : "max-w-2xl space-y-6"
         }
@@ -798,10 +816,7 @@ export default function NewCheckoutPageRoute({
                   layout={layout}
                   pageName={name || "Checkout"}
                   paymentForm={{
-                    allowedCurrencies: allowedCurrencies
-                      .split(",")
-                      .map((s) => s.trim())
-                      .filter(Boolean),
+                    allowedCurrencies: [defaultCurrency],
                     defaultCurrency,
                     providers: paymentProviders,
                   }}
@@ -815,214 +830,245 @@ export default function NewCheckoutPageRoute({
         ) : null}
 
         {step.id === "products" ? (
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Products source</Label>
-              <div className="flex flex-col gap-2 text-sm">
-                <label className="flex items-center gap-2">
-                  <input
-                    checked={itemsSource === "manual"}
-                    name="itemsSourceRadio"
-                    onChange={() => setItemsSource("manual")}
-                    type="radio"
-                  />
-                  <span>Manual products</span>
-                </label>
-                <label className="flex items-center gap-2">
-                  <input
-                    checked={itemsSource === "invoice-template"}
-                    name="itemsSourceRadio"
-                    onChange={() => setItemsSource("invoice-template")}
-                    type="radio"
-                  />
-                  <span>From invoice template</span>
-                </label>
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:gap-8 w-full">
+            <div className="space-y-4">
+              <div className="grid gap-6 md:grid-cols-2 md:items-start">
+                <div className="space-y-2 min-w-0">
+                  <Label>Products source</Label>
+                  <div className="flex flex-col gap-2 text-sm">
+                    <label className="flex items-center gap-2">
+                      <input
+                        checked={itemsSource === "manual"}
+                        name="itemsSourceRadio"
+                        onChange={() => setItemsSource("manual")}
+                        type="radio"
+                      />
+                      <span>Manual products</span>
+                    </label>
+                    <label className="flex items-center gap-2">
+                      <input
+                        checked={itemsSource === "invoice-template"}
+                        name="itemsSourceRadio"
+                        onChange={() => setItemsSource("invoice-template")}
+                        type="radio"
+                      />
+                      <span>From invoice template</span>
+                    </label>
+                  </div>
+                </div>
               </div>
-            </div>
 
-            {itemsSource === "invoice-template" ? (
-              <div className="space-y-2">
-                <Label>Invoice template</Label>
-                <div className="flex items-center gap-2">
-                  <div className="flex-1">
-                    <Select
-                      onValueChange={(value) => {
-                        setInvoiceTemplateId(value);
-                        setInvoiceProducts(extractInvoiceProducts(value));
-                      }}
-                      value={invoiceTemplateId}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select an invoice template" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {loaderData.invoiceTemplates.map((tpl) => (
-                          <SelectItem key={tpl.id} value={tpl.id}>
-                            {tpl.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+              {itemsSource === "invoice-template" ? (
+                <div className="space-y-2">
+                  <Label>Invoice template</Label>
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1">
+                      <Select
+                        onValueChange={(value) => {
+                          setInvoiceTemplateId(value);
+                          setInvoiceProducts(extractInvoiceProducts(value));
+                          setDefaultCurrency(
+                            resolveInvoiceTemplateCurrency(
+                              value,
+                              loaderData.invoiceTemplates,
+                            ),
+                          );
+                        }}
+                        value={invoiceTemplateId}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select an invoice template" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {loaderData.invoiceTemplates.map((tpl) => (
+                            <SelectItem key={tpl.id} value={tpl.id}>
+                              {tpl.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {invoiceTemplateId ? (
+                      <Button
+                        onClick={() => setInvoicePreviewOpen(true)}
+                        type="button"
+                        variant="outline"
+                      >
+                        Preview invoice
+                      </Button>
+                    ) : null}
                   </div>
 
-                  {invoiceTemplateId ? (
+                  {invoiceProducts.length > 0 ? (
+                    <div className="mt-3 rounded-md border bg-muted/20 p-3">
+                      <div className="text-xs font-medium mb-2">
+                        Products preview
+                      </div>
+                      <div className="space-y-3">
+                        {invoiceProducts.map((raw, idx) => {
+                          const product =
+                            typeof raw === "object" && raw !== null
+                              ? (raw as Record<string, unknown>)
+                              : {};
+
+                          const description = String(product.description ?? "");
+                          const quantity = String(product.quantity ?? "");
+                          const unitPrice = String(product.unitPrice ?? "");
+                          const total = String(product.total ?? "");
+
+                          const key =
+                            typeof product.id === "string" &&
+                            product.id.length > 0
+                              ? product.id
+                              : `${description}-${quantity}-${unitPrice}-${total}-${idx}`;
+
+                          return (
+                            <div
+                              className="grid gap-3 md:grid-cols-4"
+                              key={key}
+                            >
+                              <div className="md:col-span-2">
+                                <Label>Description</Label>
+                                <Input disabled value={description} />
+                              </div>
+                              <div>
+                                <Label>Qty</Label>
+                                <Input disabled value={quantity} />
+                              </div>
+                              <div>
+                                <Label>Unit price</Label>
+                                <Input disabled value={unitPrice} />
+                              </div>
+                              <div className="md:col-span-4">
+                                <Label>Total</Label>
+                                <Input disabled value={total} />
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="mt-3 text-xs text-muted-foreground">
+                      Select a template to preview its products.
+                    </div>
+                  )}
+
+                  <div className="rounded-md border bg-background p-3 text-xs text-muted-foreground">
+                    Note: This checkout will be attached to the selected invoice
+                    template.
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <div className="text-muted-foreground text-xs">
+                    Products are fixed on the public checkout. Customers won’t
+                    be able to edit them.
+                  </div>
+                  <div className="space-y-3">
+                    {manualItems.map((item, idx) => (
+                      <div className="grid gap-3 md:grid-cols-4" key={item.id}>
+                        <div className="md:col-span-2">
+                          <Label htmlFor={`desc-${idx}`}>Description</Label>
+                          <Input
+                            id={`desc-${idx}`}
+                            onChange={(e) =>
+                              setManualItems((prev) =>
+                                prev.map((p, i) =>
+                                  i === idx
+                                    ? { ...p, description: e.target.value }
+                                    : p,
+                                ),
+                              )
+                            }
+                            value={item.description}
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor={`qty-${idx}`}>Qty</Label>
+                          <Input
+                            id={`qty-${idx}`}
+                            onChange={(e) =>
+                              setManualItems((prev) =>
+                                prev.map((p, i) =>
+                                  i === idx
+                                    ? { ...p, quantity: e.target.value }
+                                    : p,
+                                ),
+                              )
+                            }
+                            value={item.quantity}
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor={`unit-${idx}`}>Unit price</Label>
+                          <Input
+                            id={`unit-${idx}`}
+                            onChange={(e) =>
+                              setManualItems((prev) =>
+                                prev.map((p, i) =>
+                                  i === idx
+                                    ? { ...p, unitPrice: e.target.value }
+                                    : p,
+                                ),
+                              )
+                            }
+                            value={item.unitPrice}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex items-center gap-2">
                     <Button
-                      onClick={() => setInvoicePreviewOpen(true)}
+                      onClick={() =>
+                        setManualItems((prev) => [
+                          ...prev,
+                          {
+                            id: crypto.randomUUID(),
+                            description: "",
+                            quantity: "1",
+                            unitPrice: "0.00",
+                            total: "0.00",
+                          },
+                        ])
+                      }
                       type="button"
                       variant="outline"
                     >
-                      Preview invoice
+                      Add product
                     </Button>
-                  ) : null}
-                </div>
-
-                {invoiceProducts.length > 0 ? (
-                  <div className="mt-3 rounded-md border bg-muted/20 p-3">
-                    <div className="text-xs font-medium mb-2">
-                      Products preview
-                    </div>
-                    <div className="space-y-3">
-                      {invoiceProducts.map((raw, idx) => {
-                        const product =
-                          typeof raw === "object" && raw !== null
-                            ? (raw as Record<string, unknown>)
-                            : {};
-
-                        const description = String(product.description ?? "");
-                        const quantity = String(product.quantity ?? "");
-                        const unitPrice = String(product.unitPrice ?? "");
-                        const total = String(product.total ?? "");
-
-                        const key =
-                          typeof product.id === "string" &&
-                          product.id.length > 0
-                            ? product.id
-                            : `${description}-${quantity}-${unitPrice}-${total}-${idx}`;
-
-                        return (
-                          <div className="grid gap-3 md:grid-cols-4" key={key}>
-                            <div className="md:col-span-2">
-                              <Label>Description</Label>
-                              <Input disabled value={description} />
-                            </div>
-                            <div>
-                              <Label>Qty</Label>
-                              <Input disabled value={quantity} />
-                            </div>
-                            <div>
-                              <Label>Unit price</Label>
-                              <Input disabled value={unitPrice} />
-                            </div>
-                            <div className="md:col-span-4">
-                              <Label>Total</Label>
-                              <Input disabled value={total} />
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
+                    <Button
+                      disabled={manualItems.length <= 1}
+                      onClick={() =>
+                        setManualItems((prev) => prev.slice(0, -1))
+                      }
+                      type="button"
+                      variant="outline"
+                    >
+                      Remove last
+                    </Button>
                   </div>
-                ) : (
-                  <div className="mt-3 text-xs text-muted-foreground">
-                    Select a template to preview its products.
-                  </div>
-                )}
+                </div>
+              )}
+            </div>
 
-                <div className="rounded-md border bg-background p-3 text-xs text-muted-foreground">
-                  Note: This checkout will be attached to the selected invoice
-                  template.
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                <div className="text-muted-foreground text-xs">
-                  Products are fixed on the public checkout. Customers won’t be
-                  able to edit them.
-                </div>
-                <div className="space-y-3">
-                  {manualItems.map((item, idx) => (
-                    <div className="grid gap-3 md:grid-cols-4" key={item.id}>
-                      <div className="md:col-span-2">
-                        <Label htmlFor={`desc-${idx}`}>Description</Label>
-                        <Input
-                          id={`desc-${idx}`}
-                          onChange={(e) =>
-                            setManualItems((prev) =>
-                              prev.map((p, i) =>
-                                i === idx
-                                  ? { ...p, description: e.target.value }
-                                  : p,
-                              ),
-                            )
-                          }
-                          value={item.description}
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor={`qty-${idx}`}>Qty</Label>
-                        <Input
-                          id={`qty-${idx}`}
-                          onChange={(e) =>
-                            setManualItems((prev) =>
-                              prev.map((p, i) =>
-                                i === idx
-                                  ? { ...p, quantity: e.target.value }
-                                  : p,
-                              ),
-                            )
-                          }
-                          value={item.quantity}
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor={`unit-${idx}`}>Unit price</Label>
-                        <Input
-                          id={`unit-${idx}`}
-                          onChange={(e) =>
-                            setManualItems((prev) =>
-                              prev.map((p, i) =>
-                                i === idx
-                                  ? { ...p, unitPrice: e.target.value }
-                                  : p,
-                              ),
-                            )
-                          }
-                          value={item.unitPrice}
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button
-                    onClick={() =>
-                      setManualItems((prev) => [
-                        ...prev,
-                        {
-                          id: crypto.randomUUID(),
-                          description: "",
-                          quantity: "1",
-                          unitPrice: "0.00",
-                          total: "0.00",
-                        },
-                      ])
-                    }
-                    type="button"
-                    variant="outline"
-                  >
-                    Add product
-                  </Button>
-                  <Button
-                    disabled={manualItems.length <= 1}
-                    onClick={() => setManualItems((prev) => prev.slice(0, -1))}
-                    type="button"
-                    variant="outline"
-                  >
-                    Remove last
-                  </Button>
-                </div>
-              </div>
-            )}
+            <div className="space-y-2 w-full max-w-xs">
+              <Label htmlFor="checkout-currency">Currency</Label>
+              <CurrencyPicker
+                className="w-full"
+                disabled={itemsSource === "invoice-template"}
+                id="checkout-currency"
+                onValueChange={setDefaultCurrency}
+                value={defaultCurrency}
+              />
+              <p className="text-muted-foreground text-xs">
+                {itemsSource === "invoice-template"
+                  ? "Currency is taken from the selected invoice template."
+                  : "Pricing currency for manual line items on this checkout."}
+              </p>
+            </div>
           </div>
         ) : null}
 
@@ -1065,49 +1111,68 @@ export default function NewCheckoutPageRoute({
 
         {step.id === "payment" ? (
           <div className="space-y-4">
+            <div className="rounded-md border bg-muted/20 px-3 py-2 text-sm">
+              <span className="text-muted-foreground">Currency: </span>
+              <span className="font-medium">
+                {getCommonCurrencyLabel(defaultCurrency)}
+              </span>
+            </div>
             <div className="space-y-2">
               <Label>Providers</Label>
               <div className="flex flex-col gap-3">
-                <div className="flex items-center gap-2">
-                  <Checkbox
-                    checked={providerStripe}
-                    id="providerStripe"
-                    onCheckedChange={(v) => setProviderStripe(Boolean(v))}
-                  />
-                  <Label htmlFor="providerStripe">Stripe</Label>
+                <div className="flex flex-col gap-1">
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      checked={providerStripe}
+                      id="providerStripe"
+                      onCheckedChange={(v) => setProviderStripe(Boolean(v))}
+                    />
+                    <Label htmlFor="providerStripe">Stripe</Label>
+                  </div>
+                  <p className="text-muted-foreground text-xs pl-6">
+                    Available for your selected currency.
+                  </p>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Checkbox
-                    checked={providerPaystack}
-                    id="providerPaystack"
-                    onCheckedChange={(v) => setProviderPaystack(Boolean(v))}
-                  />
-                  <Label htmlFor="providerPaystack">Paystack</Label>
+                <div className="flex flex-col gap-1">
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      checked={
+                        isCurrencySupportedByPaystack(defaultCurrency) &&
+                        providerPaystack
+                      }
+                      disabled={!isCurrencySupportedByPaystack(defaultCurrency)}
+                      id="providerPaystack"
+                      onCheckedChange={(v) => setProviderPaystack(Boolean(v))}
+                    />
+                    <Label
+                      className={
+                        !isCurrencySupportedByPaystack(defaultCurrency)
+                          ? "text-muted-foreground"
+                          : undefined
+                      }
+                      htmlFor="providerPaystack"
+                    >
+                      Paystack
+                    </Label>
+                  </div>
+                  {!isCurrencySupportedByPaystack(defaultCurrency) ? (
+                    <p className="text-muted-foreground text-xs pl-6">
+                      Paystack does not support {defaultCurrency.toUpperCase()}{" "}
+                      for charges. Choose Stripe or change currency on the
+                      Products step.
+                    </p>
+                  ) : (
+                    <p className="text-muted-foreground text-xs pl-6">
+                      Available when your currency is supported by Paystack.
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="defaultCurrency">Default currency</Label>
-              <Input
-                id="defaultCurrency"
-                onChange={(e) =>
-                  setDefaultCurrency(e.target.value.toUpperCase())
-                }
-                value={defaultCurrency}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="allowedCurrencies">
-                Allowed currencies (comma-separated)
-              </Label>
-              <Input
-                id="allowedCurrencies"
-                onChange={(e) =>
-                  setAllowedCurrencies(e.target.value.toUpperCase())
-                }
-                value={allowedCurrencies}
-              />
-            </div>
+            <p className="text-muted-foreground text-xs">
+              Currency is set in the Products step. This step is only for
+              choosing how customers pay.
+            </p>
           </div>
         ) : null}
 
@@ -1281,7 +1346,7 @@ export default function NewCheckoutPageRoute({
             <input
               name="allowedCurrencies"
               type="hidden"
-              value={allowedCurrencies}
+              value={defaultCurrency}
             />
             <input
               name="isPasswordProtected"

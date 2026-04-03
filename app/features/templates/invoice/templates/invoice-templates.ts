@@ -6,6 +6,7 @@ export const invoiceTemplates: Template[] = [
     colorPalette: ["#ffffff", "#000000"],
     globalStyles: {
       backgroundColor: "$colorPalette[0]",
+      currency: "USD",
       fontFamily: "Arial, sans-serif",
       fontSize: "14px",
       textColor: "$colorPalette[1]",
@@ -101,9 +102,10 @@ export const invoiceTemplates: Template[] = [
     colorPalette: ["#eff6ff", "#0F2854", "#4988C4", "#ffffff"],
     globalStyles: {
       backgroundColor: "$colorPalette[3]",
+      color: "$colorPalette[1]",
+      currency: "USD",
       fontFamily: "Inter, system-ui, -apple-system, sans-serif",
       fontSize: "14px",
-      color: "$colorPalette[1]",
     },
     id: "invoice-professional",
     name: "Professional Invoice",

@@ -56,6 +56,7 @@ import {
 import { Sheet, SheetContent } from "~/components/ui/sheet";
 import { getInstance } from "~/features/localization/i18next-middleware.server";
 import { organizationMembershipContext } from "~/features/organizations/organizations-middleware.server";
+import { COMMON_CURRENCIES } from "~/features/templates/shared/common-currencies";
 import { ApiPayloadModal } from "~/features/templates/shared/components/api-payload-modal";
 import { ColorPaletteEditor } from "~/features/templates/shared/components/color-palette-editor";
 import { ComponentPalette } from "~/features/templates/shared/components/component-palette";
@@ -197,39 +198,6 @@ function getCurrencySymbol(currencyCode: string): string {
     return currencyCode;
   }
 }
-
-const COMMON_CURRENCIES = [
-  { code: "USD", name: "US Dollar ($)" },
-  { code: "EUR", name: "Euro (€)" },
-  { code: "GBP", name: "British Pound (£)" },
-  { code: "JPY", name: "Japanese Yen (¥)" },
-  { code: "CAD", name: "Canadian Dollar (C$)" },
-  { code: "AUD", name: "Australian Dollar (A$)" },
-  { code: "CHF", name: "Swiss Franc (CHF)" },
-  { code: "CNY", name: "Chinese Yuan (¥)" },
-  { code: "INR", name: "Indian Rupee (₹)" },
-  { code: "BRL", name: "Brazilian Real (R$)" },
-  { code: "MXN", name: "Mexican Peso (MX$)" },
-  { code: "SGD", name: "Singapore Dollar (S$)" },
-  { code: "HKD", name: "Hong Kong Dollar (HK$)" },
-  { code: "NZD", name: "New Zealand Dollar (NZ$)" },
-  { code: "SEK", name: "Swedish Krona (kr)" },
-  { code: "NOK", name: "Norwegian Krone (kr)" },
-  { code: "DKK", name: "Danish Krone (kr)" },
-  { code: "PLN", name: "Polish Zloty (zł)" },
-  { code: "RUB", name: "Russian Ruble (₽)" },
-  { code: "NGN", name: "Nigerian Naira (₦)" },
-  { code: "ZAR", name: "South African Rand (R)" },
-  { code: "EGP", name: "Egyptian Pound (E£)" },
-  { code: "KES", name: "Kenyan Shilling (KSh)" },
-  { code: "GHS", name: "Ghanaian Cedi (₵)" },
-  { code: "TZS", name: "Tanzanian Shilling (TSh)" },
-  { code: "UGX", name: "Ugandan Shilling (USh)" },
-  { code: "ETB", name: "Ethiopian Birr (Br)" },
-  { code: "MAD", name: "Moroccan Dirham (د.م.)" },
-  { code: "XOF", name: "West African CFA Franc (CFA)" },
-  { code: "XAF", name: "Central African CFA Franc (FCFA)" },
-] as const;
 
 export async function loader({ params, context, request }: Route.LoaderArgs) {
   const { organization } = context.get(organizationMembershipContext);
