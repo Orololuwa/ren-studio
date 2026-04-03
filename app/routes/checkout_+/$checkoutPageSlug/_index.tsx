@@ -190,6 +190,7 @@ export default function PublicCheckoutRoute({
   return (
     <div className="min-h-screen px-4 py-10">
       <CheckoutPageRenderer
+        checkoutPageSlug={checkoutPage.slug}
         description={checkoutPage.description ?? undefined}
         header={{
           backgroundColor: parsed.header.backgroundColor,
@@ -207,6 +208,7 @@ export default function PublicCheckoutRoute({
         pageName={checkoutPage.name}
         paymentForm={parsed.paymentForm}
         paymentFormValues={{ email, name, amountMajor, currency }}
+        paymentProviders={checkoutPage.paymentProviders}
         products={parsed.items}
       />
     </div>

@@ -24,33 +24,52 @@ export function verifyPaystackSignature({
   return crypto.timingSafeEqual(Buffer.from(digest), Buffer.from(signature));
 }
 
+function stringifyMetadata(
+  metadata: Record<string, unknown>,
+): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const [key, value] of Object.entries(metadata)) {
+    if (value === undefined || value === null) continue;
+    out[key] = typeof value === "string" ? value : JSON.stringify(value);
+  }
+  return out;
+}
+
 export async function initializePaystackTransaction({
   amountMinor,
+  callbackUrl,
   currency,
   email,
   reference,
   metadata,
 }: {
   amountMinor: number;
+  /** Where Paystack sends the customer after payment (`reference` / `trxref` are appended). */
+  callbackUrl?: string;
   currency: string;
   email: string;
   reference: string;
   metadata: Record<string, unknown>;
 }) {
   const secret = requirePaystackSecretKey();
+  const body: Record<string, unknown> = {
+    amount: amountMinor,
+    currency,
+    email,
+    metadata: stringifyMetadata(metadata),
+    reference,
+  };
+  if (callbackUrl) {
+    body.callback_url = callbackUrl;
+  }
+
   const response = await fetch(`${paystackBaseUrl}/transaction/initialize`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${secret}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({
-      amount: amountMinor,
-      currency,
-      email,
-      metadata,
-      reference,
-    }),
+    body: JSON.stringify(body),
   });
 
   const json = (await response.json().catch(() => null)) as {

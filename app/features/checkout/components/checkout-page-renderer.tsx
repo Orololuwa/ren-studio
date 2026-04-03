@@ -5,15 +5,7 @@ import type {
   CheckoutLineItem,
   CheckoutPaymentFormData,
 } from "../checkout-sections";
-import { Input } from "~/components/ui/input";
-import { Label } from "~/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "~/components/ui/select";
+import { CheckoutPaymentSection } from "./checkout-payment-section";
 
 export interface CheckoutPageRendererHeader {
   storeName: string;
@@ -28,6 +20,10 @@ export interface CheckoutPageRendererProps {
   products: CheckoutLineItem[];
   description?: string;
   paymentForm: CheckoutPaymentFormData;
+  /** Public checkout slug for payment API routes. */
+  checkoutPageSlug: string;
+  /** Enabled providers from the checkout page (e.g. stripe, paystack). */
+  paymentProviders: string[];
   pageName?: string;
   /** When true, renders a read-only preview (e.g. in wizard). Payment form is placeholder. */
   previewMode?: boolean;
@@ -122,87 +118,14 @@ function PaymentFormPlaceholder() {
   );
 }
 
-function PaymentFormLive({
-  paymentForm,
-  values,
-  onChange,
-}: {
-  paymentForm: CheckoutPaymentFormData;
-  values: {
-    email: string;
-    name: string;
-    amountMajor: string;
-    currency: string;
-  };
-  onChange: (v: typeof values) => void;
-}) {
-  return (
-    <section className="space-y-4">
-      <div className="grid gap-4 md:grid-cols-2">
-        <div className="space-y-2">
-          <Label htmlFor="customerEmail">Email</Label>
-          <Input
-            id="customerEmail"
-            onChange={(e) => onChange({ ...values, email: e.target.value })}
-            placeholder="customer@example.com"
-            value={values.email}
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="customerName">Name (optional)</Label>
-          <Input
-            id="customerName"
-            onChange={(e) => onChange({ ...values, name: e.target.value })}
-            placeholder="John Doe"
-            value={values.name}
-          />
-        </div>
-      </div>
-      <div className="grid gap-4 md:grid-cols-2">
-        <div className="space-y-2">
-          <Label htmlFor="amount">Amount</Label>
-          <Input
-            id="amount"
-            inputMode="decimal"
-            onChange={(e) =>
-              onChange({ ...values, amountMajor: e.target.value })
-            }
-            placeholder="100.00"
-            value={values.amountMajor}
-          />
-        </div>
-        <div className="space-y-2">
-          <Label>Currency</Label>
-          <Select
-            onValueChange={(c) => onChange({ ...values, currency: c })}
-            value={values.currency}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select currency" />
-            </SelectTrigger>
-            <SelectContent>
-              {paymentForm.allowedCurrencies.map((c) => (
-                <SelectItem key={c} value={c}>
-                  {c}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-      <div className="rounded-md border bg-muted/30 p-4 text-sm text-muted-foreground">
-        Payment UI will be enabled after Stripe/Paystack endpoints are wired.
-      </div>
-    </section>
-  );
-}
-
 export function CheckoutPageRenderer({
   layout,
   header,
   products,
   description,
   paymentForm,
+  checkoutPageSlug,
+  paymentProviders,
   pageName,
   previewMode = false,
   paymentFormValues,
@@ -233,9 +156,12 @@ export function CheckoutPageRenderer({
           {previewMode ? (
             <PaymentFormPlaceholder />
           ) : (
-            <PaymentFormLive
+            <CheckoutPaymentSection
+              checkoutPageSlug={checkoutPageSlug}
               onChange={setValues}
               paymentForm={paymentForm}
+              paymentProviders={paymentProviders}
+              products={products}
               values={values}
             />
           )}
@@ -281,9 +207,12 @@ export function CheckoutPageRenderer({
               {previewMode ? (
                 <PaymentFormPlaceholder />
               ) : (
-                <PaymentFormLive
+                <CheckoutPaymentSection
+                  checkoutPageSlug={checkoutPageSlug}
                   onChange={setValues}
                   paymentForm={paymentForm}
+                  paymentProviders={paymentProviders}
+                  products={products}
                   values={values}
                 />
               )}

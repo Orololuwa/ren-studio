@@ -1126,6 +1126,7 @@ export default function CheckoutPageEditRoute({
           </div>
           <div className="mt-4">
             <CheckoutPageRenderer
+              checkoutPageSlug={checkoutPage.slug}
               description={checkoutPage.description ?? undefined}
               header={{
                 backgroundColor: headerBackgroundColor,
@@ -1136,6 +1137,7 @@ export default function CheckoutPageEditRoute({
               layout={layout}
               pageName={checkoutPage.name}
               paymentForm={parsed.paymentForm}
+              paymentProviders={checkoutPage.paymentProviders}
               previewMode
               products={
                 itemsSource === "manual"

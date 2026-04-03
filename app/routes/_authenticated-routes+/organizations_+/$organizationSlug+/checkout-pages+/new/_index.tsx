@@ -787,6 +787,7 @@ export default function NewCheckoutPageRoute({
               <Label className="mb-2 block">Preview</Label>
               <div className="rounded-lg border bg-muted/10 p-4">
                 <CheckoutPageRenderer
+                  checkoutPageSlug="preview"
                   description={description || undefined}
                   header={{
                     backgroundColor: headerBackgroundColor || null,
@@ -804,6 +805,7 @@ export default function NewCheckoutPageRoute({
                     defaultCurrency,
                     providers: paymentProviders,
                   }}
+                  paymentProviders={paymentProviders}
                   previewMode
                   products={getPreviewProducts()}
                 />

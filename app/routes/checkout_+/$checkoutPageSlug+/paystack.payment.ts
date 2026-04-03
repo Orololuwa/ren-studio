@@ -61,16 +61,36 @@ export async function action({ request, params }: Route.ActionArgs) {
   });
   const reference = `chk_${cuid()}`;
 
-  const { authorizationUrl } = await initializePaystackTransaction({
-    amountMinor,
-    currency,
-    email: parsed.data.customerEmail,
-    reference,
-    metadata: {
-      checkoutPageId: checkoutPage.id,
-      organizationId: checkoutPage.organizationId,
-    },
-  });
+  const appUrl = process.env.APP_URL?.replace(/\/$/, "");
+  if (!appUrl) {
+    return data(
+      { error: "APP_URL is not configured on the server" },
+      { status: 500 },
+    );
+  }
+
+  const slug = params.checkoutPageSlug;
+  const callbackUrl = `${appUrl}/checkout/${slug}/payment-complete`;
+
+  let authorizationUrl: string;
+  try {
+    const result = await initializePaystackTransaction({
+      amountMinor,
+      callbackUrl,
+      currency,
+      email: parsed.data.customerEmail,
+      reference,
+      metadata: {
+        checkoutPageId: checkoutPage.id,
+        organizationId: checkoutPage.organizationId,
+      },
+    });
+    authorizationUrl = result.authorizationUrl;
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Paystack initialization failed";
+    return data({ error: message }, { status: 502 });
+  }
 
   await upsertPaymentToDatabaseByProviderAndProviderPaymentId({
     provider: "paystack",
