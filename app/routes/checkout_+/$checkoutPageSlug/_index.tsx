@@ -133,7 +133,6 @@ export default function PublicCheckoutRoute({
 
   const [email, setEmail] = React.useState("");
   const [name, setName] = React.useState("");
-  const [amountMajor, setAmountMajor] = React.useState("");
   const [currency, setCurrency] = React.useState(checkoutPage.defaultCurrency);
 
   if (checkoutPage.isPasswordProtected && !hasAccess) {
@@ -202,12 +201,11 @@ export default function PublicCheckoutRoute({
         onPaymentFormChange={(v) => {
           setEmail(v.email);
           setName(v.name);
-          setAmountMajor(v.amountMajor);
           setCurrency(v.currency);
         }}
         pageName={checkoutPage.name}
         paymentForm={parsed.paymentForm}
-        paymentFormValues={{ email, name, amountMajor, currency }}
+        paymentFormValues={{ email, name, currency }}
         paymentProviders={checkoutPage.paymentProviders}
         products={parsed.items}
       />

@@ -20,6 +20,21 @@ export interface CheckoutLineItem {
   total: string;
 }
 
+/**
+ * Order total in major units (string with 2 decimals), from quantity × unitPrice
+ * per line — matches ProductsSummary / payment amount.
+ */
+export function computeCheckoutOrderTotalMajorFromLineItems(
+  products: CheckoutLineItem[],
+): string {
+  const total = products.reduce((sum, item) => {
+    const q = Number(item.quantity);
+    const p = Number(item.unitPrice);
+    return sum + (Number.isFinite(q) ? q : 0) * (Number.isFinite(p) ? p : 0);
+  }, 0);
+  return total.toFixed(2);
+}
+
 export interface CheckoutPaymentFormData {
   providers: string[];
   defaultCurrency: string;

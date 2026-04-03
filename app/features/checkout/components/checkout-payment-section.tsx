@@ -5,19 +5,32 @@ import type {
   CheckoutLineItem,
   CheckoutPaymentFormData,
 } from "../checkout-sections";
+import { computeCheckoutOrderTotalMajorFromLineItems } from "../checkout-sections";
+import { formatMinorUnits, toMinorUnits } from "../money";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "~/components/ui/radio-group";
 import { getCommonCurrencyLabel } from "~/features/templates/shared/common-currencies";
 
-const paymentStartSchema = z.object({
+const emailSchema = z.object({
   email: z.string().email(),
-  amountMajor: z.string().refine((s) => {
-    const n = Number(s);
-    return Number.isFinite(n) && n > 0;
-  }),
 });
+
+function validatePayClick(
+  email: string,
+  orderTotalMajor: string,
+): string | null {
+  const n = Number(orderTotalMajor);
+  if (!Number.isFinite(n) || n <= 0) {
+    return "This checkout has no payable total. Add products or fix line items.";
+  }
+  const parsed = emailSchema.safeParse({ email });
+  if (!parsed.success) {
+    return "Enter a valid email address.";
+  }
+  return null;
+}
 
 export type CheckoutPaymentSectionComponentProps = {
   checkoutPageSlug: string;
@@ -28,10 +41,11 @@ export type CheckoutPaymentSectionComponentProps = {
   values: {
     email: string;
     name: string;
-    amountMajor: string;
     currency: string;
   };
   onChange: (v: CheckoutPaymentSectionComponentProps["values"]) => void;
+  /** When true (e.g. split layout sidebar), fields stack in one column at all breakpoints. */
+  fieldsSingleColumn?: boolean;
 };
 
 function buildPaymentItems(products: CheckoutLineItem[]) {
@@ -54,6 +68,22 @@ function readErrorFromJson(json: unknown): string {
   return "Could not start payment.";
 }
 
+function formatOrderTotalLabel(orderTotalMajor: string, currency: string) {
+  const n = Number(orderTotalMajor);
+  if (!Number.isFinite(n) || n < 0) return "—";
+  const upper = currency.trim().toUpperCase();
+  if (n === 0) {
+    return formatMinorUnits({ amountMinor: 0, currency: upper });
+  }
+  return formatMinorUnits({
+    amountMinor: toMinorUnits({
+      amountMajor: orderTotalMajor,
+      currency: upper,
+    }),
+    currency: upper,
+  });
+}
+
 /**
  * Stripe Checkout (hosted page at checkout.stripe.com), same idea as Paystack’s
  * redirect — not Payment Element / clientSecret on your own domain.
@@ -62,22 +92,23 @@ function StripeHostedCheckoutButton({
   checkoutPageSlug,
   values,
   items,
+  orderTotalMajor,
+  payDisabled,
 }: {
   checkoutPageSlug: string;
   values: CheckoutPaymentSectionComponentProps["values"];
   items: ReturnType<typeof buildPaymentItems>;
+  orderTotalMajor: string;
+  payDisabled: boolean;
 }) {
   const [error, setError] = React.useState<string | null>(null);
   const [loading, setLoading] = React.useState(false);
 
   const pay = async () => {
     setError(null);
-    const parsed = paymentStartSchema.safeParse({
-      email: values.email,
-      amountMajor: values.amountMajor,
-    });
-    if (!parsed.success) {
-      setError("Enter a valid email and a positive amount.");
+    const msg = validatePayClick(values.email, orderTotalMajor);
+    if (msg) {
+      setError(msg);
       return;
     }
     setLoading(true);
@@ -87,7 +118,7 @@ function StripeHostedCheckoutButton({
         {
           body: JSON.stringify({
             provider: "stripe",
-            amountMajor: values.amountMajor,
+            amountMajor: orderTotalMajor,
             currency: values.currency,
             customerEmail: values.email,
             customerName: values.name,
@@ -121,7 +152,12 @@ function StripeHostedCheckoutButton({
 
   return (
     <div className="space-y-2">
-      <Button disabled={loading} onClick={pay} type="button" variant="default">
+      <Button
+        disabled={loading || payDisabled}
+        onClick={pay}
+        type="button"
+        variant="default"
+      >
         {loading ? "Redirecting…" : "Pay with Stripe"}
       </Button>
       <p className="text-muted-foreground text-xs">
@@ -136,22 +172,23 @@ function PaystackCheckoutButton({
   checkoutPageSlug,
   values,
   items,
+  orderTotalMajor,
+  payDisabled,
 }: {
   checkoutPageSlug: string;
   values: CheckoutPaymentSectionComponentProps["values"];
   items: ReturnType<typeof buildPaymentItems>;
+  orderTotalMajor: string;
+  payDisabled: boolean;
 }) {
   const [error, setError] = React.useState<string | null>(null);
   const [loading, setLoading] = React.useState(false);
 
   const pay = async () => {
     setError(null);
-    const parsed = paymentStartSchema.safeParse({
-      email: values.email,
-      amountMajor: values.amountMajor,
-    });
-    if (!parsed.success) {
-      setError("Enter a valid email and a positive amount.");
+    const msg = validatePayClick(values.email, orderTotalMajor);
+    if (msg) {
+      setError(msg);
       return;
     }
     setLoading(true);
@@ -161,7 +198,7 @@ function PaystackCheckoutButton({
         {
           body: JSON.stringify({
             provider: "paystack",
-            amountMajor: values.amountMajor,
+            amountMajor: orderTotalMajor,
             currency: values.currency,
             customerEmail: values.email,
             customerName: values.name,
@@ -198,7 +235,12 @@ function PaystackCheckoutButton({
 
   return (
     <div className="space-y-2">
-      <Button disabled={loading} onClick={pay} type="button" variant="default">
+      <Button
+        disabled={loading || payDisabled}
+        onClick={pay}
+        type="button"
+        variant="default"
+      >
         {loading ? "Redirecting…" : "Pay with Paystack"}
       </Button>
       <p className="text-muted-foreground text-xs">
@@ -217,8 +259,19 @@ export function CheckoutPaymentSection({
   products,
   values,
   onChange,
+  fieldsSingleColumn = false,
 }: CheckoutPaymentSectionComponentProps) {
   const items = React.useMemo(() => buildPaymentItems(products), [products]);
+
+  const orderTotalMajor = React.useMemo(
+    () => computeCheckoutOrderTotalMajorFromLineItems(products),
+    [products],
+  );
+
+  const orderTotalLabel = React.useMemo(
+    () => formatOrderTotalLabel(orderTotalMajor, values.currency),
+    [orderTotalMajor, values.currency],
+  );
 
   const available = React.useMemo(() => {
     const set = new Set(paymentProviders);
@@ -243,6 +296,10 @@ export function CheckoutPaymentSection({
 
   const showProviderChoice = available.stripe && available.paystack;
 
+  const payableTotal = Number(orderTotalMajor);
+  const canPay =
+    Number.isFinite(payableTotal) && payableTotal > 0 && products.length > 0;
+
   if (!available.stripe && !available.paystack) {
     return (
       <p className="text-muted-foreground text-sm">
@@ -251,9 +308,13 @@ export function CheckoutPaymentSection({
     );
   }
 
+  const fieldGridClass = fieldsSingleColumn
+    ? "grid gap-4 grid-cols-1"
+    : "grid gap-4 md:grid-cols-2";
+
   return (
     <section className="space-y-4">
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className={fieldGridClass}>
         <div className="space-y-2">
           <Label htmlFor="customerEmail">Email</Label>
           <Input
@@ -273,18 +334,15 @@ export function CheckoutPaymentSection({
           />
         </div>
       </div>
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className={fieldGridClass}>
         <div className="space-y-2">
-          <Label htmlFor="amount">Amount</Label>
-          <Input
-            id="amount"
-            inputMode="decimal"
-            onChange={(e) =>
-              onChange({ ...values, amountMajor: e.target.value })
-            }
-            placeholder="100.00"
-            value={values.amountMajor}
-          />
+          <Label>Total</Label>
+          <p className="text-sm font-medium rounded-md border border-input bg-muted/30 px-3 py-2">
+            {orderTotalLabel}
+          </p>
+          <p className="text-muted-foreground text-xs">
+            From your line items (quantity × unit price).
+          </p>
         </div>
         <div className="space-y-2">
           <Label>Currency</Label>
@@ -293,6 +351,14 @@ export function CheckoutPaymentSection({
           </p>
         </div>
       </div>
+
+      {!canPay ? (
+        <p className="text-destructive text-sm">
+          {products.length === 0
+            ? "There are no products to pay for."
+            : "Order total must be greater than zero to pay."}
+        </p>
+      ) : null}
 
       {showProviderChoice ? (
         <div className="space-y-2">
@@ -322,6 +388,8 @@ export function CheckoutPaymentSection({
         <StripeHostedCheckoutButton
           checkoutPageSlug={checkoutPageSlug}
           items={items}
+          orderTotalMajor={orderTotalMajor}
+          payDisabled={!canPay}
           values={values}
         />
       ) : null}
@@ -331,6 +399,8 @@ export function CheckoutPaymentSection({
         <PaystackCheckoutButton
           checkoutPageSlug={checkoutPageSlug}
           items={items}
+          orderTotalMajor={orderTotalMajor}
+          payDisabled={!canPay}
           values={values}
         />
       ) : null}

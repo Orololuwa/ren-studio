@@ -5,6 +5,7 @@ import type {
   CheckoutLineItem,
   CheckoutPaymentFormData,
 } from "../checkout-sections";
+import { computeCheckoutOrderTotalMajorFromLineItems } from "../checkout-sections";
 import { CheckoutPaymentSection } from "./checkout-payment-section";
 
 export interface CheckoutPageRendererHeader {
@@ -31,13 +32,11 @@ export interface CheckoutPageRendererProps {
   paymentFormValues?: {
     email: string;
     name: string;
-    amountMajor: string;
     currency: string;
   };
   onPaymentFormChange?: (values: {
     email: string;
     name: string;
-    amountMajor: string;
     currency: string;
   }) => void;
 }
@@ -68,12 +67,6 @@ function CheckoutHeader({
   );
 }
 
-function lineTotal(item: CheckoutLineItem): number {
-  const q = Number(item.quantity);
-  const p = Number(item.unitPrice);
-  return (Number.isFinite(q) ? q : 0) * (Number.isFinite(p) ? p : 0);
-}
-
 function ProductsSummary({ products }: { products: CheckoutLineItem[] }) {
   if (products.length === 0) {
     return (
@@ -82,7 +75,9 @@ function ProductsSummary({ products }: { products: CheckoutLineItem[] }) {
       </div>
     );
   }
-  const overallTotal = products.reduce((sum, item) => sum + lineTotal(item), 0);
+  const overallTotal = Number(
+    computeCheckoutOrderTotalMajorFromLineItems(products),
+  );
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
@@ -134,7 +129,6 @@ export function CheckoutPageRenderer({
   const [localValues, setLocalValues] = React.useState({
     email: "",
     name: "",
-    amountMajor: "",
     currency: paymentForm.defaultCurrency,
   });
   const values = paymentFormValues ?? localValues;
@@ -209,6 +203,7 @@ export function CheckoutPageRenderer({
               ) : (
                 <CheckoutPaymentSection
                   checkoutPageSlug={checkoutPageSlug}
+                  fieldsSingleColumn
                   onChange={setValues}
                   paymentForm={paymentForm}
                   paymentProviders={paymentProviders}
