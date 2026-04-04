@@ -1,6 +1,13 @@
-import { Plus, Trash2 } from "lucide-react";
+import { Copy, ExternalLink, Pencil, Plus, Trash2 } from "lucide-react";
 import * as React from "react";
-import { data, href, useNavigate } from "react-router";
+import {
+  data,
+  href,
+  Link,
+  redirect,
+  useFetcher,
+  useNavigate,
+} from "react-router";
 import { z } from "zod";
 
 import type { Route } from "./+types/_index";
@@ -14,18 +21,19 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "~/components/ui/alert-dialog";
+import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardFooter,
   CardHeader,
-  CardTitle,
 } from "~/components/ui/card";
+import { checkoutDashboardStatusLabel } from "~/features/checkout/checkout-dashboard-status";
 import {
+  countCheckoutPagesInDatabaseByOrganizationId,
   deleteCheckoutPageFromDatabase,
-  retrieveCheckoutPagesFromDatabaseByOrganizationId,
+  retrieveCheckoutPagesPageFromDatabaseByOrganizationId,
 } from "~/features/checkout/checkout-pages-model.server";
 import { getInstance } from "~/features/localization/i18next-middleware.server";
 import { organizationMembershipContext } from "~/features/organizations/organizations-middleware.server";
@@ -33,27 +41,63 @@ import { getPageTitle } from "~/utils/get-page-title.server";
 import { createToastHeaders } from "~/utils/toast.server";
 import { validateFormData } from "~/utils/validate-form-data.server";
 
-export async function loader({ params, context }: Route.LoaderArgs) {
+const PAGE_SIZE = 12;
+
+export async function loader({ request, params, context }: Route.LoaderArgs) {
   const { organization, headers } = context.get(organizationMembershipContext);
   const i18n = getInstance(context);
 
-  const checkoutPages = await retrieveCheckoutPagesFromDatabaseByOrganizationId(
-    {
-      organizationId: organization.id,
-    },
-  );
+  const url = new URL(request.url);
+  const rawPage = Number.parseInt(url.searchParams.get("page") ?? "1", 10);
+  const requestedPage =
+    Number.isFinite(rawPage) && rawPage >= 1 ? Math.floor(rawPage) : 1;
+
+  const total = await countCheckoutPagesInDatabaseByOrganizationId({
+    organizationId: organization.id,
+  });
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const page = Math.min(requestedPage, totalPages);
+
+  if (page !== requestedPage) {
+    const next = new URL(request.url);
+    if (page <= 1) {
+      next.searchParams.delete("page");
+    } else {
+      next.searchParams.set("page", String(page));
+    }
+    const qs = next.searchParams.toString();
+    throw redirect(qs ? `${next.pathname}?${qs}` : next.pathname);
+  }
+
+  const checkoutPages =
+    total === 0
+      ? []
+      : await retrieveCheckoutPagesPageFromDatabaseByOrganizationId({
+          organizationId: organization.id,
+          skip: (page - 1) * PAGE_SIZE,
+          take: PAGE_SIZE,
+        });
+
+  const listPath = href("/organizations/:organizationSlug/checkout-pages", {
+    organizationSlug: params.organizationSlug,
+  });
 
   return data(
     {
       breadcrumb: {
         title: "Checkout Pages",
-        to: href("/organizations/:organizationSlug/checkout-pages", {
-          organizationSlug: params.organizationSlug,
-        }),
+        to: listPath,
       },
       checkoutPages,
+      listPath,
       organizationSlug: params.organizationSlug,
       pageTitle: getPageTitle(i18n.t.bind(i18n), "Checkout Pages"),
+      pagination: {
+        page,
+        pageSize: PAGE_SIZE,
+        total,
+        totalPages,
+      },
     },
     { headers },
   );
@@ -105,14 +149,25 @@ export default function CheckoutPagesIndexRoute({
   loaderData,
 }: Route.ComponentProps) {
   const navigate = useNavigate();
-  const { checkoutPages, organizationSlug } = loaderData;
+  const { checkoutPages, listPath, organizationSlug, pagination } = loaderData;
+
+  const first =
+    checkoutPages.length === 0
+      ? 0
+      : (pagination.page - 1) * pagination.pageSize + 1;
+  const last = Math.min(
+    pagination.page * pagination.pageSize,
+    pagination.total,
+  );
+
+  const pageLink = (p: number) => (p <= 1 ? listPath : `${listPath}?page=${p}`);
 
   return (
     <div className="flex flex-1 flex-col gap-6 px-4 py-4 md:py-6 lg:px-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold">Checkout Pages</h1>
-          <p className="text-muted-foreground text-sm mt-1">
+          <p className="text-muted-foreground mt-1 text-sm">
             Create and manage your public checkout links.
           </p>
         </div>
@@ -121,7 +176,7 @@ export default function CheckoutPagesIndexRoute({
             navigate(`/organizations/${organizationSlug}/checkout-pages/new`)
           }
         >
-          <Plus className="h-4 w-4 mr-2" />
+          <Plus className="mr-2 h-4 w-4" />
           Create New
         </Button>
       </div>
@@ -131,19 +186,50 @@ export default function CheckoutPagesIndexRoute({
           No checkout pages yet. Click “Create New” to get started.
         </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {checkoutPages.map((page) => (
-            <CheckoutPageCardComponent
-              key={page.id}
-              onEdit={() =>
-                navigate(
-                  `/organizations/${organizationSlug}/checkout-pages/${page.id}`,
-                )
-              }
-              page={page}
-            />
-          ))}
-        </div>
+        <>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {checkoutPages.map((page) => (
+              <CheckoutPageCardComponent
+                key={page.id}
+                onEdit={() =>
+                  navigate(
+                    `/organizations/${organizationSlug}/checkout-pages/${page.id}`,
+                  )
+                }
+                page={page}
+              />
+            ))}
+          </div>
+
+          {pagination.totalPages > 1 ? (
+            <div className="flex flex-col gap-3 border-t pt-4 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-muted-foreground text-sm">
+                Showing {first}–{last} of {pagination.total}
+              </p>
+              <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  asChild
+                  disabled={pagination.page <= 1}
+                  size="sm"
+                  variant="outline"
+                >
+                  <Link to={pageLink(pagination.page - 1)}>Previous</Link>
+                </Button>
+                <span className="text-muted-foreground px-1 text-sm tabular-nums">
+                  Page {pagination.page} of {pagination.totalPages}
+                </span>
+                <Button
+                  asChild
+                  disabled={pagination.page >= pagination.totalPages}
+                  size="sm"
+                  variant="outline"
+                >
+                  <Link to={pageLink(pagination.page + 1)}>Next</Link>
+                </Button>
+              </div>
+            </div>
+          ) : null}
+        </>
       )}
     </div>
   );
@@ -157,32 +243,101 @@ function CheckoutPageCardComponent({
   onEdit: () => void;
 }) {
   const [open, setOpen] = React.useState(false);
+  const fetcher = useFetcher<{ success?: boolean }>();
+  const publicPath = `/checkout/${page.slug}`;
+  const status = checkoutDashboardStatusLabel({
+    expiresAt: page.expiresAt,
+    isActive: page.isActive,
+    paymentCount: page.paymentCount,
+  });
+
+  const busy = fetcher.state !== "idle";
+
+  React.useEffect(() => {
+    if (
+      fetcher.state === "idle" &&
+      fetcher.data &&
+      "success" in fetcher.data &&
+      fetcher.data.success
+    ) {
+      setOpen(false);
+    }
+  }, [fetcher.state, fetcher.data]);
 
   return (
     <>
-      <Card className="flex flex-col">
-        <CardHeader>
-          <CardTitle className="truncate">{page.name}</CardTitle>
-          <CardDescription className="space-y-1">
-            <div className="truncate">Slug: {page.slug}</div>
-            <div className="text-xs">
-              {page.isActive ? "Active" : "Inactive"} · {page.paymentCount}{" "}
-              payments
-            </div>
-          </CardDescription>
+      <Card className="flex min-w-0 flex-col gap-0 py-0">
+        <CardHeader className="space-y-1.5 p-3 pb-2">
+          <div className="flex items-start justify-between gap-2">
+            <h2 className="line-clamp-2 text-sm font-semibold leading-tight">
+              {page.name}
+            </h2>
+            <Badge className="shrink-0 text-[10px]" variant={status.variant}>
+              {status.label}
+            </Badge>
+          </div>
+          <p className="text-muted-foreground truncate font-mono text-[11px]">
+            {page.slug}
+          </p>
         </CardHeader>
-        <CardContent className="flex-1" />
-        <CardFooter className="gap-2">
-          <Button className="flex-1" onClick={onEdit}>
+        <CardContent className="text-muted-foreground flex-1 px-3 pb-2 pt-0 text-xs">
+          {page.paymentCount} payment{page.paymentCount === 1 ? "" : "s"} ·{" "}
+          {page.viewCount} view{page.viewCount === 1 ? "" : "s"}
+        </CardContent>
+        <CardFooter className="flex flex-nowrap items-center gap-1 border-t p-2">
+          <Button
+            className="h-8 shrink-0 gap-1.5 px-2"
+            onClick={onEdit}
+            size="sm"
+            type="button"
+            variant="outline"
+          >
+            <Pencil className="h-3.5 w-3.5" />
             Edit
           </Button>
           <Button
-            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+            asChild
+            size="icon-sm"
+            title="Open checkout"
+            variant="outline"
+          >
+            <a
+              className="h-8 shrink-0 gap-1.5 px-2 w-max"
+              href={publicPath}
+              rel="noreferrer"
+              target="_blank"
+            >
+              <ExternalLink className="h-3.5 w-3.5" />
+              <span>Open</span>
+            </a>
+          </Button>
+          <Button
+            className="h-8 shrink-0 gap-1.5 px-2 w-max"
+            onClick={async () => {
+              const full =
+                typeof window !== "undefined"
+                  ? `${window.location.origin}${publicPath}`
+                  : publicPath;
+              await navigator.clipboard.writeText(full);
+            }}
+            size="icon-sm"
+            title="Copy link"
+            type="button"
+            variant="outline"
+          >
+            <Copy className="h-3.5 w-3.5" />
+            <span>Copy</span>
+          </Button>
+          <Button
+            className="text-destructive hover:bg-destructive/10 hover:text-destructive shrink-0"
+            disabled={busy}
             onClick={() => setOpen(true)}
-            size="icon"
+            size="icon-sm"
+            title="Delete"
+            type="button"
             variant="ghost"
           >
-            <Trash2 className="h-4 w-4" />
+            <Trash2 className="h-3.5 w-3.5" />
             <span className="sr-only">Delete</span>
           </Button>
         </CardFooter>
@@ -190,32 +345,27 @@ function CheckoutPageCardComponent({
 
       <AlertDialog onOpenChange={setOpen} open={open}>
         <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete checkout page</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will delete “{page.name}” and all its payments/receipts. This
-              action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={async () => {
-                const formData = new FormData();
-                formData.set("intent", "delete");
-                formData.set("checkoutPageId", page.id);
-                await fetch(window.location.pathname, {
-                  method: "POST",
-                  body: formData,
-                });
-                setOpen(false);
-                window.location.reload();
-              }}
-            >
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
+          <fetcher.Form method="post">
+            <input name="intent" type="hidden" value="delete" />
+            <input name="checkoutPageId" type="hidden" value={page.id} />
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete checkout page</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will delete “{page.name}” and all its payments/receipts.
+                This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel type="button">Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                disabled={busy}
+                type="submit"
+              >
+                {busy ? "Deleting…" : "Delete"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </fetcher.Form>
         </AlertDialogContent>
       </AlertDialog>
     </>

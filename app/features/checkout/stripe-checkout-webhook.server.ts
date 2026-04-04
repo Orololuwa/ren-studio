@@ -114,7 +114,13 @@ export async function handleStripeCheckoutPaymentIntentSucceeded(
 
   if (!payment) return;
 
-  if (payment.status === "succeeded") return;
+  if (payment.status === "succeeded") {
+    await prisma.checkoutPage.update({
+      data: { isActive: false },
+      where: { id: payment.checkoutPageId },
+    });
+    return;
+  }
 
   await updatePaymentStatusInDatabaseByProviderAndProviderPaymentId({
     provider: "stripe",
@@ -124,6 +130,7 @@ export async function handleStripeCheckoutPaymentIntentSucceeded(
 
   await prisma.checkoutPage.update({
     data: {
+      isActive: false,
       paymentCount: { increment: 1 },
       totalRevenueMinor: { increment: payment.amountMinor },
     },

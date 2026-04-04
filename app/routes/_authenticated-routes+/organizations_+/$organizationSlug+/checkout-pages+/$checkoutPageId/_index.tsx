@@ -6,6 +6,7 @@ import { z } from "zod";
 
 import type { Route } from "./+types/_index";
 import { CurrencyPicker } from "~/components/currency-picker";
+import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Checkbox } from "~/components/ui/checkbox";
 import {
@@ -24,6 +25,7 @@ import {
   SelectValue,
 } from "~/components/ui/select";
 import { Textarea } from "~/components/ui/textarea";
+import { checkoutDashboardStatusLabel } from "~/features/checkout/checkout-dashboard-status";
 import { checkoutItemsAndTotalsFromInvoiceTemplateSections } from "~/features/checkout/checkout-from-invoice-template";
 import {
   retrieveCheckoutPageFromDatabaseById,
@@ -394,6 +396,11 @@ export default function CheckoutPageEditRoute({
     checkoutPage.paymentProviders.includes("paystack"),
   );
   const [isActive, setIsActive] = React.useState(checkoutPage.isActive);
+  const checkoutStatusBadge = checkoutDashboardStatusLabel({
+    expiresAt: checkoutPage.expiresAt,
+    isActive,
+    paymentCount: checkoutPage.paymentCount,
+  });
   const [isPasswordProtected, setIsPasswordProtected] = React.useState(
     checkoutPage.isPasswordProtected,
   );
@@ -751,9 +758,14 @@ export default function CheckoutPageEditRoute({
           <span className="sr-only">Back</span>
         </Button>
         <div className="flex-1 min-w-0">
-          <h1 className="text-2xl font-semibold truncate">
-            {checkoutPage.name}
-          </h1>
+          <div className="flex flex-wrap items-center gap-2">
+            <h1 className="text-2xl font-semibold truncate">
+              {checkoutPage.name}
+            </h1>
+            <Badge variant={checkoutStatusBadge.variant}>
+              {checkoutStatusBadge.label}
+            </Badge>
+          </div>
           <p className="text-muted-foreground text-sm truncate">
             Public URL: {publicUrl}
           </p>

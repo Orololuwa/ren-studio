@@ -77,10 +77,23 @@ export async function action({ request }: Route.ActionArgs) {
             providerPaymentId: reference,
           },
         },
-        select: { id: true, checkoutPageId: true, amountMinor: true },
+        select: {
+          id: true,
+          amountMinor: true,
+          checkoutPageId: true,
+          status: true,
+        },
       });
 
       if (!payment) {
+        return json({ message: "OK" });
+      }
+
+      if (payment.status === "succeeded") {
+        await prisma.checkoutPage.update({
+          data: { isActive: false },
+          where: { id: payment.checkoutPageId },
+        });
         return json({ message: "OK" });
       }
 
@@ -105,6 +118,7 @@ export async function action({ request }: Route.ActionArgs) {
 
       await prisma.checkoutPage.update({
         data: {
+          isActive: false,
           paymentCount: { increment: 1 },
           totalRevenueMinor: { increment: payment.amountMinor },
         },
