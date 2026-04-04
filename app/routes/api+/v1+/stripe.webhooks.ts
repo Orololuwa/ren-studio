@@ -17,6 +17,11 @@ import {
   handleStripeSubscriptionScheduleExpiringEvent,
   handleStripeSubscriptionScheduleUpdatedEvent,
 } from "~/features/billing/stripe-event-handlers.server";
+import {
+  handleStripeCheckoutPaymentIntentCanceled,
+  handleStripeCheckoutPaymentIntentFailed,
+  handleStripeCheckoutPaymentIntentSucceeded,
+} from "~/features/checkout/stripe-checkout-webhook.server";
 import { getErrorMessage } from "~/utils/get-error-message";
 
 const json = (payload: unknown, init?: ResponseInit) =>
@@ -101,6 +106,18 @@ export async function action({ request }: Route.ActionArgs) {
       case "subscription_schedule.updated": {
         return handleStripeSubscriptionScheduleUpdatedEvent(event);
       }
+      case "payment_intent.succeeded": {
+        await handleStripeCheckoutPaymentIntentSucceeded(event.data.object);
+        return json({ message: "OK" });
+      }
+      case "payment_intent.payment_failed": {
+        await handleStripeCheckoutPaymentIntentFailed(event.data.object);
+        return json({ message: "OK" });
+      }
+      case "payment_intent.canceled": {
+        await handleStripeCheckoutPaymentIntentCanceled(event.data.object);
+        return json({ message: "OK" });
+      }
       case "billing_portal.configuration.updated":
       case "billing_portal.session.created":
       case "charge.dispute.created":
@@ -117,7 +134,6 @@ export async function action({ request }: Route.ActionArgs) {
       case "invoice.updated":
       case "invoiceitem.created":
       case "payment_intent.created":
-      case "payment_intent.succeeded":
       case "payment_method.attached":
       case "plan.created":
       case "plan.deleted":

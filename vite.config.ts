@@ -47,7 +47,11 @@ const rootConfig = defineConfig({
     staticCacheHeaders(),
     sudoFilesPlugin,
   ],
-  server: { port: 3000 },
+  server: {
+    port: 3000,
+    // Paystack webhooks / tunneling: ngrok sends Host: *.ngrok-free.app
+    allowedHosts: [".ngrok-free.app", ".ngrok.io", ".ngrok.app"],
+  },
 });
 
 const testConfig = defineVitestConfig({
