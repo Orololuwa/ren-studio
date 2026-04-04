@@ -76,8 +76,8 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
   const url = new URL(request.url);
   const typeParam = url.searchParams.get("type");
 
-  // Use resume as default if parameter is missing
-  const activeType = (typeParam || "resume") as BuilderType;
+  // Default matches first template type in the sidebar (resume is app-only, not listed there).
+  const activeType = (typeParam || "estimate") as BuilderType;
 
   // Fetch saved templates for the active type
   const savedTemplates = await retrieveTemplatesByOrganizationIdAndType({
@@ -269,11 +269,6 @@ const builderTypes = [
     icon: ShoppingBag,
     label: "Receipt",
     value: "receipt",
-  },
-  {
-    icon: FileText,
-    label: "Resume",
-    value: "resume",
   },
 ] as const;
 

@@ -17,8 +17,8 @@ test.describe("builder template selection page", () => {
     organizationSlug = data.organization.slug;
     organizationId = data.organization.id;
 
-    // Navigate to the builder page
-    await page.goto(`/organizations/${organizationSlug}/builder`);
+    // Navigate to the template builder page
+    await page.goto(`/organizations/${organizationSlug}/templates`);
     await page.waitForSelector('[data-testid="template-builder-heading"]');
   });
 
@@ -42,27 +42,27 @@ test.describe("builder template selection page", () => {
       "true",
     );
 
-    // Check that resume template type button is active
+    // Check that estimate template type button is active (default; resume is not in the sidebar)
     await expect(
-      page.getByTestId("template-type-button-resume"),
+      page.getByTestId("template-type-button-estimate"),
     ).toHaveAttribute("aria-current", "page");
 
-    // Check that the expected resume templates are present
+    // Check that the expected estimate templates are present
     const visibleGrid = page.locator('[data-testid="template-grid"]:visible');
 
     await expect(
-      visibleGrid.getByTestId("template-card-resume-modern-professional"),
+      visibleGrid.getByTestId("template-card-estimate-simple"),
     ).toBeVisible();
 
     await expect(
-      visibleGrid.getByTestId("template-card-resume-classic-elegant"),
+      visibleGrid.getByTestId("template-card-estimate-professional"),
     ).toBeVisible();
   });
 
   test("should switch between template types", async ({ page }) => {
-    // Ensure we're starting from the resume view (default)
+    // Ensure we're starting from the estimate view (default)
     await expect(
-      page.getByTestId("template-type-button-resume"),
+      page.getByTestId("template-type-button-estimate"),
     ).toHaveAttribute("aria-current", "page");
 
     // Switch to Invoice via sidebar
@@ -225,7 +225,7 @@ test.describe("builder template selection page", () => {
 
     // Wait for the URL to change (initial navigation)
     await page.waitForURL(
-      new RegExp(`/builder/${templateId}.*mode=customize`),
+      new RegExp(`/templates/${templateId}.*mode=customize`),
       {
         waitUntil: "commit",
         timeout: 10_000,
@@ -234,7 +234,7 @@ test.describe("builder template selection page", () => {
 
     // Wait for the redirect to complete (customize mode creates a new template and redirects)
     // The redirect goes to a different template ID with mode=edit
-    await page.waitForURL(/\/builder\/([^/?]+)\?mode=edit/, {
+    await page.waitForURL(/\/templates\/([^/?]+)\?mode=edit/, {
       waitUntil: "commit",
       timeout: 10_000,
     });
@@ -300,7 +300,7 @@ test.describe("builder template selection page", () => {
     try {
       // Navigate directly to saved view (full page load, server-side render)
       await page.goto(
-        `/organizations/${organizationSlug}/builder?type=resume&view=saved`,
+        `/organizations/${organizationSlug}/templates?type=resume&view=saved`,
       );
 
       // Wait for page to load

@@ -776,7 +776,7 @@ export default function BuilderEditorRoute({
                   <Button
                     className="h-8 w-8 shrink-0"
                     onClick={() => {
-                      navigate(`/organizations/${organizationSlug}/templates`);
+                      navigate(-1);
                     }}
                     size="icon"
                     variant="ghost"
